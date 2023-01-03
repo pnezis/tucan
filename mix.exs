@@ -21,7 +21,8 @@ defmodule Tucan.MixProject do
   defp deps do
     [
       {:nimble_options, "~> 0.5.0"},
-      {:vega_lite, "~> 0.1.5"}
+      {:vega_lite, "~> 0.1.5"},
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false}
     ]
   end
 end
