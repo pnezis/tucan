@@ -10,7 +10,6 @@ defmodule Tucan do
   def data(vl, data) when is_binary(data), do: Vl.data_from_url(vl, data)
   def data(vl, data), do: Vl.data_from_values(vl, data)
 
-  # TODO: make plot either a vegalite or a dataset
   def scatter(plot, x, y, opts \\ [])
 
   def scatter(%VegaLite{} = plot, x, y, opts) do
@@ -50,16 +49,16 @@ defmodule Tucan do
         type:
           {:in,
            [
-             :circle,
-             :square,
-             :cross,
-             :diamond,
-             :triangle_up,
-             :triangle_down,
-             :triangle_right,
-             :triangle_left
+             "circle",
+             "square",
+             "cross",
+             "diamond",
+             "triangle-up",
+             "triangle-down",
+             "triangle-right",
+             "triangle-left"
            ]},
-        default: :circle,
+        default: "circle",
         doc: """
         Shape of the point mark, for more details check the [Vega-Lite docs](https://vega.github.io/vega-lite/docs/point.html#properties)
         """
