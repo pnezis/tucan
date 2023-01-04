@@ -17,4 +17,7 @@ defmodule Tucan.Datasets do
     do: "https://vega.github.io/vega-datasets/data/gapminder-health-income.csv"
 
   def dataset(:weather), do: "https://vega.github.io/editor/data/weather.csv"
+
+  def dataset(:titanic),
+    do: "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
 end
