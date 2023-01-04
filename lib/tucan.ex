@@ -10,6 +10,9 @@ defmodule Tucan do
   def data(vl, data) when is_binary(data), do: Vl.data_from_url(vl, data)
   def data(vl, data), do: Vl.data_from_values(vl, data)
 
+  def plot(plot_or_data, type_opts, opts) do
+  end
+
   def scatter(plot, x, y, opts \\ [])
 
   def scatter(%VegaLite{} = plot, x, y, opts) do
@@ -25,6 +28,14 @@ defmodule Tucan do
     new()
     |> data(data)
     |> scatter(x, y, opts)
+  end
+
+  def boxplot(data, x, y, opts) do
+    new()
+    |> data(data)
+    |> Vl.mark(:boxplot, extent: "min-max")
+    |> Vl.encode_field(:x, x, type: :nominal)
+    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
   end
 
   def color_by(vl, field, opts \\ []) do
