@@ -21,6 +21,9 @@ defmodule Tucan.Plots do
   def histogram(data_or_plot, field, opts \\ []),
     do: plot(data_or_plot, :histogram, [field: field], opts)
 
+  def stripplot(data_or_plot, field, opts \\ []),
+    do: plot(data_or_plot, :stripplot, [field: field], opts)
+
   defp plot(data_or_plot, type, type_opts, opts) do
     schema = Tucan.Plots.Options.schema(type)
 
@@ -48,5 +51,11 @@ defmodule Tucan.Plots do
     |> Vl.mark(:bar, fill_opacity: 0.5)
     |> Vl.encode_field(:x, type_opts[:field], bin: [step: 0.5])
     |> Vl.encode_field(:y, type_opts[:field], aggregate: "count")
+  end
+
+  defp do_plot(plot, :stripplot, type_opts, _opts) do
+    plot
+    |> Vl.mark(:tick)
+    |> Vl.encode_field(:x, type_opts[:field], type: :quantitative)
   end
 end
