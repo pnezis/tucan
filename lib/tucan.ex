@@ -6,6 +6,7 @@ defmodule Tucan do
 
   def new, do: VegaLite.new()
 
+  defdelegate histogram(plot, field, opts \\ []), to: Tucan.Plots
   defdelegate scatter(plot, x, y, opts \\ []), to: Tucan.Plots
 
   # def boxplot(data, x, y, opts) do

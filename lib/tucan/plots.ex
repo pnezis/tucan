@@ -18,6 +18,9 @@ defmodule Tucan.Plots do
   def scatter(data_or_plot, x, y, opts \\ []),
     do: plot(data_or_plot, :scatter, [x: x, y: y], opts)
 
+  def histogram(data_or_plot, field, opts \\ []),
+    do: plot(data_or_plot, :histogram, [field: field], opts)
+
   defp plot(data_or_plot, type, type_opts, opts) do
     schema = Tucan.Plots.Options.schema(type)
 
@@ -38,5 +41,12 @@ defmodule Tucan.Plots do
     |> Vl.mark(:point, opts)
     |> Vl.encode_field(:x, type_opts[:x], type: :quantitative)
     |> Vl.encode_field(:y, type_opts[:y], type: :quantitative)
+  end
+
+  defp do_plot(plot, :histogram, type_opts, _opts) do
+    plot
+    |> Vl.mark(:bar, fill_opacity: 0.5)
+    |> Vl.encode_field(:x, type_opts[:field], bin: [step: 0.5])
+    |> Vl.encode_field(:y, type_opts[:field], aggregate: "count")
   end
 end
