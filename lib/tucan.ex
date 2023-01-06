@@ -10,22 +10,6 @@ defmodule Tucan do
   defdelegate scatter(plot, x, y, opts \\ []), to: Tucan.Plots
   defdelegate stripplot(plot, field, opts \\ []), to: Tucan.Plots
 
-  # def boxplot(data, x, y, opts) do
-  #   new()
-  #   |> data(data)
-  #   |> Vl.mark(:boxplot, extent: "min-max")
-  #   |> Vl.encode_field(:x, x, type: :nominal)
-  #   |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
-  # end
-  #
-  # def histogram(data, x, opts \\ []) do
-  #   Vl.new()
-  #   |> data(data)
-  #   |> Vl.mark(:bar, fill_opacity: 0.5)
-  #   |> Vl.encode_field(:x, x, bin: [step: 0.5])
-  #   |> Vl.encode_field(:y, x, aggregate: "count")
-  # end
-
   def color_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :color, field, opts)
   end
@@ -40,5 +24,15 @@ defmodule Tucan do
 
   def size_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :size, field, opts)
+  end
+
+  def facet_by(vl, faceting_mode, field, opts \\ [])
+
+  def facet_by(vl, :row, field, opts) do
+    Vl.encode_field(vl, :row, field, opts)
+  end
+
+  def facet_by(vl, :column, field, opts) do
+    Vl.encode_field(vl, :column, field, opts)
   end
 end
