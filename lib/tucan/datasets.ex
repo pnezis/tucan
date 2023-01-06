@@ -20,4 +20,7 @@ defmodule Tucan.Datasets do
 
   def dataset(:titanic),
     do: "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+
+  def dataset(:penguins),
+    do: "https://raw.githubusercontent.com/vega/vega-datasets/next/data/penguins.json"
 end
