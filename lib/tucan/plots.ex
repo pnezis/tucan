@@ -14,15 +14,35 @@ defmodule Tucan.Plots do
   ## Supported options
 
   #{NimbleOptions.docs(Tucan.Plots.Options.schema(:scatter))}
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.Plots.scatter(:iris, "sepal_length", "sepal_width")
+  ```
   """
   def scatter(data_or_plot, x, y, opts \\ []),
     do: plot(data_or_plot, :scatter, [x: x, y: y], opts)
 
+  @doc """
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.Plots.histogram(:iris, "petal_width")
+  ```
+  """
   def histogram(data_or_plot, field, opts \\ []),
     do: plot(data_or_plot, :histogram, [field: field], opts)
 
   def stripplot(data_or_plot, field, opts \\ []),
     do: plot(data_or_plot, :stripplot, [field: field], opts)
+
+  def add_marginal_histogram(plot, field, opts) do
+    histogram = histogram(Vl.new(), field, opts)
+    plot = Vl.new() |> Vl.data(plot.spec["data"])
+    Vl.concat(Vl.new(), [histogram, plot], :vertical)
+  end
 
   defp plot(data_or_plot, type, type_opts, opts) do
     schema = Tucan.Plots.Options.schema(type)
