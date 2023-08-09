@@ -3,7 +3,17 @@ defmodule Tucan.Datasets do
   Common datasets for `Tucan` demos and docs.
   """
 
-  @type t :: :iris | :corruption | :cars | :gapminder | :weather | :titanic | :penguins
+  @type t ::
+          :iris
+          | :corruption
+          | :cars
+          | :gapminder
+          | :weather
+          | :titanic
+          | :penguins
+          | :stocks
+          | :flights
+          | :tips
 
   def dataset(:iris),
     do:
@@ -20,9 +30,16 @@ defmodule Tucan.Datasets do
 
   def dataset(:weather), do: "https://vega.github.io/editor/data/weather.csv"
 
+  def dataset(:stocks), do: "https://vega.github.io/editor/data/stocks.csv"
+
   def dataset(:titanic),
     do: "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
 
   def dataset(:penguins),
     do: "https://raw.githubusercontent.com/vega/vega-datasets/next/data/penguins.json"
+
+  def dataset(:flights),
+    do: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/flights.csv"
+
+  def dataset(:tips), do: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv"
 end

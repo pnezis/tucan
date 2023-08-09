@@ -5,26 +5,71 @@ defmodule Tucan do
   alias VegaLite, as: Vl
 
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
+  @type field :: binary()
 
   @spec new() :: VegaLite.t()
-  def new, do: VegaLite.new()
+  def new(), do: VegaLite.new()
 
-  @spec new(plotdata :: plotdata()) :: VegaLite.t()
-  def new(plotdata), do: to_vega_plot(plotdata)
+  @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
+  def new(plotdata, opts \\ []), do: to_vega_plot(plotdata, opts)
 
-  defp to_vega_plot(%VegaLite{} = plot), do: plot
+  defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
 
-  defp to_vega_plot(dataset) when is_atom(dataset),
-    do: to_vega_plot(Tucan.Datasets.dataset(dataset))
+  defp to_vega_plot(dataset, opts) when is_atom(dataset),
+    do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
-  defp to_vega_plot(dataset) when is_binary(dataset) do
-    Vl.new()
+  defp to_vega_plot(dataset, opts) when is_binary(dataset) do
+    Vl.new(width: opts[:width], height: opts[:height])
     |> Vl.data_from_url(dataset)
   end
 
-  defp to_vega_plot(data) do
-    Vl.new()
+  defp to_vega_plot(data, opts) do
+    Vl.new(width: opts[:width], height: opts[:height])
     |> Vl.data_from_values(data)
+  end
+
+  @doc """
+  Draw a line plot between `x` and `y`
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.lineplot(:flights, "year", "passengers")
+  ```
+
+  ```vega-lite
+  months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ]
+
+  Tucan.lineplot(:flights, "year", "passengers")
+  |> Tucan.color_by("month", sort: months, type: :nominal)
+  |> Tucan.stroke_dash_by("month", sort: months)
+  ```
+
+
+  """
+  @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
+          VegaLite.t()
+  def lineplot(plotdata, x, y, opts \\ []) do
+    _opts = NimbleOptions.validate!(opts, [])
+
+    plotdata
+    |> new()
+    |> Vl.mark(:line)
+    |> Vl.encode_field(:x, x, type: :temporal)
+    |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
   histogram_opts = [
@@ -140,16 +185,85 @@ defmodule Tucan do
 
   ## Examples
 
+  > We will use the `:tips` dataset thoughout the following examples.
+
+  Drawing a scatter plot betwen two variables:
+
   ```vega-lite
-  Tucan.scatter(:iris, "sepal_length", "sepal_width")
+  Tucan.scatter(:tips, "total_bill", "tip")
   ```
+
+  You can combine it with `color_by/3` to color code the points:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip")
+  |> Tucan.color_by("time")
+  ```
+
+  Assigning the same variable to `shape_by/3` will also vary the markers and create a
+  more accessible plot:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("time")
+  |> Tucan.shape_by("time")
+  ```
+
+  Assigning `color_by/3` and `shape_by/3` to different variables will vary colors and
+  markers independently:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("time")
+  ```
+
+  You can also color the points by a numeric variable, the semantic mapping will be
+  quantitative and will use a different default palette:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("size", type: :quantitative)
+  ```
+
+  A numeric variable can also be assigned to size to apply a semantic mapping to the
+  areas of the points:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("size", type: :quantitative)
+  |> Tucan.size_by("size", type: :quantitative)
+  ```
+
+  You can also combine it with `facet_by/3` in order to group within additional
+  categorical variables, and plot them across multiple subplots.
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("day")
+  |> Tucan.facet_by(:column, "time")
+  ```
+
+  You can also apply faceting on more than one variables, both horizontally and
+  vertically:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("day")
+  |> Tucan.size_by("size")
+  |> Tucan.facet_by(:column, "time")
+  |> Tucan.facet_by(:row, "sex")
+  ```
+
   """
   def scatter(plotdata, x, y, opts \\ []) do
     # TODO : define schema
-    _opts = NimbleOptions.validate!(opts, [])
+    # _opts = NimbleOptions.validate!(opts, [])
 
     plotdata
-    |> new()
+    |> new(opts)
     |> Vl.mark(:point, opts)
     |> Vl.encode_field(:x, x, type: :quantitative)
     |> Vl.encode_field(:y, y, type: :quantitative)
@@ -176,6 +290,10 @@ defmodule Tucan do
 
   def shape_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :shape, field, opts)
+  end
+
+  def stroke_dash_by(vl, field, opts \\ []) do
+    Vl.encode_field(vl, :stroke_dash, field, opts)
   end
 
   def fill_by(vl, field, opts \\ []) do
