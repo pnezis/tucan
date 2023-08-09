@@ -25,7 +25,7 @@ defmodule Tucan.MixProject do
       {:vega_lite, "~> 0.1.7"},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:fancy_fences, "~> 0.1", only: :dev, runtime: false}
+      {:fancy_fences, "~> 0.2", only: :dev, runtime: false}
     ]
   end
 
@@ -41,9 +41,9 @@ defmodule Tucan.MixProject do
       before_closing_body_tag: fn
         :html ->
           """
-          <script src="https://cdn.jsdelivr.net/npm/vega@5.20.2"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.1.1"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.18.2"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega@5.25.0"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.12.0"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.22.2"></script>
           <script>
             document.addEventListener("DOMContentLoaded", function () {
               for (const codeEl of document.querySelectorAll("pre code.vega-lite")) {
