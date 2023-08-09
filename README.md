@@ -2,6 +2,41 @@
 
 **TODO: Add description**
 
+
+## MVP
+
+- [ ] Options parsing
+- [ ] Supported plots (fully documented)
+  - [ ] scatter
+  - [ ] line
+  - [ ] histogram
+  - [ ] bubble
+  - [ ] barchart
+  - [ ] heatmap
+- [ ] low level api for setting fields options
+- [ ] helper functionality for
+  - [ ] axis (title, grid etc)
+  - [ ] graph title
+  - [ ] grid
+  - [ ] ...
+- [ ] tutorials
+
+## Enhancements
+
+- Other nice to have plot types
+  - [ ] strip
+  - [ ] area
+  - [ ] lasagna
+  - [ ] pie, donut, radial
+  - [ ] boxplot
+
+- [ ] Confidence intervals
+- [ ] financial plots
+- [ ] marginal histograms
+- [ ] interactivity
+
+
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
