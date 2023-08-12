@@ -19,7 +19,7 @@ defmodule Tucan do
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
   defp to_vega_plot(dataset, opts) when is_binary(dataset) do
-    Vl.new(width: opts[:width], height: opts[:height])
+    Vl.new(width: opts[:width], height: opts[:height], title: opts[:title])
     |> Vl.data_from_url(dataset)
   end
 
@@ -57,8 +57,6 @@ defmodule Tucan do
   |> Tucan.color_by("month", sort: months, type: :nominal)
   |> Tucan.stroke_dash_by("month", sort: months)
   ```
-
-
   """
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
@@ -71,6 +69,21 @@ defmodule Tucan do
     |> Vl.encode_field(:x, x, type: :temporal)
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
+
+  mark_general_properties = [
+    tooltip: [
+      type: {:custom, Tucan.Options, :tooltip, []},
+      doc: """
+      The tooltip text string to show upon mouse hover or an object defining which fields
+      should the tooltip be derived from. Can be one of the following:
+
+      * `:encoding` - all fields from encoding are used
+      * `:data` - all fields of the highlighted data point are used
+      * `true` - same as `:encoding`
+      * `false`, `nil` - no tooltip is used
+      """
+    ]
+  ]
 
   histogram_opts = [
     fill_opacity: [
@@ -180,8 +193,33 @@ defmodule Tucan do
   defp maybe_x_offset(vl, _field, true), do: vl
   defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
 
+  global_opts = [
+    width: [
+      type: :integer,
+      doc: "Width of the image"
+    ],
+    height: [
+      type: :integer,
+      doc: "Height of the image"
+    ],
+    title: [
+      type: :string,
+      doc: "The title of the graph"
+    ],
+    extra: [
+      type: :keyword_list,
+      doc: "You can pass here any option supported by VegaLite"
+    ]
+  ]
+
+  @scatter_schema NimbleOptions.new!(mark_general_properties ++ global_opts)
+
   @doc """
   A scatter plot.
+
+  ## Options
+
+  #{NimbleOptions.docs(@scatter_schema)}
 
   ## Examples
 
@@ -230,7 +268,7 @@ defmodule Tucan do
   areas of the points:
 
   ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400, tooltip: :data)
   |> Tucan.color_by("size", type: :quantitative)
   |> Tucan.size_by("size", type: :quantitative)
   ```
@@ -256,15 +294,14 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "time")
   |> Tucan.facet_by(:row, "sex")
   ```
-
   """
   def scatter(plotdata, x, y, opts \\ []) do
     # TODO : define schema
-    # _opts = NimbleOptions.validate!(opts, [])
+    opts = NimbleOptions.validate!(opts, @scatter_schema)
 
     plotdata
     |> new(opts)
-    |> Vl.mark(:point, opts)
+    |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
     |> Vl.encode_field(:x, x, type: :quantitative)
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
@@ -312,5 +349,89 @@ defmodule Tucan do
 
   def facet_by(vl, :column, field, opts) do
     Vl.encode_field(vl, :column, field, opts)
+  end
+
+  ## Utility functions
+
+  def set_width(vl, width) when is_struct(vl, VegaLite) do
+    update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
+  end
+
+  def set_height(vl, height) when is_struct(vl, VegaLite) do
+    update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
+  end
+
+  def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
+    update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
+  end
+
+  # TODO: move into a Tucan.Axes namespace
+  def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
+    merge_encoding_options!(vl, :x, title: title)
+  end
+
+  def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
+    merge_encoding_options!(vl, :y, title: title)
+  end
+
+  def merge_encoding_options!(vl, encoding, opts) do
+    encoding = to_vl_key(encoding)
+    validate_encoding!(vl, encoding)
+
+    spec =
+      update_in(vl.spec, ["encoding", encoding], fn encoding_opts ->
+        Map.merge(encoding_opts, opts_to_vl_props(opts))
+      end)
+
+    update_vl_spec(vl, spec)
+  end
+
+  defp update_vl_spec(vl, spec), do: %VegaLite{vl | spec: spec}
+
+  defp validate_encoding!(vl, encoding) do
+    encoding_opts = get_in(vl.spec, ["encoding", encoding])
+
+    if is_nil(encoding_opts) do
+      raise ArgumentError, "encoding #{inspect(encoding)} not found in the spec"
+    end
+  end
+
+  # these are copied verbatim from VegaLite
+  defp opts_to_vl_props(opts) do
+    opts |> Map.new() |> to_vl()
+  end
+
+  defp to_vl(value) when value in [true, false, nil], do: value
+
+  defp to_vl(atom) when is_atom(atom), do: to_vl_key(atom)
+
+  defp to_vl(%_{} = struct), do: struct
+
+  defp to_vl(map) when is_map(map) do
+    Map.new(map, fn {key, value} ->
+      {to_vl(key), to_vl(value)}
+    end)
+  end
+
+  defp to_vl([{key, _} | _] = keyword) when is_atom(key) do
+    Map.new(keyword, fn {key, value} ->
+      {to_vl(key), to_vl(value)}
+    end)
+  end
+
+  defp to_vl(list) when is_list(list) do
+    Enum.map(list, &to_vl/1)
+  end
+
+  defp to_vl(value), do: value
+  defp to_vl_key(key) when is_binary(key), do: key
+
+  defp to_vl_key(key) when is_atom(key) do
+    key |> to_string() |> snake_to_camel()
+  end
+
+  defp snake_to_camel(string) do
+    [part | parts] = String.split(string, "_")
+    Enum.join([String.downcase(part, :ascii) | Enum.map(parts, &String.capitalize(&1, :ascii))])
   end
 end
