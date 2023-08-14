@@ -86,6 +86,8 @@ defmodule Tucan do
   @doc """
   Plots a histogram.
 
+  See also `density/3`
+
   ## Options
 
   #{NimbleOptions.docs(@histogram_schema)}
@@ -105,6 +107,112 @@ defmodule Tucan do
     |> Vl.mark(:bar, fill_opacity: opts[:fill_opacity], color: nil)
     |> Vl.encode_field(:x, field, bin: [step: 0.5])
     |> Vl.encode_field(:y, field, aggregate: "count")
+  end
+
+  @density_opts Tucan.Options.options([:global, :general_mark, :density_transform], [
+                  :color_by,
+                  :fill_opacity
+                ])
+  @density_schema Tucan.Options.schema!(@density_opts)
+
+  @doc """
+  Plot the distribution of a numeric variable.
+
+  Density plots allow you to visualize the distribution of a numeric variable for one
+  or several groups. If `:color_by` is set then the given field will be used for both
+  the coloring of the various groups as well in the density estimation.
+
+  > ### Avoid calling `color_by/3` with a density plot {: .warning}
+  >
+  > Since the grouping variable must also be used for properly calculating the density
+  > transformation you **should avoid calling the `color_by/3` grouping function** after
+  > a `density/3` call. Instead use the `:color_by` option, which will ensure that the
+  > proper settings are applied to the underlying transformation.
+  >
+  > Calling `color_by/3` would produce this graph:
+  >
+  > ```vega-lite
+  > Tucan.density(:penguins, "Body Mass (g)")
+  > |> Tucan.color_by("Species")
+  > ```
+  >
+  > In the above case the density function has been calculated on the complete dataset
+  > and you cannot color by the `Species`. Instead you should use the `:color_by`
+  > option which would calculate the density function per group:
+  >
+  > ```vega-lite
+  > Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
+  > ```
+  >
+  > Alternatively you should use the `:groupby` option in order to group the density
+  > tranform by the `Species` field and then apply the `color_by/3` function:
+  >
+  > ```vega-lite
+  > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
+  > |> Tucan.color_by("Species")
+  > ```
+
+  See also `histogram/3`.
+
+  ## Options
+
+  #{NimbleOptions.docs(@density_schema)}
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)")
+  ```
+
+  It is a common use case to compare the density of several groups in a dataset. Several
+  options exist to do so. You can plot all items on the same chart, using transparency and
+  annotation to make the comparison possible.
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species")
+  ```
+
+  You can also combine it with `facet_by/4` in order to draw a different plot for each value
+  of the grouping variable. Notice that we need to set the `:groupby` variable in order
+  to correctly calculate the density plot per field's value.
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
+  |> Tucan.color_by("Species")
+  |> Tucan.facet_by(:column, "Species")
+  ```
+
+  You can plot a cumulative density distribution by setting the `:cumulative` option to `true`:
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)", cumulative: true)
+  ```
+  """
+  @doc section: :plots
+  def density(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @density_schema)
+
+    transform_opts = Keyword.take(opts, Tucan.Options.section_options(:density_transform))
+
+    transform_opts =
+      [density: field]
+      |> Keyword.merge(transform_opts)
+      |> maybe_put(:groupby, [opts[:color_by]], fn -> opts[:color_by] != nil end)
+
+    plotdata
+    |> new(opts)
+    |> Vl.transform(transform_opts)
+    |> Vl.mark(:area, fill_opacity: opts[:fill_opacity])
+    |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+    |> Vl.encode_field(:y, "density", type: :quantitative)
+    |> maybe_color_by(opts[:color_by])
+  end
+
+  defp maybe_put(opts, key, value, condition_fn) do
+    case condition_fn.() do
+      true -> Keyword.put(opts, key, value)
+      false -> opts
+    end
   end
 
   @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by])
