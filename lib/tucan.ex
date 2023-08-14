@@ -3,6 +3,7 @@ defmodule Tucan do
   Documentation for `Tucan`.
   """
   alias VegaLite, as: Vl
+  alias Tucan.VegaLiteUtils
 
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
@@ -494,72 +495,11 @@ defmodule Tucan do
   # TODO: move into a Tucan.Axes namespace
   @doc section: :utilities
   def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    merge_encoding_options!(vl, :x, title: title)
+    VegaLiteUtils.put_encoding_options!(vl, :x, title: title)
   end
 
   @doc section: :utilities
   def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    merge_encoding_options!(vl, :y, title: title)
-  end
-
-  def merge_encoding_options!(vl, encoding, opts) do
-    encoding = to_vl_key(encoding)
-    validate_encoding!(vl, encoding)
-
-    spec =
-      update_in(vl.spec, ["encoding", encoding], fn encoding_opts ->
-        Map.merge(encoding_opts, opts_to_vl_props(opts))
-      end)
-
-    update_vl_spec(vl, spec)
-  end
-
-  defp update_vl_spec(vl, spec), do: %VegaLite{vl | spec: spec}
-
-  defp validate_encoding!(vl, encoding) do
-    encoding_opts = get_in(vl.spec, ["encoding", encoding])
-
-    if is_nil(encoding_opts) do
-      raise ArgumentError, "encoding #{inspect(encoding)} not found in the spec"
-    end
-  end
-
-  # these are copied verbatim from VegaLite
-  defp opts_to_vl_props(opts) do
-    opts |> Map.new() |> to_vl()
-  end
-
-  defp to_vl(value) when value in [true, false, nil], do: value
-
-  defp to_vl(atom) when is_atom(atom), do: to_vl_key(atom)
-
-  defp to_vl(%_{} = struct), do: struct
-
-  defp to_vl(map) when is_map(map) do
-    Map.new(map, fn {key, value} ->
-      {to_vl(key), to_vl(value)}
-    end)
-  end
-
-  defp to_vl([{key, _} | _] = keyword) when is_atom(key) do
-    Map.new(keyword, fn {key, value} ->
-      {to_vl(key), to_vl(value)}
-    end)
-  end
-
-  defp to_vl(list) when is_list(list) do
-    Enum.map(list, &to_vl/1)
-  end
-
-  defp to_vl(value), do: value
-  defp to_vl_key(key) when is_binary(key), do: key
-
-  defp to_vl_key(key) when is_atom(key) do
-    key |> to_string() |> snake_to_camel()
-  end
-
-  defp snake_to_camel(string) do
-    [part | parts] = String.split(string, "_")
-    Enum.join([String.downcase(part, :ascii) | Enum.map(parts, &String.capitalize(&1, :ascii))])
+    VegaLiteUtils.put_encoding_options!(vl, :y, title: title)
   end
 end
