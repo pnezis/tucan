@@ -256,8 +256,50 @@ defmodule Tucan do
     plotdata
     |> new(opts)
     |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
-    |> Vl.encode_field(:x, x, type: :quantitative)
-    |> Vl.encode_field(:y, y, type: :quantitative)
+    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
+    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
+  end
+
+  @doc """
+  A bubble plot is a scatter plot with a third parameter defining the size of the dots required
+  by default.
+
+  All `x`, `y` and `size` must be quantitative fields of the dataset.
+
+  See also `scatter/4`.
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.bubble(:gapminder, "income", "health", "population", width: 400)
+  |> Tucan.set_x_title("Gdp per Capita")
+  |> Tucan.set_y_title("Life expectancy")
+  ```
+
+  You could use a fourth variable to color the graph and set `tooltip` to `:data` in
+  order to make it interactive:
+
+  ```vega-lite
+  Tucan.bubble(:gapminder, "income", "health", "population", width: 400, tooltip: :data)
+  |> Tucan.color_by("region")
+  |> Tucan.set_x_title("Gdp per Capita")
+  |> Tucan.set_y_title("Life expectancy")
+  ```
+  """
+  @doc section: :plots
+  @spec bubble(
+          plotdata :: plotdata(),
+          x :: field(),
+          y :: field(),
+          size :: field(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def bubble(plotdata, x, y, size, opts \\ []) do
+    # TODO: validate only bubble options here
+    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    scatter(plotdata, x, y, opts)
+    |> size_by(size, type: :quantitative)
   end
 
   @stripplot_opts Tucan.Options.options([:global, :general_mark])

@@ -113,10 +113,20 @@ defmodule Tucan.Options do
   @doc false
   def tooltip(value) do
     cond do
-      is_boolean(value) -> {:ok, value}
-      value == :encoding -> {:ok, true}
-      value == :data -> {:ok, [content: "data"]}
-      true -> "expected :tooltip to be boolean, :encoding or :data, got: #{inspect(value)}"
+      is_boolean(value) ->
+        {:ok, value}
+
+      value == :encoding ->
+        {:ok, true}
+
+      value == :data ->
+        {:ok, [content: :data]}
+
+      true ->
+        {
+          :error,
+          "expected :tooltip to be boolean, :encoding or :data, got: #{inspect(value)}"
+        }
     end
   end
 end

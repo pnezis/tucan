@@ -10,7 +10,7 @@
   - [ ] scatter
   - [ ] line
   - [ ] histogram
-  - [ ] bubble
+  - [x] bubble
   - [ ] barchart
   - [ ] heatmap
 - [ ] low level api for setting fields options
