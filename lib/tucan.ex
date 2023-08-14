@@ -58,6 +58,7 @@ defmodule Tucan do
   |> Tucan.stroke_dash_by("month", sort: months)
   ```
   """
+  @doc section: :plots
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
   def lineplot(plotdata, x, y, opts \\ []) do
@@ -110,6 +111,7 @@ defmodule Tucan do
   Tucan.histogram(:iris, "petal_width")
   ```
   """
+  @doc section: :plots
   def histogram(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
@@ -174,6 +176,7 @@ defmodule Tucan do
   > Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
   > ```
   """
+  @doc section: :plots
   def countplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @countplot_schema)
 
@@ -295,6 +298,7 @@ defmodule Tucan do
   |> Tucan.facet_by(:row, "sex")
   ```
   """
+  @doc section: :plots
   def scatter(plotdata, x, y, opts \\ []) do
     # TODO : define schema
     opts = NimbleOptions.validate!(opts, @scatter_schema)
@@ -311,6 +315,7 @@ defmodule Tucan do
   Tucan.stripplot(:weather, "precipitation")
   ```
   """
+  @doc section: :plots
   def stripplot(plotdata, x, opts \\ []) do
     # TODO : define schema
     _opts = NimbleOptions.validate!(opts, [])
@@ -321,26 +326,32 @@ defmodule Tucan do
     |> Vl.encode_field(:x, x, type: :quantitative)
   end
 
+  @doc section: :grouping
   def color_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :color, field, opts)
   end
 
+  @doc section: :grouping
   def shape_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :shape, field, opts)
   end
 
+  @doc section: :grouping
   def stroke_dash_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :stroke_dash, field, opts)
   end
 
+  @doc section: :grouping
   def fill_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :fill, field, opts)
   end
 
+  @doc section: :grouping
   def size_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :size, field, opts)
   end
 
+  @doc section: :grouping
   def facet_by(vl, faceting_mode, field, opts \\ [])
 
   def facet_by(vl, :row, field, opts) do
@@ -353,23 +364,28 @@ defmodule Tucan do
 
   ## Utility functions
 
+  @doc section: :utilities
   def set_width(vl, width) when is_struct(vl, VegaLite) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
   end
 
+  @doc section: :utilities
   def set_height(vl, height) when is_struct(vl, VegaLite) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
   end
 
+  @doc section: :utilities
   def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
   end
 
   # TODO: move into a Tucan.Axes namespace
+  @doc section: :utilities
   def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     merge_encoding_options!(vl, :x, title: title)
   end
 
+  @doc section: :utilities
   def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     merge_encoding_options!(vl, :y, title: title)
   end

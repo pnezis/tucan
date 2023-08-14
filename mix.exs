@@ -31,6 +31,11 @@ defmodule Tucan.MixProject do
 
   defp docs do
     [
+      groups_for_docs: [
+        Plots: &(&1[:section] == :plots),
+        Grouping: &(&1[:section] == :grouping),
+        Utilities: &(&1[:section] == :utilities)
+      ],
       markdown_processor:
         {FancyFences,
          [
