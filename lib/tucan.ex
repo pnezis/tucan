@@ -28,8 +28,17 @@ defmodule Tucan do
     |> Vl.data_from_values(data)
   end
 
+  ## Plots
+
+  @lineplot_opts Tucan.Options.options([:global, :general_mark])
+  @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
+
   @doc """
   Draw a line plot between `x` and `y`
+
+  ## Options
+
+  #{NimbleOptions.docs(@lineplot_schema)}
 
   ## Examples
 
@@ -62,7 +71,7 @@ defmodule Tucan do
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
   def lineplot(plotdata, x, y, opts \\ []) do
-    _opts = NimbleOptions.validate!(opts, [])
+    _opts = NimbleOptions.validate!(opts, @lineplot_schema)
 
     plotdata
     |> new()
@@ -71,32 +80,8 @@ defmodule Tucan do
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
-  mark_general_properties = [
-    tooltip: [
-      type: {:custom, Tucan.Options, :tooltip, []},
-      doc: """
-      The tooltip text string to show upon mouse hover or an object defining which fields
-      should the tooltip be derived from. Can be one of the following:
-
-      * `:encoding` - all fields from encoding are used
-      * `:data` - all fields of the highlighted data point are used
-      * `true` - same as `:encoding`
-      * `false`, `nil` - no tooltip is used
-      """
-    ]
-  ]
-
-  histogram_opts = [
-    fill_opacity: [
-      type: :float,
-      default: 0.5,
-      doc: """
-      The fill opacity of the histogram bars.
-      """
-    ]
-  ]
-
-  @histogram_schema NimbleOptions.new!(histogram_opts)
+  @histogram_opts Tucan.Options.options([:global, :general_mark], [:fill_opacity])
+  @histogram_schema Tucan.Options.schema!(@histogram_opts)
 
   @doc """
   Plots a histogram.
@@ -122,24 +107,8 @@ defmodule Tucan do
     |> Vl.encode_field(:y, field, aggregate: "count")
   end
 
-  countplot_opts = [
-    stacked: [
-      type: :boolean,
-      default: true,
-      doc: """
-      Whether the bars will be stacked or not. Applied only if a grouping
-      has been defined.
-      """
-    ],
-    color_by: [
-      type: :string,
-      doc: """
-      If set a column that will be used for coloring the data.
-      """
-    ]
-  ]
-
-  @countplot_schema NimbleOptions.new!(countplot_opts)
+  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by])
+  @countplot_schema Tucan.Options.schema!(@countplot_opts)
 
   @doc """
   Plot the counts of observations for a categorical variable.
@@ -196,26 +165,8 @@ defmodule Tucan do
   defp maybe_x_offset(vl, _field, true), do: vl
   defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
 
-  global_opts = [
-    width: [
-      type: :integer,
-      doc: "Width of the image"
-    ],
-    height: [
-      type: :integer,
-      doc: "Height of the image"
-    ],
-    title: [
-      type: :string,
-      doc: "The title of the graph"
-    ],
-    extra: [
-      type: :keyword_list,
-      doc: "You can pass here any option supported by VegaLite"
-    ]
-  ]
-
-  @scatter_schema NimbleOptions.new!(mark_general_properties ++ global_opts)
+  @scatter_opts Tucan.Options.options([:global, :general_mark])
+  @scatter_schema Tucan.Options.schema!(@scatter_opts)
 
   @doc """
   A scatter plot.
@@ -300,7 +251,6 @@ defmodule Tucan do
   """
   @doc section: :plots
   def scatter(plotdata, x, y, opts \\ []) do
-    # TODO : define schema
     opts = NimbleOptions.validate!(opts, @scatter_schema)
 
     plotdata
@@ -310,21 +260,33 @@ defmodule Tucan do
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
+  @stripplot_opts Tucan.Options.options([:global, :general_mark])
+  @stripplot_schema Tucan.Options.schema!(@stripplot_opts)
+
   @doc """
+  Plots a strip plot.
+
+  ## Options
+
+  #{NimbleOptions.docs(@stripplot_schema)}
+
+  ## Examples
+
   ```vega-lite
   Tucan.stripplot(:weather, "precipitation")
   ```
   """
   @doc section: :plots
   def stripplot(plotdata, x, opts \\ []) do
-    # TODO : define schema
-    _opts = NimbleOptions.validate!(opts, [])
+    _opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
     plotdata
     |> new()
     |> Vl.mark(:tick)
     |> Vl.encode_field(:x, x, type: :quantitative)
   end
+
+  ## Grouping functions
 
   @doc section: :grouping
   def color_by(vl, field, opts \\ []) do
