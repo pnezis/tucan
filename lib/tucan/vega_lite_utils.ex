@@ -17,7 +17,7 @@ defmodule Tucan.VegaLiteUtils do
 
     spec =
       update_in(vl.spec, ["encoding", encoding], fn encoding_opts ->
-        Map.merge(encoding_opts, opts_to_vl_props(opts))
+        deep_merge(encoding_opts, opts_to_vl_props(opts))
       end)
 
     update_vl_spec(vl, spec)
@@ -71,4 +71,16 @@ defmodule Tucan.VegaLiteUtils do
     [part | parts] = String.split(string, "_")
     Enum.join([String.downcase(part, :ascii) | Enum.map(parts, &String.capitalize(&1, :ascii))])
   end
+
+  defp deep_merge(left, right) do
+    Map.merge(left, right, fn _key, value_left, value_right ->
+      do_deep_merge(value_left, value_right)
+    end)
+  end
+
+  defp do_deep_merge(%{} = left, %{} = right),
+    do: deep_merge(left, right)
+
+  # We must keep the right part in every other case
+  defp do_deep_merge(_left, right), do: right
 end

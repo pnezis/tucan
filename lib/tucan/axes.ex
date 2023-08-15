@@ -11,7 +11,7 @@ defmodule Tucan.Axes do
   """
   @spec set_x_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
   def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    VegaLiteUtils.put_encoding_options!(vl, :x, title: title)
+    put_axis_options(vl, :x, title: title)
   end
 
   @doc """
@@ -21,6 +21,10 @@ defmodule Tucan.Axes do
   """
   @spec set_y_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
   def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    VegaLiteUtils.put_encoding_options!(vl, :y, title: title)
+    put_axis_options(vl, :y, title: title)
+  end
+
+  defp put_axis_options(vl, encoding, options) do
+    VegaLiteUtils.put_encoding_options!(vl, encoding, axis: options)
   end
 end
