@@ -3,7 +3,6 @@ defmodule Tucan do
   Documentation for `Tucan`.
   """
   alias VegaLite, as: Vl
-  alias Tucan.VegaLiteUtils
 
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
@@ -381,8 +380,8 @@ defmodule Tucan do
 
   ```vega-lite
   Tucan.bubble(:gapminder, "income", "health", "population", width: 400)
-  |> Tucan.set_x_title("Gdp per Capita")
-  |> Tucan.set_y_title("Life expectancy")
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
   ```
 
   You could use a fourth variable to color the graph and set `tooltip` to `:data` in
@@ -391,8 +390,8 @@ defmodule Tucan do
   ```vega-lite
   Tucan.bubble(:gapminder, "income", "health", "population", width: 400, tooltip: :data)
   |> Tucan.color_by("region")
-  |> Tucan.set_x_title("Gdp per Capita")
-  |> Tucan.set_y_title("Life expectancy")
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
   ```
   """
   @doc section: :plots
@@ -490,16 +489,5 @@ defmodule Tucan do
   @doc section: :utilities
   def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
-  end
-
-  # TODO: move into a Tucan.Axes namespace
-  @doc section: :utilities
-  def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    VegaLiteUtils.put_encoding_options!(vl, :x, title: title)
-  end
-
-  @doc section: :utilities
-  def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    VegaLiteUtils.put_encoding_options!(vl, :y, title: title)
   end
 end
