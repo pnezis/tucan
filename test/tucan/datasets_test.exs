@@ -7,6 +7,7 @@ defmodule Tucan.DatasetsTest do
     :flights,
     :gapminder,
     :iris,
+    :movies,
     :penguins,
     :stocks,
     :tips,

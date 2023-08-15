@@ -14,6 +14,7 @@ defmodule Tucan.Datasets do
           | :stocks
           | :flights
           | :tips
+          | :movies
 
   @datasets [
     iris: [
@@ -35,6 +36,9 @@ defmodule Tucan.Datasets do
     ],
     stocks: [
       url: "https://vega.github.io/editor/data/stocks.csv"
+    ],
+    movies: [
+      url: "https://vega.github.io/editor/data/movies.json"
     ],
     titanic: [
       url: "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
