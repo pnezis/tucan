@@ -65,7 +65,8 @@ defmodule Tucan.Options do
       The bandwidth (standard deviation) of the Gaussian kernel. If unspecified or set to
       zero, the bandwidth value is automatically estimated from the input data using
       Scott’s rule.
-      """
+      """,
+      section: :density_transform
     ],
     extent: [
       type: {:custom, Tucan.Options, :extent, []},
@@ -80,7 +81,8 @@ defmodule Tucan.Options do
       doc: """
       The minimum number of samples to take along the extent domain for plotting the density.
       """,
-      default: 25
+      default: 25,
+      section: :density_transform
     ],
     maxsteps: [
       type: :integer,
