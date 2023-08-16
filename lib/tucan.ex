@@ -422,8 +422,12 @@ defmodule Tucan do
       type: {:in, [:tick, :point, :jitter]},
       doc: """
       The style of the plot. Can be one of the following:
+        * `:tick` - use ticks for each data point
+        * `:point` - use points for each data point
+        * `:jitter` - use points but also apply some jittering across the other
+        axis
 
-      TODO
+      Use `:jitter` in case of many data points in order to avoid overlaps.
       """,
       default: :tick
     ]
@@ -433,46 +437,104 @@ defmodule Tucan do
   @stripplot_schema Tucan.Options.schema!(@stripplot_opts, stripplot_schema)
 
   @doc """
-  Plots a strip plot.
+  Draws a strip plot (categorical scatterplot).
+
+  A strip plot is a single-axis scatter plot used to visualize the distribution of
+  a numerical field. The values are plotted as dots or ticks along one axis, so
+  the dots with the same value may overlap.
+
+  You can use the `:jitter` mode for a better view of overlapping points. In this
+  case points are randomnly shifted along with other axis, which has no meaning in
+  itself data-wise.
+
+  Typically several strip plots are placed side by side to compare the distribution
+  of a numerical value among several categories.
 
   ## Options
 
   #{NimbleOptions.docs(@stripplot_schema)}
 
+  > ### Internal `VegaLite` representation {: .info}
+  > 
+  > If style is set to `:tick` the following `VegaLite` represenation is generated:
+  >
+  > ```elixir
+  > Vl.new()
+  > |> Vl.mark(:tick)
+  > |> Vl.encode_field(:x, field, type: :quantitative)
+  > |> Vl.encode_field(:y, opts[:group], type: :nominal)
+  > ```
+  >
+  > If style is set to `:jitter` then a transform is added to generate Gaussian jitter
+  > using the Box-Muller transform, and the `y_offset` is also encoded based on this:
+  >
+  > ```elixir
+  > Vl.new()
+  > |> Vl.mark(:point)
+  > |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+  > |> Vl.encode_field(:x, field, type: :quantitative)
+  > |> Vl.encode_field(:y, opts[:group], type: :nominal)
+  > |> Vl.encode_field(:y_offset, "jitter", type: :quantitative)
+  > ```
+  > 
+
   ## Examples
 
-  By default a strip plot will be one dimensional.
+  Assigning a single numeric variable shows the univariate distribution. The default
+  style is the `:tick`:
 
   ```vega-lite
-  Tucan.stripplot(:cars, "Horsepower")
+  Tucan.stripplot(:tips, "total_bill")
+  ```
+
+  For very dense distribution it makes more sense to use the `:jitter` style in order
+  to reduce overlapping points:
+
+  ```vega-lite
+  Tucan.stripplot(:tips, "total_bill", style: :jitter, height: 30, width: 300)
   ```
 
   You can set the `:group` option in order to add a second dimension. Notice that
   the field must be categorical.
 
+
   ```vega-lite
-  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders")
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
   ```
 
-  The plot would be more clear if you also colored the ticks with the same field:
+  The plot would be more clear if you also colored the points with the same field:
 
   ```vega-lite
-  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders")
-  |> Tucan.color_by("Cylinders")
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  |> Tucan.color_by("day")
   ```
 
-  You can change the style from ticks to points by setting the style option:
+  Or you can color by a distinct variable to show a multi-dimensional relationship:
 
   ```vega-lite
-  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders", style: :point)
-  |> Tucan.color_by("Cylinders")
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  |> Tucan.color_by("sex")
   ```
 
-  If the points are overlapping you can add some jittering:
+  or you can color by a numerical variable:
 
   ```vega-lite
-  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders", style: :jitter, height: 20)
-  |> Tucan.color_by("Cylinders")
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  |> Tucan.color_by("size", type: :ordinal)
+  ```
+
+  You could draw the same with points but without jittering:
+
+  ```vega-lite
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :point)
+  |> Tucan.color_by("sex")
+  ```
+
+  or with ticks which is the default one:
+
+  ```vega-lite
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :tick)
+  |> Tucan.color_by("sex")
   ```
   """
   @doc section: :plots
@@ -487,7 +549,7 @@ defmodule Tucan do
 
     plot =
       plotdata
-      |> new()
+      |> new(opts)
       |> Vl.mark(mark, size: 16)
       |> Vl.encode_field(:x, x, type: :quantitative)
       |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], type: :nominal)
@@ -495,8 +557,8 @@ defmodule Tucan do
     case opts[:style] do
       :jitter ->
         plot
-        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "random")
-        |> Vl.encode_field(:y_offset, "random", type: :quantitative)
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
 
       _other ->
         plot
