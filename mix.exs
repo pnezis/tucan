@@ -33,6 +33,7 @@ defmodule Tucan.MixProject do
     [
       groups_for_docs: [
         Plots: &(&1[:section] == :plots),
+        "Composite Plots": &(&1[:section] == :composite),
         Grouping: &(&1[:section] == :grouping),
         Utilities: &(&1[:section] == :utilities)
       ],

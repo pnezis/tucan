@@ -598,12 +598,88 @@ defmodule Tucan do
     end
   end
 
+  ## Composite plots
+
+  @doc """
+  Plot pairwise relationships in a dataset.
+
+  This function expects an array of fields to be provided. A grid will be created
+  where each numeric variable in `fields` will be shared acrosss the y-axes across
+  a single row and the x-axes across a single column.
+
+  > #### Numerical field types {: .warning}
+  >
+  > Notice that currently `pairplot/3` works only with numerical (`:quantitative`)
+  > variables. If you need to create a pair plot containing other variable types
+  > you need to manually build the grid using the `VegaLite` concatenation operations.
+
+  ## Examples
+
+  By default a scatter plot will be drawn for all pairwise plots:
+
+  ```vega-lite
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130)
+  ```
+  """
+  @doc section: :composite
+  def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
+    children =
+      for {row_field, row_index} <- Enum.with_index(fields),
+          {col_field, col_index} <- Enum.with_index(fields) do
+        pairplot_child_spec({row_field, row_index}, {col_field, col_index}, length(fields), opts)
+      end
+
+    plotdata
+    |> new(title: opts[:title])
+    |> Vl.concat(children, :wrappable)
+    |> put_spec_field("columns", length(fields))
+
+    # This is a bit hacky but it works for aligning the plots in case
+    # of both integer and float axis values
+    # |> Vl.config(axis_y: [min_extent: 30])
+  end
+
+  defp put_spec_field(vl, name, value) do
+    update_in(vl.spec, fn spec -> Map.put(spec, name, value) end)
+  end
+
+  defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
+    x_axis_title = fn vl, row_index ->
+      cond do
+        row_index == fields_count - 1 ->
+          vl
+
+        true ->
+          Tucan.Axes.put_axis_options(vl, :x, title: nil)
+      end
+    end
+
+    y_axis_title = fn vl, col_index ->
+      cond do
+        col_index == 0 ->
+          vl
+
+        true ->
+          Tucan.Axes.put_axis_options(vl, :y, title: nil)
+      end
+    end
+
+    Vl.new(width: opts[:width], height: opts[:height])
+    |> Tucan.scatter(col_field, row_field)
+    |> x_axis_title.(row_index)
+    |> y_axis_title.(col_index)
+  end
+
   ## Grouping functions
 
   @doc section: :grouping
   def color_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :color, field, opts)
   end
+
+  # defp encode_recursively(vl, )
 
   @doc section: :grouping
   def shape_by(vl, field, opts \\ []) do
