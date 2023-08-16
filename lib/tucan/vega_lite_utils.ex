@@ -11,16 +11,54 @@ defmodule Tucan.VegaLiteUtils do
   """
   @spec put_encoding_options!(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword()) ::
           VegaLite.t()
-  def put_encoding_options!(vl, encoding, opts) do
-    encoding = to_vl_key(encoding)
-    validate_encoding!(vl, encoding)
+  def put_encoding_options!(vl, channel, opts) do
+    channel = to_vl_key(channel)
+    validate_encoding!(vl, channel)
 
     spec =
-      update_in(vl.spec, ["encoding", encoding], fn encoding_opts ->
+      update_in(vl.spec, ["encoding", channel], fn encoding_opts ->
         deep_merge(encoding_opts, opts_to_vl_props(opts))
       end)
 
     update_vl_spec(vl, spec)
+  end
+
+  @doc """
+  Gets the configured encoding options for the given `channel` or `nil` if not set.
+  """
+  @spec encoding_options(vl :: VegaLite.t(), channel :: atom()) :: map() | nil
+  def encoding_options(vl, channel) do
+    channel = to_vl_key(channel)
+    get_in(vl.spec, ["encoding", channel])
+  end
+
+  def encode_raw(vl, channel, opts) do
+    channel = to_vl_key(channel)
+
+    update_in(vl.spec, fn spec ->
+      encoding =
+        spec
+        |> Map.get("encoding", %{})
+        |> Map.put(channel, opts)
+
+      Map.put(spec, "encoding", encoding)
+    end)
+  end
+
+  def drop_encoding_channels(vl, channel) when is_binary(channel),
+    do: drop_encoding_channels(vl, [channel])
+
+  def drop_encoding_channels(vl, channels) when is_list(channels) do
+    channels = Enum.map(channels, &to_vl_key/1)
+
+    update_in(vl.spec, fn spec ->
+      encoding =
+        spec
+        |> Map.get("encoding", %{})
+        |> Map.drop(channels)
+
+      Map.put(spec, "encoding", encoding)
+    end)
   end
 
   defp update_vl_spec(vl, spec), do: %VegaLite{vl | spec: spec}

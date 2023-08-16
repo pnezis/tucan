@@ -2,6 +2,7 @@ defmodule Tucan do
   @moduledoc """
   Documentation for `Tucan`.
   """
+  alias Tucan.VegaLiteUtils
   alias VegaLite, as: Vl
 
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
@@ -536,6 +537,14 @@ defmodule Tucan do
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :tick)
   |> Tucan.color_by("sex")
   ```
+
+  You can use `flip_axes/1` to change the orientation:
+
+  ```vega-lite
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  |> Tucan.color_by("sex")
+  |> Tucan.flip_axes()
+  ```
   """
   @doc section: :plots
   def stripplot(plotdata, x, opts \\ []) do
@@ -572,6 +581,20 @@ defmodule Tucan do
 
       true ->
         Vl.encode_field(vl, channel, field, opts)
+    end
+  end
+
+  defp maybe_encode(vl, channel, condition_fn, opts) do
+    case condition_fn.() do
+      false ->
+        vl
+
+      true ->
+        if is_list(opts) do
+          Vl.encode(vl, channel, opts)
+        else
+          VegaLiteUtils.encode_raw(vl, channel, opts)
+        end
     end
   end
 
@@ -628,5 +651,27 @@ defmodule Tucan do
   @doc section: :utilities
   def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
+  end
+
+  @doc """
+  Flips the axes of the provided chart.
+
+  This works for both one dimensional and two dimensional charts. All positional channels
+  that are defined will be flipped.
+  """
+  @doc section: :utilities
+  @spec flip_axes(vl :: VegaLite.t()) :: VegaLite.t()
+  def flip_axes(vl) when is_struct(vl, VegaLite) do
+    x = VegaLiteUtils.encoding_options(vl, :x)
+    y = VegaLiteUtils.encoding_options(vl, :y)
+    x_offset = VegaLiteUtils.encoding_options(vl, :x_offset)
+    y_offset = VegaLiteUtils.encoding_options(vl, :y_offset)
+
+    vl
+    |> VegaLiteUtils.drop_encoding_channels([:x, :y, :x_offset, :y_offset])
+    |> maybe_encode(:x, fn -> !is_nil(y) end, y)
+    |> maybe_encode(:x_offset, fn -> !is_nil(y_offset) end, y_offset)
+    |> maybe_encode(:y, fn -> !is_nil(x) end, x)
+    |> maybe_encode(:y_offset, fn -> !is_nil(x_offset) end, x_offset)
   end
 end
