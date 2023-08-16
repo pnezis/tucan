@@ -622,6 +622,17 @@ defmodule Tucan do
 
   Tucan.pairplot(:iris, fields, width: 130, height: 130)
   ```
+
+  You can color the points by another field in to add some semantic mapping. Notice
+  that you need the `recursive` option to `true` for the grouping to be applied on all
+  internal subplots.
+
+  ```vega-lite
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130)
+  |> Tucan.color_by("species", recursive: true)
+  ```
   """
   @doc section: :composite
   def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
@@ -676,7 +687,15 @@ defmodule Tucan do
 
   @doc section: :grouping
   def color_by(vl, field, opts \\ []) do
-    Vl.encode_field(vl, :color, field, opts)
+    case opts[:recursive] do
+      true ->
+        apply_recursively(vl, fn spec ->
+          VegaLiteUtils.encode_field_raw(spec, :color, field, opts)
+        end)
+
+      _ ->
+        Vl.encode_field(vl, :color, field, opts)
+    end
   end
 
   # defp encode_recursively(vl, )
@@ -710,6 +729,33 @@ defmodule Tucan do
 
   def facet_by(vl, :column, field, opts) do
     Vl.encode_field(vl, :column, field, opts)
+  end
+
+  defp apply_recursively(%VegaLite{} = vl, fun) do
+    put_in(vl.spec, apply_recursively(vl.spec, fun))
+  end
+
+  defp apply_recursively(%{"vconcat" => vconcat} = spec, fun) do
+    vconcat = apply_recursively(vconcat, fun)
+    Map.put(spec, "vconcat", vconcat)
+  end
+
+  defp apply_recursively(%{"hconcat" => hconcat} = spec, fun) do
+    hconcat = apply_recursively(hconcat, fun)
+    Map.put(spec, "hconcat", hconcat)
+  end
+
+  defp apply_recursively(%{"concat" => concat} = spec, fun) do
+    concat = apply_recursively(concat, fun)
+    Map.put(spec, "concat", concat)
+  end
+
+  defp apply_recursively(spec, fun) when is_map(spec) do
+    fun.(spec)
+  end
+
+  defp apply_recursively(spec, fun) when is_list(spec) do
+    Enum.map(spec, fn item -> apply_recursively(item, fun) end)
   end
 
   ## Utility functions

@@ -32,17 +32,25 @@ defmodule Tucan.VegaLiteUtils do
     get_in(vl.spec, ["encoding", channel])
   end
 
-  def encode_raw(vl, channel, opts) do
+  def encode_field_raw(vl, channel, field, opts) do
+    opts = Keyword.put(opts, :field, field)
+    encode_raw(vl, channel, opts)
+  end
+
+  def encode_raw(%VegaLite{} = vl, channel, opts) do
+    update_in(vl.spec, fn spec -> encode_raw(spec, channel, opts) end)
+  end
+
+  def encode_raw(%{} = spec, channel, opts) do
     channel = to_vl_key(channel)
+    opts = to_vl(opts)
 
-    update_in(vl.spec, fn spec ->
-      encoding =
-        spec
-        |> Map.get("encoding", %{})
-        |> Map.put(channel, opts)
+    encoding =
+      spec
+      |> Map.get("encoding", %{})
+      |> Map.put(channel, opts)
 
-      Map.put(spec, "encoding", encoding)
-    end)
+    Map.put(spec, "encoding", encoding)
   end
 
   def drop_encoding_channels(vl, channel) when is_binary(channel),
