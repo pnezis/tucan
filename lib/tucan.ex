@@ -434,7 +434,7 @@ defmodule Tucan do
     ]
   ]
 
-  @stripplot_opts Tucan.Options.options([:global, :general_mark])
+  @stripplot_opts Tucan.Options.options([:global, :general_mark], [:orient])
   @stripplot_schema Tucan.Options.schema!(@stripplot_opts, stripplot_schema)
 
   @doc """
@@ -538,12 +538,11 @@ defmodule Tucan do
   |> Tucan.color_by("sex")
   ```
 
-  You can use `flip_axes/1` to change the orientation:
+  You can set the `:orient` flag to `:vertical` to change the orientation:
 
   ```vega-lite
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter, orient: :vertical)
   |> Tucan.color_by("sex")
-  |> Tucan.flip_axes()
   ```
   """
   @doc section: :plots
@@ -572,6 +571,7 @@ defmodule Tucan do
       _other ->
         plot
     end
+    |> maybe_flip_axes(opts[:orient])
   end
 
   defp maybe_encode_field(vl, channel, condition_fn, field, opts) do
@@ -658,6 +658,8 @@ defmodule Tucan do
 
   This works for both one dimensional and two dimensional charts. All positional channels
   that are defined will be flipped.
+
+  This is used internally by plots that support setting orientation.
   """
   @doc section: :utilities
   @spec flip_axes(vl :: VegaLite.t()) :: VegaLite.t()
@@ -674,4 +676,7 @@ defmodule Tucan do
     |> maybe_encode(:y, fn -> !is_nil(x) end, x)
     |> maybe_encode(:y_offset, fn -> !is_nil(x_offset) end, x_offset)
   end
+
+  defp maybe_flip_axes(vl, :horizontal), do: vl
+  defp maybe_flip_axes(vl, :vertical), do: flip_axes(vl)
 end

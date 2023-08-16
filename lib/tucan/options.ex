@@ -131,6 +131,13 @@ defmodule Tucan.Options do
       doc: """
       If set a column that will be used for coloring the data.
       """
+    ],
+    orient: [
+      type: {:in, [:horizontal, :vertical]},
+      doc: """
+      The plot's orientation, can be either `:horizontal` or `:vertical`.
+      """,
+      default: :horizontal
     ]
   ]
 
