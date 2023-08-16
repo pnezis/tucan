@@ -633,6 +633,50 @@ defmodule Tucan do
   Tucan.pairplot(:iris, fields, width: 130, height: 130)
   |> Tucan.color_by("species", recursive: true)
   ```
+
+  By specifying the `:diagonal` option you can change the default plot for the diagonal
+  elements to a histogram:
+
+  ```vega-lite
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram)
+  |> Tucan.color_by("species", recursive: true)
+  ```
+
+  Additionally you have the option to configure a `plot_fn` with which we can go crazy and
+  modify any part of the grid based on our needs. `plot_fn` should accept as input a `VegaLite`
+  struct and two tuples containing the row and column fields and indexes. In the following
+  example we draw differently the diagonal, the lower and the upper grid. Notice that we don't
+  call `color_by/3` since we color differently the plots based on their index positions.
+
+  ```vega-lite
+  Tucan.pairplot(:iris, ["petal_width", "petal_length", "sepal_width", "sepal_length"],
+    width: 150,
+    height: 150,
+    plot_fn: fn vl, {row_field, row_index}, {col_field, col_index} ->
+      cond do
+        # For the first two diagonal elements we plot a histogram, no 
+        row_index == col_index and row_index < 2 ->
+          Tucan.histogram(vl, row_field)
+
+        # For the other diagonal plots we plot a histogram colored_by the species
+        row_index == col_index ->
+          Tucan.histogram(vl, row_field)
+          |> Tucan.color_by("species")
+
+        # For the upper part of the diagram we apply a scatter plot
+        row_index < col_index ->
+          Tucan.scatter(vl, col_field, row_field)
+          |> Tucan.color_by("species")
+
+        # for anything else scatter plot without coloring
+        true ->
+          Tucan.scatter(vl, col_field, row_field)
+      end
+    end
+  )
+  ```
   """
   @doc section: :composite
   def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
@@ -652,15 +696,11 @@ defmodule Tucan do
     # |> Vl.config(axis_y: [min_extent: 30])
   end
 
-  defp put_spec_field(vl, name, value) do
-    update_in(vl.spec, fn spec -> Map.put(spec, name, value) end)
-  end
-
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
     x_axis_title = fn vl, row_index ->
       cond do
         row_index == fields_count - 1 ->
-          vl
+          Tucan.Axes.put_axis_options(vl, :x, title: col_field)
 
         true ->
           Tucan.Axes.put_axis_options(vl, :x, title: nil)
@@ -670,7 +710,7 @@ defmodule Tucan do
     y_axis_title = fn vl, col_index ->
       cond do
         col_index == 0 ->
-          vl
+          Tucan.Axes.put_axis_options(vl, :y, title: row_field)
 
         true ->
           Tucan.Axes.put_axis_options(vl, :y, title: nil)
@@ -678,9 +718,32 @@ defmodule Tucan do
     end
 
     Vl.new(width: opts[:width], height: opts[:height])
-    |> Tucan.scatter(col_field, row_field)
+    |> pairplot_child_plot(row_field, row_index, col_field, col_index, opts)
     |> x_axis_title.(row_index)
     |> y_axis_title.(col_index)
+  end
+
+  defp pairplot_child_plot(vl, row_field, row_index, col_field, col_index, opts) do
+    diagonal = opts[:diagonal] || :scatter
+    plot_fn = opts[:plot_fn]
+
+    cond do
+      plot_fn != nil ->
+        plot_fn.(vl, {row_field, row_index}, {col_field, col_index})
+
+      row_index == col_index and diagonal == :histogram ->
+        Tucan.histogram(vl, row_field)
+
+      row_index == col_index and diagonal == :density ->
+        Tucan.density(vl, row_field)
+
+      true ->
+        Tucan.scatter(vl, col_field, row_field)
+    end
+  end
+
+  defp put_spec_field(vl, name, value) do
+    update_in(vl.spec, fn spec -> Map.put(spec, name, value) end)
   end
 
   ## Grouping functions
