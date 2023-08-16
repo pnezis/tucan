@@ -410,8 +410,27 @@ defmodule Tucan do
     |> size_by(size, type: :quantitative)
   end
 
+  stripplot_schema = [
+    group: [
+      type: :string,
+      doc: """
+      A field to be used for grouping the strip plot. If not set the plot will
+      be one dimensional.
+      """
+    ],
+    style: [
+      type: {:in, [:tick, :point, :jitter]},
+      doc: """
+      The style of the plot. Can be one of the following:
+
+      TODO
+      """,
+      default: :tick
+    ]
+  ]
+
   @stripplot_opts Tucan.Options.options([:global, :general_mark])
-  @stripplot_schema Tucan.Options.schema!(@stripplot_opts)
+  @stripplot_schema Tucan.Options.schema!(@stripplot_opts, stripplot_schema)
 
   @doc """
   Plots a strip plot.
@@ -422,18 +441,76 @@ defmodule Tucan do
 
   ## Examples
 
+  By default a strip plot will be one dimensional.
+
   ```vega-lite
-  Tucan.stripplot(:weather, "precipitation")
+  Tucan.stripplot(:cars, "Horsepower")
+  ```
+
+  You can set the `:group` option in order to add a second dimension. Notice that
+  the field must be categorical.
+
+  ```vega-lite
+  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders")
+  ```
+
+  The plot would be more clear if you also colored the ticks with the same field:
+
+  ```vega-lite
+  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders")
+  |> Tucan.color_by("Cylinders")
+  ```
+
+  You can change the style from ticks to points by setting the style option:
+
+  ```vega-lite
+  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders", style: :point)
+  |> Tucan.color_by("Cylinders")
+  ```
+
+  If the points are overlapping you can add some jittering:
+
+  ```vega-lite
+  Tucan.stripplot(:cars, "Horsepower", group: "Cylinders", style: :jitter, height: 20)
+  |> Tucan.color_by("Cylinders")
   ```
   """
   @doc section: :plots
   def stripplot(plotdata, x, opts \\ []) do
-    _opts = NimbleOptions.validate!(opts, @stripplot_schema)
+    opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
-    plotdata
-    |> new()
-    |> Vl.mark(:tick)
-    |> Vl.encode_field(:x, x, type: :quantitative)
+    mark =
+      case opts[:style] do
+        :tick -> :tick
+        _other -> :point
+      end
+
+    plot =
+      plotdata
+      |> new()
+      |> Vl.mark(mark, size: 16)
+      |> Vl.encode_field(:x, x, type: :quantitative)
+      |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], type: :nominal)
+
+    case opts[:style] do
+      :jitter ->
+        plot
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "random")
+        |> Vl.encode_field(:y_offset, "random", type: :quantitative)
+
+      _other ->
+        plot
+    end
+  end
+
+  defp maybe_encode_field(vl, channel, condition_fn, field, opts) do
+    case condition_fn.() do
+      false ->
+        vl
+
+      true ->
+        Vl.encode_field(vl, channel, field, opts)
+    end
   end
 
   ## Grouping functions

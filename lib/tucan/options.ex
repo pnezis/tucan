@@ -177,16 +177,26 @@ defmodule Tucan.Options do
   @spec to_nimble_options(options :: [atom()]) :: keyword()
   def to_nimble_options(options) do
     Keyword.take(@options, options)
-    |> Enum.map(fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
+    |> drop_tucan_opts_fields()
+  end
+
+  defp drop_tucan_opts_fields(opts) do
+    Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
   end
 
   @doc """
   Converts a list of options to a `NimbleOptions` schema.
+
+  Additinally an extra schema definition can be provided, which will be merged
+  with the schema defined by the selected options.
   """
-  @spec schema!(options :: [atom()]) :: NimbleOptions.t()
-  def schema!(options) do
+  @spec schema!(options :: [atom()], extra :: keyword()) :: NimbleOptions.t()
+  def schema!(options, extra \\ []) do
+    extra = drop_tucan_opts_fields(extra)
+
     options
     |> to_nimble_options()
+    |> Keyword.merge(extra)
     |> NimbleOptions.new!()
   end
 
