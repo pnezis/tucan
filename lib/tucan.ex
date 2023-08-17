@@ -39,7 +39,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@lineplot_schema)}
+  #{Tucan.Options.docs(@lineplot_schema)}
 
   ## Examples
 
@@ -91,7 +91,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@histogram_schema)}
+  #{Tucan.Options.docs(@histogram_schema)}
 
   ## Examples
 
@@ -157,7 +157,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@density_schema)}
+  #{Tucan.Options.docs(@density_schema)}
 
   ## Examples
 
@@ -227,7 +227,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@countplot_schema)}
+  #{Tucan.Options.docs(@countplot_schema)}
 
   ## Examples
 
@@ -282,7 +282,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@scatter_schema)}
+  #{Tucan.Options.docs(@scatter_schema)}
 
   ## Examples
 
@@ -453,7 +453,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{NimbleOptions.docs(@stripplot_schema)}
+  #{Tucan.Options.docs(@stripplot_schema)}
 
   > ### Internal `VegaLite` representation {: .info}
   > 

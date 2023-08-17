@@ -1,4 +1,22 @@
 defmodule Tucan.Options do
+  # TODO: cleanup sections ordering & descriptions
+  @sections [
+    unknown: [
+      order: -1
+    ],
+    general_mark: [
+      order: 7,
+      header: "Interactivity Options"
+    ],
+    global: [
+      order: 10,
+      header: "Global Options"
+    ],
+    density_transform: [
+      order: 5,
+      header: "Density Options"
+    ]
+  ]
   @options [
     # Global opts
     width: [
@@ -171,14 +189,21 @@ defmodule Tucan.Options do
 
   @doc """
   Get the options (keys) of the given `section`.
+
+  Raises if no option exists for the given `section`.
   """
   @spec section_options(section :: atom()) :: [atom()]
   def section_options(section) do
-    Enum.filter(@options, fn {_key, opts} -> opts[:section] == section end)
-    |> Keyword.keys()
-  end
+    options =
+      Enum.filter(@options, fn {_key, opts} -> opts[:section] == section end)
+      |> Keyword.keys()
 
-  @tucan_opts_fields [:section]
+    if options == [] do
+      raise ArgumentError, "no option defined for section: #{inspect(section)}"
+    end
+
+    options
+  end
 
   @doc """
   Converts the given tucan options to nimble options
@@ -189,6 +214,7 @@ defmodule Tucan.Options do
     |> drop_tucan_opts_fields()
   end
 
+  @tucan_opts_fields [:section]
   defp drop_tucan_opts_fields(opts) do
     Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
   end
@@ -207,6 +233,45 @@ defmodule Tucan.Options do
     |> to_nimble_options()
     |> Keyword.merge(extra)
     |> NimbleOptions.new!()
+  end
+
+  def docs(%NimbleOptions{schema: schema}) do
+    schema
+    |> Enum.group_by(fn {key, _opts} ->
+      @options
+      |> Keyword.get(key, [])
+      |> Keyword.get(:section, :unknown)
+    end)
+    |> Enum.sort_by(fn {section, _opts} ->
+      @sections
+      |> Keyword.fetch!(section)
+      |> Keyword.fetch!(:order)
+    end)
+    |> Enum.map(fn {section, opts} -> section_opts_docs(section, opts) end)
+    |> Enum.join("\n\n")
+  end
+
+  defp section_opts_docs(section, opts) do
+    section_settings = Keyword.fetch!(@sections, section)
+
+    [
+      section_header(section, section_settings),
+      Keyword.get(section_settings, :doc, nil),
+      section_nimble_options_docs(%NimbleOptions{schema: opts})
+    ]
+    |> Enum.filter(fn item -> not is_nil(item) end)
+    |> Enum.join("\n\n")
+  end
+
+  defp section_header(:unknown, _settings), do: nil
+  defp section_header(_section, settings), do: "### " <> Keyword.fetch!(settings, :header)
+
+  defp section_nimble_options_docs(schema) do
+    schema
+    |> NimbleOptions.docs()
+    # NimbleOptions adds an extra empty line between each option definition, which I do
+    # not like for documenting many options
+    |> String.replace("\n\n*", "\n*")
   end
 
   ## Custom validations
