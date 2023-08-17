@@ -11,7 +11,7 @@ defmodule Tucan.VegaLiteUtils do
   """
   @spec put_encoding_options!(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword()) ::
           VegaLite.t()
-  def put_encoding_options!(vl, channel, opts) do
+  def put_encoding_options!(vl, channel, opts) when is_atom(channel) and is_list(opts) do
     channel = to_vl_key(channel)
     validate_encoding!(vl, channel)
 
