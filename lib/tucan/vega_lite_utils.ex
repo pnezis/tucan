@@ -4,32 +4,78 @@ defmodule Tucan.VegaLiteUtils do
   """
 
   @doc """
-  Puts the given `opts` into the `encoding` options.
-
-  * If encoding already has some options these will be deep merged with the provided ones.
-  * If the encoding does not exist in the specification an `ArgumentError` will be raised.
-  """
-  @spec put_encoding_options!(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword()) ::
-          VegaLite.t()
-  def put_encoding_options!(vl, channel, opts) when is_atom(channel) and is_list(opts) do
-    channel = to_vl_key(channel)
-    validate_encoding!(vl, channel)
-
-    spec =
-      update_in(vl.spec, ["encoding", channel], fn encoding_opts ->
-        deep_merge(encoding_opts, opts_to_vl_props(opts))
-      end)
-
-    update_vl_spec(vl, spec)
-  end
-
-  @doc """
   Gets the configured encoding options for the given `channel` or `nil` if not set.
+
+  Raises in case of a non single view.
+
+  ## Examples
+
+      iex> VegaLite.new()
+      ...> |> VegaLite.encode_field(:x, "x", foo: "bar")
+      ...> |> Tucan.VegaLiteUtils.encoding_options(:x)
+      %{"field" => "x", "foo" => "bar"}
   """
   @spec encoding_options(vl :: VegaLite.t(), channel :: atom()) :: map() | nil
   def encoding_options(vl, channel) do
+    validate_single_view!(vl, "encoding_options/2")
+
     channel = to_vl_key(channel)
     get_in(vl.spec, ["encoding", channel])
+  end
+
+  @doc """
+  Puts and merges the given `opts` into the `encoding` options.
+
+  The input can either by a `VegaLite` struct or the spec map. The options will be
+  deep merged with the existing ones.
+
+  The input vega lite representation must be a single view.
+
+  It will raise an `ArgumentError` if:
+
+  * The input `vl` is not a single view.
+  * The encoding does not exist in the specification an `ArgumentError` will be raised.
+  """
+  @spec put_encoding_options(vl :: VegaLite.t() | map(), encoding :: atom(), opts :: keyword()) ::
+          VegaLite.t()
+  def put_encoding_options(%VegaLite{} = vl, channel, opts)
+      when is_atom(channel) and is_list(opts) do
+    %VegaLite{vl | spec: put_encoding_options(vl.spec, channel, opts)}
+  end
+
+  def put_encoding_options(%{} = spec, channel, opts) when is_atom(channel) and is_list(opts) do
+    validate_single_view!(spec, "put_encoding_options/3")
+    validate_channel!(spec, channel)
+    validate_channel!(spec, channel)
+
+    update_in(spec, ["encoding", to_vl_key(channel)], fn encoding_opts ->
+      deep_merge(encoding_opts, opts_to_vl_props(opts))
+    end)
+  end
+
+  @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
+
+  # validates that the specification corresponds to a single view plot
+  defp validate_single_view!(%VegaLite{spec: spec}, caller),
+    do: validate_single_view!(spec, caller)
+
+  defp validate_single_view!(%{} = spec, caller) do
+    for key <- @multi_view_only_keys, Map.has_key?(spec, to_vl_key(key)) do
+      raise ArgumentError,
+            "#{caller} expects a single view spec, multi view detected: #{inspect(key)} key is defined"
+    end
+  end
+
+  # validates that the channel exists in the encoding options
+  defp validate_channel!(%VegaLite{spec: spec}, channel) when is_atom(channel),
+    do: validate_channel!(spec, channel)
+
+  defp validate_channel!(%{} = spec, channel) when is_atom(channel) do
+    encoding_opts = get_in(spec, ["encoding", to_vl_key(channel)])
+
+    if is_nil(encoding_opts) do
+      raise ArgumentError, "encoding for channel #{inspect(channel)} not found in the spec"
+    end
   end
 
   def encode_field_raw(vl, channel, field, opts) do
@@ -67,16 +113,6 @@ defmodule Tucan.VegaLiteUtils do
 
       Map.put(spec, "encoding", encoding)
     end)
-  end
-
-  defp update_vl_spec(vl, spec), do: %VegaLite{vl | spec: spec}
-
-  defp validate_encoding!(vl, encoding) do
-    encoding_opts = get_in(vl.spec, ["encoding", encoding])
-
-    if is_nil(encoding_opts) do
-      raise ArgumentError, "encoding #{inspect(encoding)} not found in the spec"
-    end
   end
 
   # these are copied verbatim from VegaLite

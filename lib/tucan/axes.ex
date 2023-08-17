@@ -37,6 +37,6 @@ defmodule Tucan.Axes do
   end
 
   def put_axis_options(vl, encoding, options) do
-    VegaLiteUtils.put_encoding_options!(vl, encoding, axis: options)
+    VegaLiteUtils.put_encoding_options(vl, encoding, axis: options)
   end
 end

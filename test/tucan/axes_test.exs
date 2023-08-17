@@ -7,11 +7,11 @@ defmodule Tucan.AxesTest do
     test "raises if the encoding does not exist" do
       vl = Vl.new()
 
-      assert_raise ArgumentError, ~s'encoding "x" not found in the spec', fn ->
+      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
         Tucan.Axes.set_x_title(vl, "title")
       end
 
-      assert_raise ArgumentError, ~s'encoding "y" not found in the spec', fn ->
+      assert_raise ArgumentError, "encoding for channel :y not found in the spec", fn ->
         Tucan.Axes.set_y_title(vl, "title")
       end
     end
