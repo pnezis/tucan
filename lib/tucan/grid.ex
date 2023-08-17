@@ -57,4 +57,100 @@ defmodule Tucan.Grid do
   def set_grid_enabled(vl, channel, enabled) do
     Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid: enabled])
   end
+
+  @doc """
+  Set a specific color to the grid for the given channel.
+
+  This will raise if the `channel` is not encoded.
+
+  ## Examples
+
+  A scatter plot with the `y-axis` grid colored red and `x-axis` grid with a custom RGB color:
+
+  ```vega-lite
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Grid.set_grid_color(:y, "red")
+  |> Tucan.Grid.set_grid_color(:x, "#2A32F4")
+  ```
+  """
+  @spec set_grid_color(vl :: VegaLite.t(), channel :: atom(), color :: binary()) ::
+          VegaLite.t()
+  def set_grid_color(vl, channel, color)
+      when is_struct(vl, VegaLite) and is_atom(channel) and is_binary(color) do
+    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_color: color])
+  end
+
+  @doc """
+  Sets the opacity of the grid lines.
+
+  If not set it defaults to 1.
+
+  This will raise if the `channel` is not encoded.
+
+  ## Examples
+
+  A scatter plot with the `y-axis` grid colored red and `x-axis` grid with a custom RGB color and
+  opacity values set. Also the width is increased to make the opacity changes more clear.
+
+  ```vega-lite
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Grid.set_grid_color(:x, "red")
+  |> Tucan.Grid.set_grid_color(:y, "cyan")
+  |> Tucan.Grid.set_grid_opacity(:x, 0.1)
+  |> Tucan.Grid.set_grid_opacity(:y, 0.8)
+  |> Tucan.Grid.set_grid_width(:x, 3)
+  |> Tucan.Grid.set_grid_width(:y, 3)
+  ```
+  """
+  @spec set_grid_color(vl :: VegaLite.t(), channel :: atom(), opacity :: float()) ::
+          VegaLite.t()
+  def set_grid_opacity(vl, channel, opacity)
+      when is_struct(vl, VegaLite) and is_atom(channel) and is_number(opacity) and opacity >= 0 and
+             opacity <= 1 do
+    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_opacity: opacity])
+  end
+
+  @doc """
+  Sets the width of the grid lines.
+
+  If not set it defaults to 1.
+
+  This will raise if the `channel` is not encoded.
+  """
+  @spec set_grid_width(vl :: VegaLite.t(), channel :: atom(), width :: pos_integer()) ::
+          VegaLite.t()
+  def set_grid_width(vl, channel, width)
+      when is_struct(vl, VegaLite) and is_atom(channel) and is_integer(width) and width > 0 do
+    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_width: width])
+  end
+
+  @doc """
+  Sets the dash style of the grid.
+
+  `stroke` and `space` are alternatinv lengths for the dashed grid lines in pixels.
+
+  This will raise if the `channel` is not encoded.
+
+  ## Examples
+
+  A scatter plot with the different dashed styles across the two axes:
+
+  ```vega-lite
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Grid.set_grid_dash_style(:x, 10, 2)
+  |> Tucan.Grid.set_grid_dash_style(:y, 2, 10)
+  ```
+  """
+  @spec set_grid_dash_style(
+          vl :: VegaLite.t(),
+          channel :: atom(),
+          stroke :: pos_integer(),
+          space :: pos_integer()
+        ) ::
+          VegaLite.t()
+  def set_grid_dash_style(vl, channel, stroke, space)
+      when is_struct(vl, VegaLite) and is_atom(channel) and is_integer(stroke) and stroke > 0 and
+             is_integer(space) and space > 0 do
+    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_dash: [stroke, space]])
+  end
 end
