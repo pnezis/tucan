@@ -24,6 +24,29 @@ defmodule Tucan.VegaLiteUtils do
   end
 
   @doc """
+  Returns true if the given single view plot has the provided `channel` encoded, `false`
+  otherwise.
+
+  Raises in case of a non single view.
+
+  ## Examples
+
+      iex> Tucan.VegaLiteUtils.has_encoding?(VegaLite.new(), :x)
+      false
+
+      iex> Tucan.VegaLiteUtils.has_encoding?(VegaLite.encode_field(VegaLite.new(), :x, "x"), :x)
+      true
+  """
+  @spec has_encoding?(vl :: VegaLite.t(), channel :: atom()) :: boolean()
+  def has_encoding?(%VegaLite{spec: spec} = vl, channel) when is_atom(channel) do
+    validate_single_view!(vl, "has_encoding?/2")
+
+    spec
+    |> Map.get("encoding", %{})
+    |> Map.has_key?(to_vl_key(channel))
+  end
+
+  @doc """
   Puts and merges the given `opts` into the `encoding` options.
 
   The input can either by a `VegaLite` struct or the spec map. The options will be

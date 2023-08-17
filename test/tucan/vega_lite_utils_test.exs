@@ -28,6 +28,25 @@ defmodule Tucan.VegaLiteUtilsTest do
     end
   end
 
+  describe "has_encoding?/2" do
+    test "with multi children views" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      assert_raise ArgumentError,
+                   "has_encoding?/2 expects a single view spec, multi view detected: :hconcat key is defined",
+                   fn ->
+                     VegaLiteUtils.has_encoding?(vl, :x)
+                   end
+    end
+
+    test "with a proper view" do
+      vl = Vl.new() |> Vl.encode_field(:x, "x", foo: 1, bar: "abc")
+
+      assert VegaLiteUtils.has_encoding?(vl, :x)
+      refute VegaLiteUtils.has_encoding?(vl, :y)
+    end
+  end
+
   describe "put_encoding_options/3" do
     test "raises with multi children views" do
       vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
