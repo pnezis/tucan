@@ -5,11 +5,11 @@ defmodule Tucan.GridTest do
 
   test "all channel functions raise if channel is not encoded" do
     functions = [
-      fn vl -> Tucan.Grid.set_grid_color(vl, :x, "red") end,
-      fn vl -> Tucan.Grid.set_grid_dash_style(vl, :x, 2, 3) end,
-      fn vl -> Tucan.Grid.set_grid_enabled(vl, :x, true) end,
-      fn vl -> Tucan.Grid.set_grid_opacity(vl, :x, 0.1) end,
-      fn vl -> Tucan.Grid.set_grid_width(vl, :x, 1) end
+      fn vl -> Tucan.Grid.set_color(vl, :x, "red") end,
+      fn vl -> Tucan.Grid.set_dash_style(vl, :x, 2, 3) end,
+      fn vl -> Tucan.Grid.set_enabled(vl, :x, true) end,
+      fn vl -> Tucan.Grid.set_opacity(vl, :x, 0.1) end,
+      fn vl -> Tucan.Grid.set_width(vl, :x, 1) end
     ]
 
     vl = Vl.new()
@@ -19,13 +19,13 @@ defmodule Tucan.GridTest do
     end
   end
 
-  describe "set_grid_enabled/2" do
+  describe "set_enabled/2" do
     test "with all axes defined" do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x")
         |> Vl.encode_field(:y, "y")
-        |> Tucan.Grid.set_grid_enabled(false)
+        |> Tucan.Grid.set_enabled(false)
 
       assert_encoding_value(vl, :x, ["axis", "grid"], false)
       assert_encoding_value(vl, :y, ["axis", "grid"], false)
@@ -34,61 +34,61 @@ defmodule Tucan.GridTest do
     test "with no axis defined" do
       vl = Vl.new()
 
-      assert Tucan.Grid.set_grid_enabled(vl, false) == vl
+      assert Tucan.Grid.set_enabled(vl, false) == vl
     end
 
     test "with a single axis defined" do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x")
-        |> Tucan.Grid.set_grid_enabled(false)
+        |> Tucan.Grid.set_enabled(false)
 
       assert_encoding_value(vl, :x, ["axis", "grid"], false)
       assert_encoding_value(vl, :y, ["axis", "grid"], nil)
     end
   end
 
-  test "set_grid_color/3" do
+  test "set_color/3" do
     vl =
       Vl.new()
       |> Vl.encode_field(:x, "x")
-      |> Tucan.Grid.set_grid_color(:x, "red")
+      |> Tucan.Grid.set_color(:x, "red")
 
     assert_encoding_value(vl, :x, ["axis", "gridColor"], "red")
   end
 
-  test "set_grid_enabled/3" do
+  test "set_enabled/3" do
     vl =
       Vl.new()
       |> Vl.encode_field(:x, "x")
-      |> Tucan.Grid.set_grid_enabled(:x, false)
+      |> Tucan.Grid.set_enabled(:x, false)
 
     assert_encoding_value(vl, :x, ["axis", "grid"], false)
   end
 
-  test "set_grid_opacity/3" do
+  test "set_opacity/3" do
     vl =
       Vl.new()
       |> Vl.encode_field(:x, "x")
-      |> Tucan.Grid.set_grid_opacity(:x, 0.3)
+      |> Tucan.Grid.set_opacity(:x, 0.3)
 
     assert_encoding_value(vl, :x, ["axis", "gridOpacity"], 0.3)
   end
 
-  test "set_grid_width/3" do
+  test "set_width/3" do
     vl =
       Vl.new()
       |> Vl.encode_field(:x, "x")
-      |> Tucan.Grid.set_grid_width(:x, 3)
+      |> Tucan.Grid.set_width(:x, 3)
 
     assert_encoding_value(vl, :x, ["axis", "gridWidth"], 3)
   end
 
-  test "set_grid_dash_style/4" do
+  test "set_dash_style/4" do
     vl =
       Vl.new()
       |> Vl.encode_field(:x, "x")
-      |> Tucan.Grid.set_grid_dash_style(:x, 3, 2)
+      |> Tucan.Grid.set_dash_style(:x, 3, 2)
 
     assert_encoding_value(vl, :x, ["axis", "gridDash"], [3, 2])
   end
