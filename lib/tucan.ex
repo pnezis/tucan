@@ -660,6 +660,11 @@ defmodule Tucan do
         row_index == col_index and row_index < 2 ->
           Tucan.histogram(vl, row_field)
 
+        row_index == 2 and col_index == 2 ->
+          Tucan.stripplot(vl, row_field, group: "species", style: :tick)
+          |> Tucan.color_by("species") 
+          |> Tucan.Axes.put_axis_options(:y, labels: false)  
+
         # For the other diagonal plots we plot a histogram colored_by the species
         row_index == col_index ->
           Tucan.histogram(vl, row_field)
@@ -670,9 +675,12 @@ defmodule Tucan do
           Tucan.scatter(vl, col_field, row_field)
           |> Tucan.color_by("species")
 
-        # for anything else scatter plot without coloring
+        # for anything else scatter plot with a quantitative color scale
+        # and size
         true ->
           Tucan.scatter(vl, col_field, row_field)
+          |> Tucan.size_by("petal_width", type: :quantitative)
+          
       end
     end
   )
@@ -836,6 +844,12 @@ defmodule Tucan do
   @doc section: :utilities
   def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
+  end
+
+  def set_theme(vl, theme) do
+    theme = Tucan.Themes.theme(theme)
+
+    Vl.config(vl, theme)
   end
 
   @doc """
