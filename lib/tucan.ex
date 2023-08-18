@@ -12,7 +12,8 @@ defmodule Tucan do
   def new(), do: VegaLite.new()
 
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
-  def new(plotdata, opts \\ []), do: to_vega_plot(plotdata, opts)
+  def new(plotdata, opts \\ []),
+    do: to_vega_plot(plotdata, Keyword.take(opts, [:width, :height, :title]))
 
   defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
 
@@ -20,12 +21,12 @@ defmodule Tucan do
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
   defp to_vega_plot(dataset, opts) when is_binary(dataset) do
-    Vl.new(width: opts[:width], height: opts[:height], title: opts[:title])
+    Vl.new(opts)
     |> Vl.data_from_url(dataset)
   end
 
   defp to_vega_plot(data, opts) do
-    Vl.new(width: opts[:width], height: opts[:height])
+    Vl.new(opts)
     |> Vl.data_from_values(data)
   end
 
