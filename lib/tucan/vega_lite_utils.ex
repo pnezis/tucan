@@ -76,6 +76,13 @@ defmodule Tucan.VegaLiteUtils do
     end)
   end
 
+  def put_in_spec(%VegaLite{spec: spec} = vl, key, opts) when is_list(opts) do
+    key = to_vl_key(key)
+    opts = to_vl(opts)
+
+    %VegaLite{vl | spec: Map.merge(spec, %{key => opts})}
+  end
+
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
   # validates that the specification corresponds to a single view plot

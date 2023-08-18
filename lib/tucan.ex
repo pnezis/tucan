@@ -454,7 +454,7 @@ defmodule Tucan do
   > Vl.new()
   > |> Vl.data_from_values(data)
   > |> Vl.concat([pie, bar], :horizontal)
-  > |> Tucan.set_title("Pie vs Bar chart")
+  > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
   > ```
 
   ## Examples
@@ -909,8 +909,11 @@ defmodule Tucan do
   end
 
   @doc section: :utilities
-  def set_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
-    update_in(vl.spec, fn spec -> Map.merge(spec, %{"title" => title}) end)
+  def set_title(vl, title, opts \\ [])
+      when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
+    title_opts = Keyword.merge(opts, text: title)
+
+    VegaLiteUtils.put_in_spec(vl, :title, title_opts)
   end
 
   def set_theme(vl, theme) do
