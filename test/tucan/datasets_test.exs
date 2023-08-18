@@ -2,6 +2,7 @@ defmodule Tucan.DatasetsTest do
   use ExUnit.Case
 
   @valid_datasets [
+    :barley,
     :cars,
     :corruption,
     :flights,
