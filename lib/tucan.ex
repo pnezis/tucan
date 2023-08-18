@@ -411,6 +411,73 @@ defmodule Tucan do
     |> size_by(size, type: :quantitative)
   end
 
+  @doc """
+  Draws a pie chart.
+
+  A pie chart is a circle divided into sectors that each represents a proportion
+  of the whole. The `field` specifies the data column that contains the proportions
+  of each category. The chart will be colored by the `caregory` field.
+
+  > #### Avoid using pie charts {: .warning}
+  >
+  > Despite it's popularity pie charts should rarely be used. Pie charts are best
+  > suited for displaying a small number of categories and can make it challenging
+  > to accurately compare data. They rely on angle perception, which can lead to
+  > misinterpretation, and lack the precision offered by other charts like bar
+  > charts or line charts.
+  >
+  > Instead, opt for alternatives such as bar charts for straightforward comparisons,
+  > stacked area charts for cumulative effects.
+  > 
+  > The following example showcases the limitations of a pie chart, compared to a
+  > bar chart:
+  >
+  > ```vega-lite
+  > alias VegaLite, as: Vl
+  >
+  > data = [
+  >   %{value: 30, category: "A"},
+  >   %{value: 33, category: "B"},
+  >   %{value: 38, category: "C"}
+  > ]
+  > 
+  > pie = Tucan.pie(Vl.new(), "value", "category")
+  > 
+  > # TODO: replace with the bar call once implemented
+  > bar =
+  >   Vl.new()
+  >   |> Tucan.new()
+  >   |> Vl.mark(:bar)
+  >   |> Vl.encode_field(:y, "category")
+  >   |> Vl.encode_field(:x, "value", type: :quantitative)
+  >
+  > Vl.new()
+  > |> Vl.data_from_values(data)
+  > |> Vl.concat([pie, bar], :horizontal)
+  > |> Tucan.set_title("Pie vs Bar chart")
+  > ```
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.pie(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  |> Tucan.facet_by(:column, "year", type: :nominal)
+  ```
+  """
+  def pie(plotdata, field, category, opts \\ []) do
+    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    theta_opts =
+      Keyword.take(opts, [:aggregate])
+      |> Keyword.merge(type: :quantitative)
+
+    plotdata
+    |> new(opts)
+    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip]))
+    |> Vl.encode_field(:theta, field, theta_opts)
+    |> color_by(category)
+  end
+
   stripplot_schema = [
     group: [
       type: :string,
