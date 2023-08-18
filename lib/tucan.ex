@@ -217,14 +217,29 @@ defmodule Tucan do
     end
   end
 
-  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by])
+  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by, :orient])
   @countplot_schema Tucan.Options.schema!(@countplot_opts)
 
   @doc """
   Plot the counts of observations for a categorical variable.
 
+  Takes a categorical `field` as input and generates a count plot
+  visualization. By default the counts are plotted on the *y-axis*
+  and the categorical `field` across the *x-axis*.
+
   This is similar to `histogram/3` but specifically for a categorical
   variable.
+
+  > #### What is a countplot? {: .tip}
+  > 
+  > A countplot is a type of bar chart used in data visualization to
+  > display the **frequency of occurrences of categorical data**. It is
+  > particularly useful for visualizing the *distribution* and *frequency*
+  > of different categories within a dataset.
+  >
+  > In a countplot, each unique category is represented by a bar, and the
+  > height of the bar corresponds to the number of occurrences of that
+  > category in the data.
 
   ## Options
 
@@ -232,28 +247,31 @@ defmodule Tucan do
 
   ## Examples
 
-  We will use the `:titanic` dataset on the following examples.
-
-  Number of passengers by ticket class:
+  We will use the `:titanic` dataset on the following examples. We can
+  plot the number of passengers by ticket class:
 
   ```vega-lite
   Tucan.countplot(:titanic, "Pclass")
   ```
 
-  > #### Stacked and grouped bars {: .tip}
-  >
-  > You can set color_by to group it by a second variable:
-  >
-  > ```vega-lite
-  > Tucan.countplot(:titanic, "Pclass", color_by: "Survived")
-  > ```
-  >
-  > By default the bars are stacked. You can unstack them by setting the
-  > stacked option:
-  >
-  > ```vega-lite
-  > Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
-  > ```
+  You can make the bars horizontal by setting the `:orient` option:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", orient: :vertical)
+  ```
+
+  You can set `:color_by` to group it by a second variable:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", color_by: "Survived")
+  ```
+
+  By default the bars are stacked. You can unstack them by setting the
+  `:stacked` option:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
+  ```
   """
   @doc section: :plots
   def countplot(plotdata, field, opts \\ []) do
@@ -266,6 +284,7 @@ defmodule Tucan do
     |> Vl.encode_field(:y, field, aggregate: "count")
     |> maybe_color_by(opts[:color_by])
     |> maybe_x_offset(opts[:color_by], opts[:stacked])
+    |> maybe_flip_axes(opts[:orient])
   end
 
   defp maybe_color_by(vl, nil), do: vl
