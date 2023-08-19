@@ -4,6 +4,8 @@ defmodule TucanTest do
   alias VegaLite, as: Vl
   doctest Tucan
 
+  @dataset "dataset.csv"
+
   describe "pie/4" do
     @pie_data [
       %{category: "A", value: 30},
@@ -34,7 +36,29 @@ defmodule TucanTest do
     end
   end
 
-  @dataset "dataset.csv"
+  describe "donut/4" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:arc, inner_radius: 50)
+        |> Vl.encode_field(:theta, "value", type: :quantitative)
+        |> Vl.encode_field(:color, "category")
+
+      assert Tucan.donut(@dataset, "value", "category") == expected
+    end
+
+    test "with set inner radius" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:arc, inner_radius: 20)
+        |> Vl.encode_field(:theta, "value", type: :quantitative)
+        |> Vl.encode_field(:color, "category")
+
+      assert Tucan.donut(@dataset, "value", "category", inner_radius: 20) == expected
+    end
+  end
 
   describe "countplot/3" do
     test "with default options" do

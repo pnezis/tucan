@@ -493,9 +493,31 @@ defmodule Tucan do
 
     plotdata
     |> new(opts)
-    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip]))
+    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip, :inner_radius]))
     |> Vl.encode_field(:theta, field, theta_opts)
     |> color_by(category)
+  end
+
+  @doc """
+  Draw a donut chart.
+
+  A donut chart is a circular visualization that resembles a pie chart but
+  features a hole at its center. This central hole creates a _donut_ shape,
+  distinguishing it from traditional pie charts. 
+
+  This is a wrapper around `pie/4` that sets by default the `:inner_radius`.
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.donut(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  |> Tucan.facet_by(:column, "year", type: :nominal)
+  ```
+  """
+  def donut(plotdata, field, category, opts \\ []) do
+    opts = Keyword.put_new(opts, :inner_radius, 50)
+
+    pie(plotdata, field, category, opts)
   end
 
   stripplot_schema = [
