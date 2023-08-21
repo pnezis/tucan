@@ -32,6 +32,217 @@ defmodule Tucan do
 
   ## Plots
 
+  # global_opts should be applicable in all plot types
+  @global_opts [:width, :height, :title]
+
+  @global_mark_opts [:clip, :fill_opacity, :tooltip]
+
+  histogram_opts = [
+    relative: [
+      type: :boolean,
+      doc: """
+      If set a relative frequency histogram is generated.
+      """,
+      default: false
+    ],
+    orient: [
+      type: {:in, [:horizontal, :vertical]},
+      doc: """
+      Histogram's orientation. It specifies the axis along which the field values
+      are plotted.
+      """,
+      default: :horizontal
+    ],
+    color_by: [
+      type: :string,
+      doc: """
+      The field to group observations by. This will used for coloring the histogram
+      if set.
+      """
+    ],
+    maxbins: [
+      type: :integer,
+      doc: """
+      Maximum number of bins.
+      """,
+      dest: :bin
+    ],
+    step: [
+      type: {:or, [:integer, :float]},
+      doc: """
+      An exact step size to use between bins. If provided, options such as `maxbins`
+      will be ignored.
+      """,
+      dest: :bin
+    ],
+    extent: [
+      type: {:custom, Tucan.Options, :extent, []},
+      doc: """
+      A two-element (`[min, max]`) array indicating the range of desired bin values.
+      """,
+      dest: :bin
+    ],
+    stacked: [
+      type: :boolean,
+      doc: """
+      If set it will stack the group histograms instead of layering one over another. Valid
+      only if a semantic grouping has been applied.
+      """
+    ]
+  ]
+
+  @histogram_opts Tucan.Options.take!([@global_opts, @global_mark_opts], histogram_opts)
+  @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
+
+  @doc """
+  Plots a histogram.
+
+  See also `density/3`
+
+  ## Options
+
+  #{Tucan.Options.docs(@histogram_schema)}
+
+  ## Examples
+
+  Histogram of `Horsepower`
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower")
+  ```
+
+  You can flip the plot by setting the `:orient` option to `:vertical`:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", orient: :vertical)
+  ```
+
+  By setting the `:relative` flag you can get a relative frequency histogram:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", relative: true)
+  ```
+
+  You can increase the number of bins by settings the `maxbins` or the `step` options:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", step: 5)
+  ```
+
+  You can draw multiple histograms by grouping the observations by a second
+  *categorical* variable:
+
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", color_by: "Origin", fill_opacity: 0.5)
+  ```
+
+  By default the histograms are plotted layered, but you can also stack them:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", color_by: "Origin", fill_opacity: 0.5, stacked: true)
+  ```
+
+  or you can facet it, in order to make the histograms more clear:
+
+  ```vega-lite
+  histograms =
+    Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
+    |> Tucan.facet_by(:column, "Origin")
+
+  relative_histograms =
+    Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin", fill_opacity: 0.5, tooltip: true)
+    |> Tucan.facet_by(:column, "Origin")
+
+  VegaLite.concat(VegaLite.new(), [histograms, relative_histograms], :vertical)
+  ```
+  """
+  @doc section: :plots
+  def histogram(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @histogram_schema)
+
+    spec_opts = take_options(opts, @histogram_opts, :spec)
+    mark_opts = take_options(opts, @histogram_opts, :mark)
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:bar, mark_opts)
+    |> bin_count_transform(field, opts)
+    |> maybe_add_relative_frequency_transform(field, opts, opts[:relative])
+    |> Vl.encode_field(:x, "bin_#{field}", bin: [binned: true], title: field)
+    |> Vl.encode_field(:x2, "bin_#{field}_end")
+    |> histogram_y_encoding(field, opts)
+    |> maybe_color_by(opts[:color_by])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
+  defp take_options(opts, schema, dest) do
+    dest_opts =
+      schema
+      |> Enum.filter(fn {_key, opts} ->
+        opts[:dest] == dest
+      end)
+      |> Keyword.keys()
+
+    Keyword.take(opts, dest_opts)
+  end
+
+  defp bin_count_transform(vl, field, opts) do
+    bin_opts =
+      case take_options(opts, @histogram_opts, :bin) do
+        [] -> true
+        bin_opts -> bin_opts
+      end
+
+    groupby =
+      case opts[:color_by] do
+        nil -> ["bin_#{field}", "bin_#{field}_end"]
+        color_by -> ["bin_#{field}", "bin_#{field}_end", color_by]
+      end
+
+    vl
+    |> Vl.transform(bin: bin_opts, field: field, as: "bin_#{field}")
+    |> Vl.transform(
+      aggregate: [[op: :count, as: "count_#{field}"]],
+      groupby: groupby
+    )
+  end
+
+  defp maybe_add_relative_frequency_transform(vl, _field, _opts, false), do: vl
+
+  defp maybe_add_relative_frequency_transform(vl, field, opts, true) do
+    groupby =
+      case opts[:color_by] do
+        nil -> []
+        color_by -> [color_by]
+      end
+
+    vl
+    |> Vl.transform(
+      joinaggregate: [[op: :sum, field: "count_#{field}", as: "total_count_#{field}"]],
+      groupby: groupby
+    )
+    |> Vl.transform(
+      calculate: "datum.count_#{field}/datum.total_count_#{field}",
+      as: "percent_#{field}"
+    )
+  end
+
+  defp histogram_y_encoding(vl, field, opts) do
+    case opts[:relative] do
+      false ->
+        Vl.encode_field(vl, :y, "count_#{field}", type: :quantitative, stack: opts[:stacked])
+
+      true ->
+        Vl.encode_field(vl, :y, "percent_#{field}",
+          type: :quantitative,
+          axis: [format: ".1~%"],
+          title: "Relative Frequency",
+          stack: opts[:stack]
+        )
+    end
+  end
+
   @lineplot_opts Tucan.Options.options([:global, :general_mark])
   @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
 
@@ -80,142 +291,6 @@ defmodule Tucan do
     |> Vl.mark(:line)
     |> Vl.encode_field(:x, x, type: :temporal)
     |> Vl.encode_field(:y, y, type: :quantitative)
-  end
-
-  histogram_schema = [
-    relative: [
-      type: :boolean,
-      doc: """
-      If set a relative frequency histogram is generated.
-      """,
-      default: false
-    ],
-    orient: [
-      type: {:in, [:horizontal, :vertical]},
-      doc: """
-      Histogram's orientation. It specifies the axis along which the field values
-      are plotted.
-      """,
-      default: :horizontal
-    ],
-    color_by: [
-      type: :string,
-      doc: """
-      The field to group observations by. This will used for coloring the histogram
-      if set.
-      """
-    ]
-  ]
-
-  @histogram_opts Tucan.Options.options([:global, :general_mark], [:fill_opacity])
-  @histogram_schema Tucan.Options.schema!(@histogram_opts, histogram_schema)
-
-  @doc """
-  Plots a histogram.
-
-  See also `density/3`
-
-  ## Options
-
-  #{Tucan.Options.docs(@histogram_schema)}
-
-  ## Examples
-
-  Histogram of `Horsepower`
-
-  ```vega-lite
-  Tucan.histogram(:cars, "Horsepower")
-  ```
-
-  You can flip the plot by setting the `:orient` option to `:vertical`:
-
-  ```vega-lite
-  Tucan.histogram(:cars, "Horsepower", orient: :vertical)
-  ```
-
-  By setting the `:relative` flag you can get a relative frequency histogram:
-
-  ```vega-lite
-  Tucan.histogram(:cars, "Horsepower", relative: true)
-  ```
-
-  You can draw multiple histograms by grouping the observations by a second
-  *categorical* variable:
-
-
-  ```vega-lite
-  Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
-  ```
-
-  or you can facet it, in order to make the histograms more clear:
-
-
-  ```vega-lite
-  histograms =
-    Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
-    |> Tucan.facet_by(:column, "Origin")
-
-  relative_histograms =
-    Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin")
-    |> Tucan.facet_by(:column, "Origin")
-
-  VegaLite.concat(VegaLite.new(), [histograms, relative_histograms], :vertical)
-  ```
-  """
-  @doc section: :plots
-  def histogram(plotdata, field, opts \\ []) do
-    opts = NimbleOptions.validate!(opts, @histogram_schema)
-
-    plotdata
-    |> new()
-    |> bin_count_transform(field, opts)
-    |> maybe_add_relative_frequency_transform(field, opts, opts[:relative])
-    |> Vl.mark(:bar, fill_opacity: opts[:fill_opacity], color: nil)
-    |> Vl.encode_field(:x, "bin_#{field}", bin: [binned: true], title: field)
-    |> Vl.encode_field(:x2, "bin_#{field}_end")
-    |> histogram_positional_encodings(field, opts, opts[:relative])
-    |> maybe_color_by(opts[:color_by])
-    |> maybe_flip_axes(opts[:orient] == :vertical)
-  end
-
-  defp bin_count_transform(vl, field, opts) do
-    groupby =
-      case opts[:color_by] do
-        nil -> ["bin_#{field}", "bin_#{field}_end"]
-        color_by -> ["bin_#{field}", "bin_#{field}_end", color_by]
-      end
-
-    vl
-    |> Vl.transform(bin: true, field: field, as: "bin_#{field}")
-    |> Vl.transform(
-      aggregate: [[op: :count, as: "count_#{field}"]],
-      groupby: groupby
-    )
-  end
-
-  defp maybe_add_relative_frequency_transform(vl, _field, _opts, false), do: vl
-
-  defp maybe_add_relative_frequency_transform(vl, field, _opts, true) do
-    vl
-    |> Vl.transform(
-      joinaggregate: [[op: :sum, field: "count_#{field}", as: "total_count_#{field}"]]
-    )
-    |> Vl.transform(
-      calculate: "datum.count_#{field}/datum.total_count_#{field}",
-      as: "percent_#{field}"
-    )
-  end
-
-  defp histogram_positional_encodings(vl, field, _opts, false) do
-    Vl.encode_field(vl, :y, "count_#{field}", type: :quantitative)
-  end
-
-  defp histogram_positional_encodings(vl, field, _opts, true) do
-    Vl.encode_field(vl, :y, "percent_#{field}",
-      type: :quantitative,
-      axis: [format: ".1~%"],
-      title: "Relative Frequency"
-    )
   end
 
   @density_opts Tucan.Options.options([:global, :general_mark, :density_transform], [

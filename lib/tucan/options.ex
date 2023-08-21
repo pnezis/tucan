@@ -17,22 +17,26 @@ defmodule Tucan.Options do
       header: "Density Options"
     ]
   ]
-  @options [
+
+  options = [
     # Global opts
     width: [
       type: :integer,
       doc: "Width of the image",
-      section: :global
+      section: :global,
+      dest: :spec
     ],
     height: [
       type: :integer,
       doc: "Height of the image",
-      section: :global
+      section: :global,
+      dest: :spec
     ],
     title: [
       type: :string,
       doc: "The title of the graph",
-      section: :global
+      section: :global,
+      dest: :spec
     ],
 
     # Mark general properties
@@ -47,7 +51,8 @@ defmodule Tucan.Options do
       * `true` - same as `:encoding`
       * `false`, `nil` - no tooltip is used
       """,
-      section: :general_mark
+      section: :general_mark,
+      dest: :mark
     ],
 
     # Density transform
@@ -89,7 +94,7 @@ defmodule Tucan.Options do
     extent: [
       type: {:custom, Tucan.Options, :extent, []},
       doc: """
-      A [min, max] domain from which to sample the distribution. If unspecified, the extent
+      A `[min, max]` domain from which to sample the distribution. If unspecified, the extent
       will be determined by the observed minimum and maximum values of the density value field.
       """,
       section: :density_transform
@@ -131,12 +136,27 @@ defmodule Tucan.Options do
     ],
 
     # Uncategorized
+    clip: [
+      type: :boolean,
+      doc: """
+      Whether a mark will be clipped to the enclosing group’s width and height.
+      """,
+      dest: :mark
+    ],
     fill_opacity: [
       type: :float,
       default: 0.5,
       doc: """
-      The fill opacity of the histogram bars.
-      """
+      The fill opacity of the plotted elemets.
+      """,
+      dest: :mark
+    ],
+    opacity: [
+      type: :float,
+      doc: """
+      The overall opacity of the mark
+      """,
+      dest: :mark
     ],
     stacked: [
       type: :boolean,
@@ -161,6 +181,8 @@ defmodule Tucan.Options do
     ]
   ]
 
+  @options options
+
   @doc """
   Extracts the options keys of the given `sections` adding any `extra` option added.
 
@@ -178,6 +200,7 @@ defmodule Tucan.Options do
   See also `to_nimble_options/1` and `schema!/1` in order to convert the returned
   list to a valid `NimbleOptions` schema.
   """
+  # TODO: to be removed and replaced with the `take` below
   @spec options(sections :: [atom()], extra :: [atom()]) :: [atom()]
   def options(sections, extra \\ []) do
     # TODO: validate that extra includes valid options
@@ -185,6 +208,55 @@ defmodule Tucan.Options do
     Enum.map(sections, &section_options/1)
     |> List.flatten()
     |> Enum.concat(extra)
+  end
+
+  @doc """
+  Take the given options from the globally defined options list and optionally merge them
+  with `extra`.
+
+  This will return an options list with a subset of the global options optionally augmented
+  by the extra. Notice that the result is a plain keyword list and not a `NimbleOptions`
+  list since it main contain `Tucan` specific attributes per option. Use `schema/2` in order
+  to convert it to a valid `NimbleOptions` schema.
+
+  The input can be either a list of options, or a list of lists.
+
+  This will raise if:
+
+    * Any of the options provided in the `options` list is not a valid option
+    * In case of duplicates.
+  """
+  @spec take!(options :: [atom() | [atom()]], extra :: keyword()) :: keyword()
+  def take!(options, extra \\ []) do
+    options
+    |> List.flatten()
+    |> ensure_no_duplicates!()
+    |> Enum.map(fn option -> {option, Keyword.fetch!(@options, option)} end)
+    |> Keyword.merge(extra)
+  end
+
+  defp ensure_no_duplicates!(opts) do
+    duplicates =
+      opts
+      |> Enum.group_by(& &1)
+      |> Enum.map(fn {key, items} -> {key, length(items)} end)
+      |> Enum.filter(fn {_item, count} -> count > 1 end)
+      |> Keyword.keys()
+
+    case duplicates do
+      [] ->
+        opts
+
+      duplicates ->
+        raise ArgumentError,
+              "the following options were defined more than once: #{inspect(duplicates)}"
+    end
+  end
+
+  def to_nimble_schema!(opts) do
+    opts
+    |> drop_tucan_opts_fields()
+    |> NimbleOptions.new!()
   end
 
   @doc """
@@ -214,7 +286,7 @@ defmodule Tucan.Options do
     |> drop_tucan_opts_fields()
   end
 
-  @tucan_opts_fields [:section]
+  @tucan_opts_fields [:section, :dest]
   defp drop_tucan_opts_fields(opts) do
     Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
   end
