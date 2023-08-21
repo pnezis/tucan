@@ -484,6 +484,7 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
   """
+  @doc section: :plots
   def pie(plotdata, field, category, opts \\ []) do
     # opts = NimbleOptions.validate!(opts, @scatter_schema)
 
@@ -514,6 +515,7 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
   """
+  @doc section: :plots
   def donut(plotdata, field, category, opts \\ []) do
     opts = Keyword.put_new(opts, :inner_radius, 50)
 
@@ -705,6 +707,53 @@ defmodule Tucan do
           VegaLiteUtils.encode_raw(vl, channel, opts)
         end
     end
+  end
+
+  @doc """
+  Draws a density heatmap.
+
+  A density heatmap is a bivariate histogram, e.g. the `x`, `y` data are binned
+  within rectangles that tile the plot and then the count of observations within
+  each rectangle is shown with the fill color.
+
+  By default the `count` of observations within each rectangle is encoded, but you
+  can calculate the statistic of any field and use it instead. 
+
+  Density heatmaps are a powerful visualization tool that find their best use cases
+  in situations where you need to explore and understand the distribution and
+  concentration of data points in a two-dimensional space. They are particularly
+  effective when dealing with large datasets, allowing you to uncover patterns,
+  clusters, and trends that might be difficult to discern in raw data.
+
+  ## Examples
+
+  Let's start with a default denisty heatmap on the penguins dataset:
+
+  ```vega-lite
+  Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)")
+  ```
+
+  You can summarize over another field:
+
+  ```vega-lite
+  Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)", z: "Body Mass (g)", aggregate: :mean)
+  ```
+  """
+  @doc section: :plots
+  def density_heatmap(plotdata, x, y, opts \\ []) do
+    color_fn = fn vl ->
+      case opts[:z] do
+        nil -> Vl.encode(vl, :color, type: :quantitative, aggregate: opts[:aggregate] || :count)
+        field -> color_by(vl, field, aggregate: opts[:aggregate] || :count)
+      end
+    end
+
+    plotdata
+    |> new(opts)
+    |> Vl.mark(:rect)
+    |> Vl.encode_field(:x, x, type: :quantitative, bin: true)
+    |> Vl.encode_field(:y, y, type: :quantitative, bin: true)
+    |> color_fn.()
   end
 
   ## Composite plots
