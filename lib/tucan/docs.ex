@@ -15,7 +15,7 @@ defmodule Tucan.Docs do
 
     """
     ```elixir
-    #{code}
+    #{Code.format_string!(code)}
     ```
 
     ```vega-lite
