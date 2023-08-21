@@ -82,8 +82,33 @@ defmodule Tucan do
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
+  histogram_schema = [
+    relative: [
+      type: :boolean,
+      doc: """
+      If set a relative frequency histogram is generated.
+      """,
+      default: false
+    ],
+    orient: [
+      type: {:in, [:horizontal, :vertical]},
+      doc: """
+      Histogram's orientation. It specifies the axis along which the field values
+      are plotted.
+      """,
+      default: :horizontal
+    ],
+    color_by: [
+      type: :string,
+      doc: """
+      The field to group observations by. This will used for coloring the histogram
+      if set.
+      """
+    ]
+  ]
+
   @histogram_opts Tucan.Options.options([:global, :general_mark], [:fill_opacity])
-  @histogram_schema Tucan.Options.schema!(@histogram_opts)
+  @histogram_schema Tucan.Options.schema!(@histogram_opts, histogram_schema)
 
   @doc """
   Plots a histogram.
@@ -96,8 +121,45 @@ defmodule Tucan do
 
   ## Examples
 
+  Histogram of `Horsepower`
+
   ```vega-lite
-  Tucan.histogram(:iris, "petal_width")
+  Tucan.histogram(:cars, "Horsepower")
+  ```
+
+  You can flip the plot by setting the `:orient` option to `:vertical`:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", orient: :vertical)
+  ```
+
+  By setting the `:relative` flag you can get a relative frequency histogram:
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", relative: true)
+  ```
+
+  You can draw multiple histograms by grouping the observations by a second
+  *categorical* variable:
+
+
+  ```vega-lite
+  Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
+  ```
+
+  or you can facet it, in order to make the histograms more clear:
+
+
+  ```vega-lite
+  histograms =
+    Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
+    |> Tucan.facet_by(:column, "Origin")
+
+  relative_histograms =
+    Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin")
+    |> Tucan.facet_by(:column, "Origin")
+
+  VegaLite.concat(VegaLite.new(), [histograms, relative_histograms], :vertical)
   ```
   """
   @doc section: :plots
@@ -106,9 +168,54 @@ defmodule Tucan do
 
     plotdata
     |> new()
+    |> bin_count_transform(field, opts)
+    |> maybe_add_relative_frequency_transform(field, opts, opts[:relative])
     |> Vl.mark(:bar, fill_opacity: opts[:fill_opacity], color: nil)
-    |> Vl.encode_field(:x, field, bin: [step: 0.5])
-    |> Vl.encode_field(:y, field, aggregate: "count")
+    |> Vl.encode_field(:x, "bin_#{field}", bin: [binned: true], title: field)
+    |> Vl.encode_field(:x2, "bin_#{field}_end")
+    |> histogram_positional_encodings(field, opts, opts[:relative])
+    |> maybe_color_by(opts[:color_by])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
+  defp bin_count_transform(vl, field, opts) do
+    groupby =
+      case opts[:color_by] do
+        nil -> ["bin_#{field}", "bin_#{field}_end"]
+        color_by -> ["bin_#{field}", "bin_#{field}_end", color_by]
+      end
+
+    vl
+    |> Vl.transform(bin: true, field: field, as: "bin_#{field}")
+    |> Vl.transform(
+      aggregate: [[op: :count, as: "count_#{field}"]],
+      groupby: groupby
+    )
+  end
+
+  defp maybe_add_relative_frequency_transform(vl, _field, _opts, false), do: vl
+
+  defp maybe_add_relative_frequency_transform(vl, field, _opts, true) do
+    vl
+    |> Vl.transform(
+      joinaggregate: [[op: :sum, field: "count_#{field}", as: "total_count_#{field}"]]
+    )
+    |> Vl.transform(
+      calculate: "datum.count_#{field}/datum.total_count_#{field}",
+      as: "percent_#{field}"
+    )
+  end
+
+  defp histogram_positional_encodings(vl, field, _opts, false) do
+    Vl.encode_field(vl, :y, "count_#{field}", type: :quantitative)
+  end
+
+  defp histogram_positional_encodings(vl, field, _opts, true) do
+    Vl.encode_field(vl, :y, "percent_#{field}",
+      type: :quantitative,
+      axis: [format: ".1~%"],
+      title: "Relative Frequency"
+    )
   end
 
   @density_opts Tucan.Options.options([:global, :general_mark, :density_transform], [
@@ -284,7 +391,7 @@ defmodule Tucan do
     |> Vl.encode_field(:y, field, aggregate: "count")
     |> maybe_color_by(opts[:color_by])
     |> maybe_x_offset(opts[:color_by], opts[:stacked])
-    |> maybe_flip_axes(opts[:orient])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
   defp maybe_color_by(vl, nil), do: vl
@@ -682,7 +789,7 @@ defmodule Tucan do
       _other ->
         plot
     end
-    |> maybe_flip_axes(opts[:orient])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
   defp maybe_encode_field(vl, channel, condition_fn, field, opts) do
@@ -692,20 +799,6 @@ defmodule Tucan do
 
       true ->
         Vl.encode_field(vl, channel, field, opts)
-    end
-  end
-
-  defp maybe_encode(vl, channel, condition_fn, opts) do
-    case condition_fn.() do
-      false ->
-        vl
-
-      true ->
-        if is_list(opts) do
-          Vl.encode(vl, channel, opts)
-        else
-          VegaLiteUtils.encode_raw(vl, channel, opts)
-        end
     end
   end
 
@@ -1024,19 +1117,25 @@ defmodule Tucan do
   @doc section: :utilities
   @spec flip_axes(vl :: VegaLite.t()) :: VegaLite.t()
   def flip_axes(vl) when is_struct(vl, VegaLite) do
-    x = VegaLiteUtils.encoding_options(vl, :x)
-    y = VegaLiteUtils.encoding_options(vl, :y)
-    x_offset = VegaLiteUtils.encoding_options(vl, :x_offset)
-    y_offset = VegaLiteUtils.encoding_options(vl, :y_offset)
+    axis_pairs = [{:x, :y}, {:x2, :y2}, {:x_offset, :y_offset}]
 
-    vl
-    |> VegaLiteUtils.drop_encoding_channels([:x, :y, :x_offset, :y_offset])
-    |> maybe_encode(:x, fn -> !is_nil(y) end, y)
-    |> maybe_encode(:x_offset, fn -> !is_nil(y_offset) end, y_offset)
-    |> maybe_encode(:y, fn -> !is_nil(x) end, x)
-    |> maybe_encode(:y_offset, fn -> !is_nil(x_offset) end, x_offset)
+    new_vl = VegaLiteUtils.drop_encoding_channels(vl, [:x, :y, :x2, :y2, :x_offset, :y_offset])
+
+    Enum.reduce(axis_pairs, new_vl, fn {left, right}, new_vl ->
+      new_vl
+      |> copy_encoding(left, right, vl)
+      |> copy_encoding(right, left, vl)
+    end)
   end
 
-  defp maybe_flip_axes(vl, :horizontal), do: vl
-  defp maybe_flip_axes(vl, :vertical), do: flip_axes(vl)
+  # copies to left channel, the right channel options from the vl_origing specification
+  defp copy_encoding(vl, left, right, vl_origin) do
+    case VegaLiteUtils.has_encoding?(vl_origin, left) do
+      false -> vl
+      true -> VegaLiteUtils.encode_raw(vl, right, VegaLiteUtils.encoding_options(vl_origin, left))
+    end
+  end
+
+  defp maybe_flip_axes(vl, false), do: vl
+  defp maybe_flip_axes(vl, true), do: flip_axes(vl)
 end
