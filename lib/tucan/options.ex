@@ -169,7 +169,22 @@ defmodule Tucan.Options do
     color_by: [
       type: :string,
       doc: """
-      If set a column that will be used for coloring the data.
+      If set a data field that will be used for coloring the data. It is considered
+      `:nominal` by default.
+      """
+    ],
+    shape_by: [
+      type: :string,
+      doc: """
+      If set a data field that will be used for setting the shape of the data points.
+      It is considered `:nominal` by default.
+      """
+    ],
+    size_by: [
+      type: :string,
+      doc: """
+      If set a data field that will be used for controlling the size of the data points.
+      It is considered `:quantitative` by default.
       """
     ],
     orient: [

@@ -643,11 +643,58 @@ defmodule Tucan do
   defp maybe_x_offset(vl, _field, true), do: vl
   defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
 
-  @scatter_opts Tucan.Options.options([:global, :general_mark])
-  @scatter_schema Tucan.Options.schema!(@scatter_opts)
+  @scatter_opts Tucan.Options.take!([
+                  @global_opts,
+                  @global_mark_opts,
+                  :color_by,
+                  :shape_by,
+                  :size_by
+                ])
+  @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
 
   @doc """
-  A scatter plot.
+  Returns the specification of a scatter plot with possibility of several semantic
+  groupings.
+
+  Both `x` and `y` must be `:quantitative`.
+
+  > #### Semantic groupings {: .tip}
+  >   
+  > The relationship between `x` and `y` can be shown for different subsets of the
+  > data using the `color_by`, `size_by` and `shape_by` parameters. This is equivalent
+  > to calling the corresponding functions after a `scatter/4` call.
+  > 
+  > These parameters control what visual semantics are used to identify the different
+  > subsets. It is possible to show up to three dimensions independently by using all
+  > three semantic types, but this style of plot can be hard to interpret and is often
+  > ineffective.
+  >
+  > ```vega-lite
+  > Tucan.scatter(:tips, "total_bill", "tip",
+  >   color_by: "day",
+  >   shape_by: "sex",
+  >   size_by: "size"
+  > )
+  > ```
+  > 
+  > The above is equivalent to calling:
+  >
+  > ```elixir
+  > Tucan.scatter(:tips, "total_bill", "tip")
+  > |> Tucan.color_by("day", type: :nominal)
+  > |> Tucan.shape_by("sex", type: :nominal)
+  > |> Tucan.size_by("size", type: :quantitative)
+  > ```
+  > 
+  > Using redundant semantics (i.e. both color and shape for the same variable) can be
+  > helpful for making graphics more accessible.
+  >
+  > ```vega-lite
+  > Tucan.scatter(:tips, "total_bill", "tip",
+  >   color_by: "day",
+  >   shape_by: "day"
+  > )
+  > ```
 
   ## Options
 
@@ -736,6 +783,15 @@ defmodule Tucan do
     |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
     |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
     |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by],
+      type: :nominal
+    )
+    |> maybe_encode_field(:shape, fn -> opts[:shape_by] != nil end, opts[:shape_by],
+      type: :nominal
+    )
+    |> maybe_encode_field(:size, fn -> opts[:size_by] != nil end, opts[:size_by],
+      type: :quantitative
+    )
   end
 
   @doc """

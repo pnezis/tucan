@@ -7,6 +7,7 @@ defmodule TucanTest do
   @dataset "dataset.csv"
 
   @cars_dataset Tucan.Datasets.dataset(:cars)
+  @iris_dataset Tucan.Datasets.dataset(:iris)
 
   describe "histogram/3" do
     test "with default options" do
@@ -161,6 +162,37 @@ defmodule TucanTest do
                stacked: true
              ) ==
                expected
+    end
+  end
+
+  describe "scatter/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:point)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.scatter(@iris_dataset, "petal_width", "petal_length") == expected
+    end
+
+    test "with color shape and size groupings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:point)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:color, "species", type: :nominal)
+        |> Vl.encode_field(:shape, "species", type: :nominal)
+        |> Vl.encode_field(:size, "sepal_length", type: :quantitative)
+
+      assert Tucan.scatter(@iris_dataset, "petal_width", "petal_length",
+               color_by: "species",
+               shape_by: "species",
+               size_by: "sepal_length"
+             ) == expected
     end
   end
 
