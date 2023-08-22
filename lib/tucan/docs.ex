@@ -1,7 +1,5 @@
 defmodule Tucan.Docs do
-  @moduledoc """
-  Helper doc utilities
-  """
+  @moduledoc false
 
   @doc """
   Renders the original code and the vega-lite json spec

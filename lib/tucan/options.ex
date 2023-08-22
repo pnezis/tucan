@@ -1,4 +1,6 @@
 defmodule Tucan.Options do
+  @moduledoc false
+
   # TODO: cleanup sections ordering & descriptions
   @sections [
     unknown: [
