@@ -6,10 +6,10 @@ defmodule Tucan.Axes do
 
   @type axis :: :x | :y
 
+  @type scale :: :linear | :log | :symlog | :pow | :sqrt
+
   @doc """
   Sets the x axis title.
-
-  This is an alias for `set_title/3`.
   """
   @spec set_x_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
   def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
@@ -18,8 +18,6 @@ defmodule Tucan.Axes do
 
   @doc """
   Sets the y axis title.
-
-  This is an alias for `set_title/3`.
   """
   @spec set_y_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
   def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
@@ -34,6 +32,23 @@ defmodule Tucan.Axes do
   @spec set_title(vl :: VegaLite.t(), axis :: axis(), title :: binary()) :: VegaLite.t()
   def set_title(vl, axis, title) do
     put_axis_options(vl, axis, title: title)
+  end
+
+  @doc """
+  Sets the x axis scale.
+  """
+  # TODO validate the scale based on the encoding type
+  @spec set_x_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
+  def set_x_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
+    VegaLiteUtils.put_encoding_options(vl, :x, scale: [type: scale])
+  end
+
+  @doc """
+  Sets the x axis scale.
+  """
+  @spec set_y_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
+  def set_y_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
+    VegaLiteUtils.put_encoding_options(vl, :y, scale: [type: scale])
   end
 
   def put_axis_options(vl, encoding, options) do

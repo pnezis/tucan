@@ -28,4 +28,30 @@ defmodule Tucan.AxesTest do
       assert get_in(vl.spec, ["encoding", "y", "axis", "title"]) == "y title"
     end
   end
+
+  describe "set_x/y_scale" do
+    test "raises if encoding does not exist" do
+      vl = Vl.new()
+
+      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+        Tucan.Axes.set_x_scale(vl, :log)
+      end
+
+      assert_raise ArgumentError, "encoding for channel :y not found in the spec", fn ->
+        Tucan.Axes.set_y_scale(vl, :log)
+      end
+    end
+
+    test "sets the scales" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Tucan.Axes.set_x_scale(:log)
+        |> Tucan.Axes.set_y_scale(:sqrt)
+
+      assert get_in(vl.spec, ["encoding", "x", "scale", "type"]) == "log"
+      assert get_in(vl.spec, ["encoding", "y", "scale", "type"]) == "sqrt"
+    end
+  end
 end
