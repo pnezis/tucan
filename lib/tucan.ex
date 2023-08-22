@@ -180,17 +180,6 @@ defmodule Tucan do
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
-  defp take_options(opts, schema, dest) do
-    dest_opts =
-      schema
-      |> Enum.filter(fn {_key, opts} ->
-        opts[:dest] == dest
-      end)
-      |> Keyword.keys()
-
-    Keyword.take(opts, dest_opts)
-  end
-
   defp bin_count_transform(vl, field, opts) do
     bin_opts =
       case take_options(opts, @histogram_opts, :bin) do
@@ -249,57 +238,6 @@ defmodule Tucan do
           stack: opts[:stacked]
         )
     end
-  end
-
-  @lineplot_opts Tucan.Options.options([:global, :general_mark])
-  @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
-  Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
-
-  @doc """
-  Draw a line plot between `x` and `y`
-
-  ## Options
-
-  #{Tucan.Options.docs(@lineplot_schema)}
-
-  ## Examples
-
-  ```vega-lite
-  Tucan.lineplot(:flights, "year", "passengers")
-  ```
-
-  ```vega-lite
-  months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ]
-
-  Tucan.lineplot(:flights, "year", "passengers")
-  |> Tucan.color_by("month", sort: months, type: :nominal)
-  |> Tucan.stroke_dash_by("month", sort: months)
-  ```
-  """
-  @doc section: :plots
-  @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
-          VegaLite.t()
-  def lineplot(plotdata, x, y, opts \\ []) do
-    _opts = NimbleOptions.validate!(opts, @lineplot_schema)
-
-    plotdata
-    |> new()
-    |> Vl.mark(:line)
-    |> Vl.encode_field(:x, x, type: :temporal)
-    |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
   @density_opts Tucan.Options.options([:global, :general_mark, :density_transform], [
@@ -406,311 +344,6 @@ defmodule Tucan do
       true -> Keyword.put(opts, key, value)
       false -> opts
     end
-  end
-
-  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by, :orient])
-  @countplot_schema Tucan.Options.schema!(@countplot_opts)
-
-  @doc """
-  Plot the counts of observations for a categorical variable.
-
-  Takes a categorical `field` as input and generates a count plot
-  visualization. By default the counts are plotted on the *y-axis*
-  and the categorical `field` across the *x-axis*.
-
-  This is similar to `histogram/3` but specifically for a categorical
-  variable.
-
-  > #### What is a countplot? {: .tip}
-  > 
-  > A countplot is a type of bar chart used in data visualization to
-  > display the **frequency of occurrences of categorical data**. It is
-  > particularly useful for visualizing the *distribution* and *frequency*
-  > of different categories within a dataset.
-  >
-  > In a countplot, each unique category is represented by a bar, and the
-  > height of the bar corresponds to the number of occurrences of that
-  > category in the data.
-
-  ## Options
-
-  #{Tucan.Options.docs(@countplot_schema)}
-
-  ## Examples
-
-  We will use the `:titanic` dataset on the following examples. We can
-  plot the number of passengers by ticket class:
-
-  ```vega-lite
-  Tucan.countplot(:titanic, "Pclass")
-  ```
-
-  You can make the bars horizontal by setting the `:orient` option:
-
-  ```vega-lite
-  Tucan.countplot(:titanic, "Pclass", orient: :vertical)
-  ```
-
-  You can set `:color_by` to group it by a second variable:
-
-  ```vega-lite
-  Tucan.countplot(:titanic, "Pclass", color_by: "Survived")
-  ```
-
-  By default the bars are stacked. You can unstack them by setting the
-  `:stacked` option:
-
-  ```vega-lite
-  Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
-  ```
-  """
-  @doc section: :plots
-  def countplot(plotdata, field, opts \\ []) do
-    opts = NimbleOptions.validate!(opts, @countplot_schema)
-
-    plotdata
-    |> new()
-    |> Vl.mark(:bar, fill_opacity: 0.5)
-    |> Vl.encode_field(:x, field, type: :nominal)
-    |> Vl.encode_field(:y, field, aggregate: "count")
-    |> maybe_color_by(opts[:color_by])
-    |> maybe_x_offset(opts[:color_by], opts[:stacked])
-    |> maybe_flip_axes(opts[:orient] == :vertical)
-  end
-
-  defp maybe_color_by(vl, nil), do: vl
-  defp maybe_color_by(vl, field), do: color_by(vl, field)
-
-  defp maybe_x_offset(vl, nil, _stacked), do: vl
-  defp maybe_x_offset(vl, _field, true), do: vl
-  defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
-
-  @scatter_opts Tucan.Options.options([:global, :general_mark])
-  @scatter_schema Tucan.Options.schema!(@scatter_opts)
-
-  @doc """
-  A scatter plot.
-
-  ## Options
-
-  #{Tucan.Options.docs(@scatter_schema)}
-
-  ## Examples
-
-  > We will use the `:tips` dataset thoughout the following examples.
-
-  Drawing a scatter plot betwen two variables:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip")
-  ```
-
-  You can combine it with `color_by/3` to color code the points:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip")
-  |> Tucan.color_by("time")
-  ```
-
-  Assigning the same variable to `shape_by/3` will also vary the markers and create a
-  more accessible plot:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
-  |> Tucan.color_by("time")
-  |> Tucan.shape_by("time")
-  ```
-
-  Assigning `color_by/3` and `shape_by/3` to different variables will vary colors and
-  markers independently:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
-  |> Tucan.color_by("day")
-  |> Tucan.shape_by("time")
-  ```
-
-  You can also color the points by a numeric variable, the semantic mapping will be
-  quantitative and will use a different default palette:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
-  |> Tucan.color_by("size", type: :quantitative)
-  ```
-
-  A numeric variable can also be assigned to size to apply a semantic mapping to the
-  areas of the points:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 400, tooltip: :data)
-  |> Tucan.color_by("size", type: :quantitative)
-  |> Tucan.size_by("size", type: :quantitative)
-  ```
-
-  You can also combine it with `facet_by/3` in order to group within additional
-  categorical variables, and plot them across multiple subplots.
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
-  |> Tucan.color_by("day")
-  |> Tucan.shape_by("day")
-  |> Tucan.facet_by(:column, "time")
-  ```
-
-  You can also apply faceting on more than one variables, both horizontally and
-  vertically:
-
-  ```vega-lite
-  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
-  |> Tucan.color_by("day")
-  |> Tucan.shape_by("day")
-  |> Tucan.size_by("size")
-  |> Tucan.facet_by(:column, "time")
-  |> Tucan.facet_by(:row, "sex")
-  ```
-  """
-  @doc section: :plots
-  def scatter(plotdata, x, y, opts \\ []) do
-    opts = NimbleOptions.validate!(opts, @scatter_schema)
-
-    plotdata
-    |> new(opts)
-    |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
-    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
-    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
-  end
-
-  @doc """
-  A bubble plot is a scatter plot with a third parameter defining the size of the dots required
-  by default.
-
-  All `x`, `y` and `size` must be quantitative fields of the dataset.
-
-  See also `scatter/4`.
-
-  ## Examples
-
-  ```vega-lite
-  Tucan.bubble(:gapminder, "income", "health", "population", width: 400)
-  |> Tucan.Axes.set_x_title("Gdp per Capita")
-  |> Tucan.Axes.set_y_title("Life expectancy")
-  ```
-
-  You could use a fourth variable to color the graph and set `tooltip` to `:data` in
-  order to make it interactive:
-
-  ```vega-lite
-  Tucan.bubble(:gapminder, "income", "health", "population", width: 400, tooltip: :data)
-  |> Tucan.color_by("region")
-  |> Tucan.Axes.set_x_title("Gdp per Capita")
-  |> Tucan.Axes.set_y_title("Life expectancy")
-  ```
-  """
-  @doc section: :plots
-  @spec bubble(
-          plotdata :: plotdata(),
-          x :: field(),
-          y :: field(),
-          size :: field(),
-          opts :: keyword()
-        ) :: VegaLite.t()
-  def bubble(plotdata, x, y, size, opts \\ []) do
-    # TODO: validate only bubble options here
-    # opts = NimbleOptions.validate!(opts, @scatter_schema)
-
-    scatter(plotdata, x, y, opts)
-    |> size_by(size, type: :quantitative)
-  end
-
-  @doc """
-  Draws a pie chart.
-
-  A pie chart is a circle divided into sectors that each represents a proportion
-  of the whole. The `field` specifies the data column that contains the proportions
-  of each category. The chart will be colored by the `caregory` field.
-
-  > #### Avoid using pie charts {: .warning}
-  >
-  > Despite it's popularity pie charts should rarely be used. Pie charts are best
-  > suited for displaying a small number of categories and can make it challenging
-  > to accurately compare data. They rely on angle perception, which can lead to
-  > misinterpretation, and lack the precision offered by other charts like bar
-  > charts or line charts.
-  >
-  > Instead, opt for alternatives such as bar charts for straightforward comparisons,
-  > stacked area charts for cumulative effects.
-  > 
-  > The following example showcases the limitations of a pie chart, compared to a
-  > bar chart:
-  >
-  > ```vega-lite
-  > alias VegaLite, as: Vl
-  >
-  > data = [
-  >   %{value: 30, category: "A"},
-  >   %{value: 33, category: "B"},
-  >   %{value: 38, category: "C"}
-  > ]
-  > 
-  > pie = Tucan.pie(Vl.new(), "value", "category")
-  > 
-  > # TODO: replace with the bar call once implemented
-  > bar =
-  >   Vl.new()
-  >   |> Tucan.new()
-  >   |> Vl.mark(:bar)
-  >   |> Vl.encode_field(:y, "category")
-  >   |> Vl.encode_field(:x, "value", type: :quantitative)
-  >
-  > Vl.new()
-  > |> Vl.data_from_values(data)
-  > |> Vl.concat([pie, bar], :horizontal)
-  > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
-  > ```
-
-  ## Examples
-
-  ```vega-lite
-  Tucan.pie(:barley, "yield", "site", aggregate: "sum", tooltip: true)
-  |> Tucan.facet_by(:column, "year", type: :nominal)
-  ```
-  """
-  @doc section: :plots
-  def pie(plotdata, field, category, opts \\ []) do
-    # opts = NimbleOptions.validate!(opts, @scatter_schema)
-
-    theta_opts =
-      Keyword.take(opts, [:aggregate])
-      |> Keyword.merge(type: :quantitative)
-
-    plotdata
-    |> new(opts)
-    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip, :inner_radius]))
-    |> Vl.encode_field(:theta, field, theta_opts)
-    |> color_by(category)
-  end
-
-  @doc """
-  Draw a donut chart.
-
-  A donut chart is a circular visualization that resembles a pie chart but
-  features a hole at its center. This central hole creates a _donut_ shape,
-  distinguishing it from traditional pie charts. 
-
-  This is a wrapper around `pie/4` that sets by default the `:inner_radius`.
-
-  ## Examples
-
-  ```vega-lite
-  Tucan.donut(:barley, "yield", "site", aggregate: "sum", tooltip: true)
-  |> Tucan.facet_by(:column, "year", type: :nominal)
-  ```
-  """
-  @doc section: :plots
-  def donut(plotdata, field, category, opts \\ []) do
-    opts = Keyword.put_new(opts, :inner_radius, 50)
-
-    pie(plotdata, field, category, opts)
   end
 
   stripplot_schema = [
@@ -931,6 +564,362 @@ defmodule Tucan do
     |> Vl.encode_field(:x, x, type: :quantitative, bin: true)
     |> Vl.encode_field(:y, y, type: :quantitative, bin: true)
     |> color_fn.()
+  end
+
+  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by, :orient])
+  @countplot_schema Tucan.Options.schema!(@countplot_opts)
+
+  @doc """
+  Plot the counts of observations for a categorical variable.
+
+  Takes a categorical `field` as input and generates a count plot
+  visualization. By default the counts are plotted on the *y-axis*
+  and the categorical `field` across the *x-axis*.
+
+  This is similar to `histogram/3` but specifically for a categorical
+  variable.
+
+  > #### What is a countplot? {: .tip}
+  > 
+  > A countplot is a type of bar chart used in data visualization to
+  > display the **frequency of occurrences of categorical data**. It is
+  > particularly useful for visualizing the *distribution* and *frequency*
+  > of different categories within a dataset.
+  >
+  > In a countplot, each unique category is represented by a bar, and the
+  > height of the bar corresponds to the number of occurrences of that
+  > category in the data.
+
+  ## Options
+
+  #{Tucan.Options.docs(@countplot_schema)}
+
+  ## Examples
+
+  We will use the `:titanic` dataset on the following examples. We can
+  plot the number of passengers by ticket class:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass")
+  ```
+
+  You can make the bars horizontal by setting the `:orient` option:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", orient: :vertical)
+  ```
+
+  You can set `:color_by` to group it by a second variable:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", color_by: "Survived")
+  ```
+
+  By default the bars are stacked. You can unstack them by setting the
+  `:stacked` option:
+
+  ```vega-lite
+  Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
+  ```
+  """
+  @doc section: :plots
+  def countplot(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @countplot_schema)
+
+    plotdata
+    |> new()
+    |> Vl.mark(:bar, fill_opacity: 0.5)
+    |> Vl.encode_field(:x, field, type: :nominal)
+    |> Vl.encode_field(:y, field, aggregate: "count")
+    |> maybe_color_by(opts[:color_by])
+    |> maybe_x_offset(opts[:color_by], opts[:stacked])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
+  defp maybe_color_by(vl, nil), do: vl
+  defp maybe_color_by(vl, field), do: color_by(vl, field)
+
+  defp maybe_x_offset(vl, nil, _stacked), do: vl
+  defp maybe_x_offset(vl, _field, true), do: vl
+  defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
+
+  @scatter_opts Tucan.Options.options([:global, :general_mark])
+  @scatter_schema Tucan.Options.schema!(@scatter_opts)
+
+  @doc """
+  A scatter plot.
+
+  ## Options
+
+  #{Tucan.Options.docs(@scatter_schema)}
+
+  ## Examples
+
+  > We will use the `:tips` dataset thoughout the following examples.
+
+  Drawing a scatter plot betwen two variables:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip")
+  ```
+
+  You can combine it with `color_by/3` to color code the points:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip")
+  |> Tucan.color_by("time")
+  ```
+
+  Assigning the same variable to `shape_by/3` will also vary the markers and create a
+  more accessible plot:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("time")
+  |> Tucan.shape_by("time")
+  ```
+
+  Assigning `color_by/3` and `shape_by/3` to different variables will vary colors and
+  markers independently:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("time")
+  ```
+
+  You can also color the points by a numeric variable, the semantic mapping will be
+  quantitative and will use a different default palette:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400)
+  |> Tucan.color_by("size", type: :quantitative)
+  ```
+
+  A numeric variable can also be assigned to size to apply a semantic mapping to the
+  areas of the points:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 400, tooltip: :data)
+  |> Tucan.color_by("size", type: :quantitative)
+  |> Tucan.size_by("size", type: :quantitative)
+  ```
+
+  You can also combine it with `facet_by/3` in order to group within additional
+  categorical variables, and plot them across multiple subplots.
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("day")
+  |> Tucan.facet_by(:column, "time")
+  ```
+
+  You can also apply faceting on more than one variables, both horizontally and
+  vertically:
+
+  ```vega-lite
+  Tucan.scatter(:tips, "total_bill", "tip", width: 300)
+  |> Tucan.color_by("day")
+  |> Tucan.shape_by("day")
+  |> Tucan.size_by("size")
+  |> Tucan.facet_by(:column, "time")
+  |> Tucan.facet_by(:row, "sex")
+  ```
+  """
+  @doc section: :plots
+  def scatter(plotdata, x, y, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    plotdata
+    |> new(opts)
+    |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
+    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
+    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
+  end
+
+  @doc """
+  A bubble plot is a scatter plot with a third parameter defining the size of the dots required
+  by default.
+
+  All `x`, `y` and `size` must be quantitative fields of the dataset.
+
+  See also `scatter/4`.
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.bubble(:gapminder, "income", "health", "population", width: 400)
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
+  ```
+
+  You could use a fourth variable to color the graph and set `tooltip` to `:data` in
+  order to make it interactive:
+
+  ```vega-lite
+  Tucan.bubble(:gapminder, "income", "health", "population", width: 400, tooltip: :data)
+  |> Tucan.color_by("region")
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
+  ```
+  """
+  @doc section: :plots
+  @spec bubble(
+          plotdata :: plotdata(),
+          x :: field(),
+          y :: field(),
+          size :: field(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def bubble(plotdata, x, y, size, opts \\ []) do
+    # TODO: validate only bubble options here
+    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    scatter(plotdata, x, y, opts)
+    |> size_by(size, type: :quantitative)
+  end
+
+  @lineplot_opts Tucan.Options.options([:global, :general_mark])
+  @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
+  Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
+
+  @doc """
+  Draw a line plot between `x` and `y`
+
+  ## Options
+
+  #{Tucan.Options.docs(@lineplot_schema)}
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.lineplot(:flights, "year", "passengers")
+  ```
+
+  ```vega-lite
+  months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ]
+
+  Tucan.lineplot(:flights, "year", "passengers")
+  |> Tucan.color_by("month", sort: months, type: :nominal)
+  |> Tucan.stroke_dash_by("month", sort: months)
+  ```
+  """
+  @doc section: :plots
+  @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
+          VegaLite.t()
+  def lineplot(plotdata, x, y, opts \\ []) do
+    _opts = NimbleOptions.validate!(opts, @lineplot_schema)
+
+    plotdata
+    |> new()
+    |> Vl.mark(:line)
+    |> Vl.encode_field(:x, x, type: :temporal)
+    |> Vl.encode_field(:y, y, type: :quantitative)
+  end
+
+  @doc """
+  Draws a pie chart.
+
+  A pie chart is a circle divided into sectors that each represents a proportion
+  of the whole. The `field` specifies the data column that contains the proportions
+  of each category. The chart will be colored by the `caregory` field.
+
+  > #### Avoid using pie charts {: .warning}
+  >
+  > Despite it's popularity pie charts should rarely be used. Pie charts are best
+  > suited for displaying a small number of categories and can make it challenging
+  > to accurately compare data. They rely on angle perception, which can lead to
+  > misinterpretation, and lack the precision offered by other charts like bar
+  > charts or line charts.
+  >
+  > Instead, opt for alternatives such as bar charts for straightforward comparisons,
+  > stacked area charts for cumulative effects.
+  > 
+  > The following example showcases the limitations of a pie chart, compared to a
+  > bar chart:
+  >
+  > ```vega-lite
+  > alias VegaLite, as: Vl
+  >
+  > data = [
+  >   %{value: 30, category: "A"},
+  >   %{value: 33, category: "B"},
+  >   %{value: 38, category: "C"}
+  > ]
+  > 
+  > pie = Tucan.pie(Vl.new(), "value", "category")
+  > 
+  > # TODO: replace with the bar call once implemented
+  > bar =
+  >   Vl.new()
+  >   |> Tucan.new()
+  >   |> Vl.mark(:bar)
+  >   |> Vl.encode_field(:y, "category")
+  >   |> Vl.encode_field(:x, "value", type: :quantitative)
+  >
+  > Vl.new()
+  > |> Vl.data_from_values(data)
+  > |> Vl.concat([pie, bar], :horizontal)
+  > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
+  > ```
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.pie(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  |> Tucan.facet_by(:column, "year", type: :nominal)
+  ```
+  """
+  @doc section: :plots
+  def pie(plotdata, field, category, opts \\ []) do
+    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    theta_opts =
+      Keyword.take(opts, [:aggregate])
+      |> Keyword.merge(type: :quantitative)
+
+    plotdata
+    |> new(opts)
+    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip, :inner_radius]))
+    |> Vl.encode_field(:theta, field, theta_opts)
+    |> color_by(category)
+  end
+
+  @doc """
+  Draw a donut chart.
+
+  A donut chart is a circular visualization that resembles a pie chart but
+  features a hole at its center. This central hole creates a _donut_ shape,
+  distinguishing it from traditional pie charts. 
+
+  This is a wrapper around `pie/4` that sets by default the `:inner_radius`.
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.donut(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  |> Tucan.facet_by(:column, "year", type: :nominal)
+  ```
+  """
+  @doc section: :plots
+  def donut(plotdata, field, category, opts \\ []) do
+    opts = Keyword.put_new(opts, :inner_radius, 50)
+
+    pie(plotdata, field, category, opts)
   end
 
   ## Composite plots
@@ -1222,6 +1211,17 @@ defmodule Tucan do
 
   defp maybe_flip_axes(vl, false), do: vl
   defp maybe_flip_axes(vl, true), do: flip_axes(vl)
+
+  defp take_options(opts, schema, dest) do
+    dest_opts =
+      schema
+      |> Enum.filter(fn {_key, opts} ->
+        opts[:dest] == dest
+      end)
+      |> Keyword.keys()
+
+    Keyword.take(opts, dest_opts)
+  end
 
   @doc false
   def __schema__(plot), do: Keyword.fetch!(@schemas, plot)
