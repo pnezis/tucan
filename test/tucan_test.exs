@@ -196,6 +196,37 @@ defmodule TucanTest do
     end
   end
 
+  describe "bubble/5" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:circle)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:size, "sepal_length", type: :quantitative)
+
+      assert Tucan.bubble(@iris_dataset, "petal_width", "petal_length", "sepal_length") ==
+               expected
+    end
+
+    test "with color_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:circle)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:size, "sepal_length", type: :quantitative)
+        |> Vl.encode_field(:color, "species", type: :nominal)
+
+      assert Tucan.bubble(@iris_dataset, "petal_width", "petal_length", "sepal_length",
+               color_by: "species"
+             ) ==
+               expected
+    end
+  end
+
   describe "pie/4" do
     @pie_data [
       %{category: "A", value: 30},

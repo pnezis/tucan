@@ -794,13 +794,25 @@ defmodule Tucan do
     )
   end
 
-  @doc """
-  A bubble plot is a scatter plot with a third parameter defining the size of the dots required
-  by default.
+  @bubble_opts Tucan.Options.take!([
+                 @global_opts,
+                 @global_mark_opts,
+                 :color_by
+               ])
+  @bubble_schema Tucan.Options.to_nimble_schema!(@bubble_opts)
 
-  All `x`, `y` and `size` must be quantitative fields of the dataset.
+  @doc """
+  Returns the specification of a bubble plot.
+
+  A bubble plot is a scatter plot with a third parameter defining the size of the dots.
+
+  All `x`, `y` and `size` must be numerical data fields.
 
   See also `scatter/4`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@bubble_schema)}
 
   ## Examples
 
@@ -810,12 +822,11 @@ defmodule Tucan do
   |> Tucan.Axes.set_y_title("Life expectancy")
   ```
 
-  You could use a fourth variable to color the graph and set `tooltip` to `:data` in
-  order to make it interactive:
+  You could use a fourth variable to color the graph. As always you can set the `tooltip` in
+  order to make the plot interactive:
 
   ```vega-lite
-  Tucan.bubble(:gapminder, "income", "health", "population", width: 400, tooltip: :data)
-  |> Tucan.color_by("region")
+  Tucan.bubble(:gapminder, "income", "health", "population", color_by: "region", width: 400, tooltip: :data)
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
   ```
@@ -829,11 +840,17 @@ defmodule Tucan do
           opts :: keyword()
         ) :: VegaLite.t()
   def bubble(plotdata, x, y, size, opts \\ []) do
-    # TODO: validate only bubble options here
-    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+    opts = NimbleOptions.validate!(opts, @bubble_schema)
 
-    scatter(plotdata, x, y, opts)
-    |> size_by(size, type: :quantitative)
+    plotdata
+    |> new(opts)
+    |> Vl.mark(:circle, Keyword.take(opts, [:tooltip]))
+    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
+    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
+    |> Vl.encode_field(:size, size, type: :quantitative)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by],
+      type: :nominal
+    )
   end
 
   @lineplot_opts Tucan.Options.options([:global, :general_mark])
