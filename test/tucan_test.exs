@@ -395,7 +395,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_values(@pie_data)
-        |> Vl.mark(:arc)
+        |> Vl.mark(:arc, fill_opacity: 0.5)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
@@ -406,11 +406,12 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(Tucan.Datasets.dataset(:iris))
-        |> Vl.mark(:arc)
+        |> Vl.mark(:arc, fill_opacity: 0.8)
         |> Vl.encode_field(:theta, "sepal_length", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "species")
 
-      assert Tucan.pie(:iris, "sepal_length", "species", aggregate: :mean) == expected
+      assert Tucan.pie(:iris, "sepal_length", "species", aggregate: :mean, fill_opacity: 0.8) ==
+               expected
     end
   end
 
@@ -419,7 +420,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:arc, inner_radius: 50)
+        |> Vl.mark(:arc, inner_radius: 50, fill_opacity: 0.5)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
@@ -430,7 +431,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:arc, inner_radius: 20)
+        |> Vl.mark(:arc, inner_radius: 20, fill_opacity: 0.5)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 

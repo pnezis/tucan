@@ -1015,6 +1015,26 @@ defmodule Tucan do
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
 
+  pie_opts = [
+    inner_radius: [
+      type: :integer,
+      doc: """
+      The inner radius in pixels. `0` for a pie chart, `> 0` for a donut chart. If not
+      set it defaults to 0
+      """,
+      dest: :mark
+    ],
+    # TODO: custom validation with supported types
+    aggregate: [
+      type: :atom,
+      doc: "The statistic to use (if any) for aggregating values per pie slice (e.g. `:mean`).",
+      dest: :theta
+    ]
+  ]
+
+  @pie_opts Tucan.Options.take!([@global_opts, @global_mark_opts], pie_opts)
+  @pie_schema Tucan.Options.to_nimble_schema!(@pie_opts)
+
   @doc """
   Draws a pie chart.
 
@@ -1061,24 +1081,32 @@ defmodule Tucan do
   > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
   > ```
 
+  ## Options
+
+  #{Tucan.Options.docs(@pie_schema)}
+
   ## Examples
 
   ```vega-lite
-  Tucan.pie(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  Tucan.pie(:barley, "yield", "site", aggregate: :sum, tooltip: true)
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
   """
   @doc section: :plots
   def pie(plotdata, field, category, opts \\ []) do
-    # opts = NimbleOptions.validate!(opts, @scatter_schema)
+    opts = NimbleOptions.validate!(opts, @pie_schema)
+
+    spec_opts = take_options(opts, @pie_opts, :spec)
+    mark_opts = take_options(opts, @pie_opts, :mark)
 
     theta_opts =
-      Keyword.take(opts, [:aggregate])
+      opts
+      |> take_options(@pie_opts, :theta)
       |> Keyword.merge(type: :quantitative)
 
     plotdata
-    |> new(opts)
-    |> Vl.mark(:arc, Keyword.take(opts, [:tooltip, :inner_radius]))
+    |> new(spec_opts)
+    |> Vl.mark(:arc, mark_opts)
     |> Vl.encode_field(:theta, field, theta_opts)
     |> color_by(category)
   end
@@ -1092,10 +1120,14 @@ defmodule Tucan do
 
   This is a wrapper around `pie/4` that sets by default the `:inner_radius`.
 
+  ## Options
+
+  See `pie/4`
+
   ## Examples
 
   ```vega-lite
-  Tucan.donut(:barley, "yield", "site", aggregate: "sum", tooltip: true)
+  Tucan.donut(:barley, "yield", "site", aggregate: :sum, tooltip: true)
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
   """
