@@ -6,6 +6,164 @@ defmodule TucanTest do
 
   @dataset "dataset.csv"
 
+  @cars_dataset Tucan.Datasets.dataset(:cars)
+
+  describe "histogram/3" do
+    test "with default options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(bin: true, as: "bin_Horsepower", field: "Horsepower")
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end"]
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:x2, "bin_Horsepower_end")
+        |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower") == expected
+    end
+
+    test "with relative set to true" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(bin: true, as: "bin_Horsepower", field: "Horsepower")
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end"]
+        )
+        |> Vl.transform(
+          joinaggregate: [[as: "total_count_Horsepower", field: "count_Horsepower", op: "sum"]],
+          groupby: []
+        )
+        |> Vl.transform(
+          calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
+          as: "percent_Horsepower"
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:x2, "bin_Horsepower_end")
+        |> Vl.encode_field(:y, "percent_Horsepower",
+          stack: nil,
+          type: :quantitative,
+          title: "Relative Frequency",
+          axis: [format: ".1~%"]
+        )
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower", relative: true) == expected
+    end
+
+    test "with custom bin options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(
+          bin: [extent: [10, 100], maxbins: 30],
+          as: "bin_Horsepower",
+          field: "Horsepower"
+        )
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end"]
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:x2, "bin_Horsepower_end")
+        |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower", extent: [10, 100], maxbins: 30) ==
+               expected
+    end
+
+    test "with orient set to :vertical" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(bin: true, as: "bin_Horsepower", field: "Horsepower")
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end"]
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:y2, "bin_Horsepower_end")
+        |> Vl.encode_field(:x, "count_Horsepower", stack: nil, type: :quantitative)
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower", orient: :vertical) == expected
+    end
+
+    test "with groupby and relative" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(bin: true, as: "bin_Horsepower", field: "Horsepower")
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end", "Origin"]
+        )
+        |> Vl.transform(
+          joinaggregate: [[as: "total_count_Horsepower", field: "count_Horsepower", op: "sum"]],
+          groupby: ["Origin"]
+        )
+        |> Vl.transform(
+          calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
+          as: "percent_Horsepower"
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:x2, "bin_Horsepower_end")
+        |> Vl.encode_field(:y, "percent_Horsepower",
+          stack: nil,
+          type: :quantitative,
+          title: "Relative Frequency",
+          axis: [format: ".1~%"]
+        )
+        |> Vl.encode_field(:color, "Origin")
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower", relative: true, color_by: "Origin") ==
+               expected
+    end
+
+    test "with stacked set to true" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.transform(bin: true, as: "bin_Horsepower", field: "Horsepower")
+        |> Vl.transform(
+          aggregate: [[op: :count, as: "count_Horsepower"]],
+          groupby: ["bin_Horsepower", "bin_Horsepower_end", "Origin"]
+        )
+        |> Vl.transform(
+          joinaggregate: [[as: "total_count_Horsepower", field: "count_Horsepower", op: "sum"]],
+          groupby: ["Origin"]
+        )
+        |> Vl.transform(
+          calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
+          as: "percent_Horsepower"
+        )
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
+        |> Vl.encode_field(:x2, "bin_Horsepower_end")
+        |> Vl.encode_field(:y, "percent_Horsepower",
+          stack: true,
+          type: :quantitative,
+          title: "Relative Frequency",
+          axis: [format: ".1~%"]
+        )
+        |> Vl.encode_field(:color, "Origin")
+
+      assert Tucan.histogram(@cars_dataset, "Horsepower",
+               relative: true,
+               color_by: "Origin",
+               stacked: true
+             ) ==
+               expected
+    end
+  end
+
   describe "pie/4" do
     @pie_data [
       %{category: "A", value: 30},

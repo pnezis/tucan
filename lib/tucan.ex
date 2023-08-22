@@ -5,6 +5,8 @@ defmodule Tucan do
   alias Tucan.VegaLiteUtils
   alias VegaLite, as: Vl
 
+  Module.register_attribute(__MODULE__, :schemas, accumulate: true)
+
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
 
@@ -91,8 +93,10 @@ defmodule Tucan do
     ]
   ]
 
+  # TODO: maybe refactor with a macro
   @histogram_opts Tucan.Options.take!([@global_opts, @global_mark_opts], histogram_opts)
   @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
+  Module.put_attribute(__MODULE__, :schemas, {:histogram, @histogram_opts})
 
   @doc """
   Plots a histogram.
@@ -168,7 +172,7 @@ defmodule Tucan do
     |> new(spec_opts)
     |> Vl.mark(:bar, mark_opts)
     |> bin_count_transform(field, opts)
-    |> maybe_add_relative_frequency_transform(field, opts, opts[:relative])
+    |> maybe_add_relative_frequency_transform(field, opts)
     |> Vl.encode_field(:x, "bin_#{field}", bin: [binned: true], title: field)
     |> Vl.encode_field(:x2, "bin_#{field}_end")
     |> histogram_y_encoding(field, opts)
@@ -208,24 +212,28 @@ defmodule Tucan do
     )
   end
 
-  defp maybe_add_relative_frequency_transform(vl, _field, _opts, false), do: vl
+  defp maybe_add_relative_frequency_transform(vl, field, opts) do
+    case opts[:relative] do
+      false ->
+        vl
 
-  defp maybe_add_relative_frequency_transform(vl, field, opts, true) do
-    groupby =
-      case opts[:color_by] do
-        nil -> []
-        color_by -> [color_by]
-      end
+      true ->
+        groupby =
+          case opts[:color_by] do
+            nil -> []
+            color_by -> [color_by]
+          end
 
-    vl
-    |> Vl.transform(
-      joinaggregate: [[op: :sum, field: "count_#{field}", as: "total_count_#{field}"]],
-      groupby: groupby
-    )
-    |> Vl.transform(
-      calculate: "datum.count_#{field}/datum.total_count_#{field}",
-      as: "percent_#{field}"
-    )
+        vl
+        |> Vl.transform(
+          joinaggregate: [[op: :sum, field: "count_#{field}", as: "total_count_#{field}"]],
+          groupby: groupby
+        )
+        |> Vl.transform(
+          calculate: "datum.count_#{field}/datum.total_count_#{field}",
+          as: "percent_#{field}"
+        )
+    end
   end
 
   defp histogram_y_encoding(vl, field, opts) do
@@ -238,13 +246,14 @@ defmodule Tucan do
           type: :quantitative,
           axis: [format: ".1~%"],
           title: "Relative Frequency",
-          stack: opts[:stack]
+          stack: opts[:stacked]
         )
     end
   end
 
   @lineplot_opts Tucan.Options.options([:global, :general_mark])
   @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
+  Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
 
   @doc """
   Draw a line plot between `x` and `y`
@@ -1213,4 +1222,7 @@ defmodule Tucan do
 
   defp maybe_flip_axes(vl, false), do: vl
   defp maybe_flip_axes(vl, true), do: flip_axes(vl)
+
+  @doc false
+  def __schema__(plot), do: Keyword.fetch!(@schemas, plot)
 end
