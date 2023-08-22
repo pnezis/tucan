@@ -1047,8 +1047,7 @@ defmodule Tucan do
 
         # For the other diagonal plots we plot a histogram colored_by the species
         row_index == col_index ->
-          Tucan.histogram(vl, row_field)
-          |> Tucan.color_by("species")
+          Tucan.histogram(vl, row_field, color_by: "species")
 
         # For the upper part of the diagram we apply a scatter plot
         row_index < col_index ->
