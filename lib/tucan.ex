@@ -369,8 +369,11 @@ defmodule Tucan do
     ]
   ]
 
-  @stripplot_opts Tucan.Options.options([:global, :general_mark], [:orient])
-  @stripplot_schema Tucan.Options.schema!(@stripplot_opts, stripplot_schema)
+  @stripplot_opts Tucan.Options.take!(
+                    [@global_opts, @global_mark_opts, :orient],
+                    stripplot_schema
+                  )
+  @stripplot_schema Tucan.Options.to_nimble_schema!(@stripplot_opts)
 
   @doc """
   Draws a strip plot (categorical scatterplot).
@@ -412,7 +415,6 @@ defmodule Tucan do
   > |> Vl.encode_field(:y, opts[:group], type: :nominal)
   > |> Vl.encode_field(:y_offset, "jitter", type: :quantitative)
   > ```
-  > 
 
   ## Examples
 
@@ -481,33 +483,20 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  def stripplot(plotdata, x, opts \\ []) do
+  def stripplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
-    mark =
-      case opts[:style] do
-        :tick -> :tick
-        _other -> :point
-      end
-
-    plot =
-      plotdata
-      |> new(opts)
-      |> Vl.mark(mark, size: 16)
-      |> Vl.encode_field(:x, x, type: :quantitative)
-      |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], type: :nominal)
-
-    case opts[:style] do
-      :jitter ->
-        plot
-        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
-        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
-
-      _other ->
-        plot
-    end
+    plotdata
+    |> new(opts)
+    |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
+    |> Vl.encode_field(:x, field, type: :quantitative)
+    |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], type: :nominal)
+    |> maybe_add_jitter(opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
+
+  defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, opts)
+  defp stripplot_mark(vl, _other, opts), do: Vl.mark(vl, :point, [size: 16] ++ opts)
 
   defp maybe_encode_field(vl, channel, condition_fn, field, opts) do
     case condition_fn.() do
@@ -516,6 +505,18 @@ defmodule Tucan do
 
       true ->
         Vl.encode_field(vl, channel, field, opts)
+    end
+  end
+
+  defp maybe_add_jitter(vl, opts) do
+    case opts[:style] do
+      :jitter ->
+        vl
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
+
+      _other ->
+        vl
     end
   end
 

@@ -8,6 +8,7 @@ defmodule TucanTest do
 
   @cars_dataset Tucan.Datasets.dataset(:cars)
   @iris_dataset Tucan.Datasets.dataset(:iris)
+  @tips_dataset Tucan.Datasets.dataset(:tips)
 
   describe "histogram/3" do
     test "with default options" do
@@ -222,6 +223,71 @@ defmodule TucanTest do
 
       assert Tucan.bubble(@iris_dataset, "petal_width", "petal_length", "sepal_length",
                color_by: "species"
+             ) ==
+               expected
+    end
+  end
+
+  describe "stripplot/3" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:tick)
+        |> Vl.encode_field(:x, "total_bill", type: :quantitative)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill") == expected
+    end
+
+    test "with point style" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:point, size: 16)
+        |> Vl.encode_field(:x, "total_bill", type: :quantitative)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill", style: :point) == expected
+    end
+
+    test "with jitter style" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> Vl.mark(:point, size: 16)
+        |> Vl.encode_field(:x, "total_bill", type: :quantitative)
+        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill", style: :jitter) == expected
+    end
+
+    test "with jitter and vertical orient" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> Vl.mark(:point, size: 16)
+        |> Vl.encode_field(:y, "total_bill", type: :quantitative)
+        |> Vl.encode_field(:x_offset, "jitter", type: :quantitative, axis: nil)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill", style: :jitter, orient: :vertical) ==
+               expected
+    end
+
+    test "with jitter, vertical orient and grouping" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> Vl.mark(:point, size: 16)
+        |> Vl.encode_field(:y, "total_bill", type: :quantitative)
+        |> Vl.encode_field(:x, "sex", type: :nominal)
+        |> Vl.encode_field(:x_offset, "jitter", type: :quantitative, axis: nil)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill",
+               style: :jitter,
+               orient: :vertical,
+               group: "sex"
              ) ==
                expected
     end
