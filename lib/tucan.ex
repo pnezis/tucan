@@ -830,6 +830,15 @@ defmodule Tucan do
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
   ```
+
+  It makes more sense to use a log scale for the _x axis_:
+
+  ```vega-lite
+  Tucan.bubble(:gapminder, "income", "health", "population", color_by: "region", width: 400, tooltip: :data)
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
+  |> Tucan.Axes.set_x_scale(:log)
+  ```
   """
   @doc section: :plots
   @spec bubble(
