@@ -36,7 +36,6 @@ defmodule Tucan do
 
   # global_opts should be applicable in all plot types
   @global_opts [:width, :height, :title]
-
   @global_mark_opts [:clip, :fill_opacity, :tooltip]
 
   histogram_opts = [
@@ -240,18 +239,102 @@ defmodule Tucan do
     end
   end
 
-  @density_opts Tucan.Options.options([:global, :general_mark, :density_transform], [
-                  :color_by,
-                  :fill_opacity
-                ])
-  @density_schema Tucan.Options.schema!(@density_opts)
+  density_opts = [
+    groupby: [
+      type: {:list, :string},
+      doc: """
+      The data fields to group by. If not specified, a single group containing all data
+      objects will be used. This is applied only on the density transform.
+
+      In most cases you only need to set `color_by` which will automatically handle the
+      density transform grouping. Use `groupby` only if you want to manually post-process
+      the generated specification, or if you want to apply grouping by more than one
+      variable.
+
+      If both `groupby` and `color_by` are set then only `groupby` is used for grouping
+      the density transform and `color_by` is used for encoding the color.
+      """,
+      dest: :density_transform
+    ],
+    cumulative: [
+      type: :boolean,
+      doc: """
+      A boolean flag indicating whether to produce density estimates (false) or cumulative
+      density estimates (true).
+      """,
+      default: false,
+      dest: :density_transform
+    ],
+    counts: [
+      type: :boolean,
+      doc: """
+      A boolean flag indicating if the output values should be probability estimates
+      (false) or smoothed counts (true).
+      """,
+      default: false,
+      dest: :density_transform
+    ],
+    bandwidth: [
+      type: :float,
+      doc: """
+      The bandwidth (standard deviation) of the Gaussian kernel. If unspecified or set to
+      zero, the bandwidth value is automatically estimated from the input data using
+      Scott’s rule.
+      """,
+      dest: :density_transform
+    ],
+    extent: [
+      type: {:custom, Tucan.Options, :extent, []},
+      doc: """
+      A `[min, max]` domain from which to sample the distribution. If unspecified, the extent
+      will be determined by the observed minimum and maximum values of the density value field.
+      """,
+      dest: :density_transform
+    ],
+    minsteps: [
+      type: :integer,
+      doc: """
+      The minimum number of samples to take along the extent domain for plotting the density.
+      """,
+      default: 25,
+      dest: :density_transform
+    ],
+    maxsteps: [
+      type: :integer,
+      doc: """
+      The maximum number of samples to take along the extent domain for plotting the density.
+      """,
+      default: 200,
+      dest: :density_transform
+    ],
+    steps: [
+      type: :integer,
+      doc: """
+      The exact number of samples to take along the extent domain for plotting the density. If
+      specified, overrides both minsteps and maxsteps to set an exact number of uniform samples.
+      Potentially useful in conjunction with a fixed extent to ensure consistent sample points
+      for stacked densities.
+      """,
+      dest: :density_transform
+    ]
+  ]
+
+  @density_opts Tucan.Options.take!(
+                  [
+                    @global_opts,
+                    @global_mark_opts,
+                    :color_by
+                  ],
+                  density_opts
+                )
+  @density_schema Tucan.Options.to_nimble_schema!(@density_opts)
 
   @doc """
   Plot the distribution of a numeric variable.
 
   Density plots allow you to visualize the distribution of a numeric variable for one
-  or several groups. If `:color_by` is set then the given field will be used for both
-  the coloring of the various groups as well in the density estimation.
+  or several groups. If you want to draw the density for several groups you need to
+  specify the `:color_by` option which is assumed to be a categorical variable.
 
   > ### Avoid calling `color_by/3` with a density plot {: .warning}
   >
@@ -313,37 +396,55 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "Species")
   ```
 
+  You can control the smoothing by setting a specific `bandwidth` value (if not set it is
+  automatically calculated by vega lite):
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", bandwidth: 20.0)
+  ```
+
   You can plot a cumulative density distribution by setting the `:cumulative` option to `true`:
 
   ```vega-lite
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true)
+  ```
+
+  or calculate a separate cumulative distribution for each group: 
+
+  ```vega-lite
+  Tucan.density(:penguins, "Body Mass (g)", cumulative: true, color_by: "Species")
+  |> Tucan.facet_by(:column, "Species")
   ```
   """
   @doc section: :plots
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
-    transform_opts = Keyword.take(opts, Tucan.Options.section_options(:density_transform))
+    spec_opts = take_options(opts, @histogram_opts, :spec)
+    mark_opts = take_options(opts, @histogram_opts, :mark)
 
     transform_opts =
-      [density: field]
-      |> Keyword.merge(transform_opts)
-      |> maybe_put(:groupby, [opts[:color_by]], fn -> opts[:color_by] != nil end)
+      take_options(opts, @density_opts, :density_transform)
+      |> Keyword.merge(density: field)
+      |> Tucan.Keyword.put_new_conditionally(:groupby, [opts[:color_by]], fn ->
+        opts[:color_by] != nil
+      end)
+
+    # # if groupby is not set and color_by is set we apply it to the transform as well
+    # transform_opts =
+    #   cond do
+    #     opts[:groupby] != nil -> transform_opts
+    #     opts[:color_by] != nil -> Keyword.put(transform_opts, :groupby, [opts[:color_by]])
+    #     true -> transform_opts
+    #   end
 
     plotdata
-    |> new(opts)
+    |> new(spec_opts)
     |> Vl.transform(transform_opts)
-    |> Vl.mark(:area, fill_opacity: opts[:fill_opacity])
+    |> Vl.mark(:area, mark_opts)
     |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
     |> Vl.encode_field(:y, "density", type: :quantitative)
     |> maybe_color_by(opts[:color_by])
-  end
-
-  defp maybe_put(opts, key, value, condition_fn) do
-    case condition_fn.() do
-      true -> Keyword.put(opts, key, value)
-      false -> opts
-    end
   end
 
   stripplot_schema = [

@@ -11,10 +11,6 @@ defmodule Tucan.Options do
     global: [
       order: 10,
       header: "Global Options"
-    ],
-    density_transform: [
-      order: 5,
-      header: "Density Options"
     ]
   ]
 
@@ -53,86 +49,6 @@ defmodule Tucan.Options do
       """,
       section: :general_mark,
       dest: :mark
-    ],
-
-    # Density transform
-    groupby: [
-      type: {:list, :string},
-      doc: """
-      The data fields to group by. If not specified, a single group containing all data
-      objects will be used. 
-      """,
-      section: :density_transform
-    ],
-    cumulative: [
-      type: :boolean,
-      doc: """
-      A boolean flag indicating whether to produce density estimates (false) or cumulative
-      density estimates (true).
-      """,
-      default: false,
-      section: :density_transform
-    ],
-    counts: [
-      type: :boolean,
-      doc: """
-      A boolean flag indicating if the output values should be probability estimates
-      (false) or smoothed counts (true).
-      """,
-      default: false,
-      section: :density_transform
-    ],
-    bandwidth: [
-      type: :float,
-      doc: """
-      The bandwidth (standard deviation) of the Gaussian kernel. If unspecified or set to
-      zero, the bandwidth value is automatically estimated from the input data using
-      Scott’s rule.
-      """,
-      section: :density_transform
-    ],
-    extent: [
-      type: {:custom, Tucan.Options, :extent, []},
-      doc: """
-      A `[min, max]` domain from which to sample the distribution. If unspecified, the extent
-      will be determined by the observed minimum and maximum values of the density value field.
-      """,
-      section: :density_transform
-    ],
-    minsteps: [
-      type: :integer,
-      doc: """
-      The minimum number of samples to take along the extent domain for plotting the density.
-      """,
-      default: 25,
-      section: :density_transform
-    ],
-    maxsteps: [
-      type: :integer,
-      doc: """
-      The maximum number of samples to take along the extent domain for plotting the density.
-      """,
-      default: 200,
-      section: :density_transform
-    ],
-    steps: [
-      type: :integer,
-      doc: """
-      The exact number of samples to take along the extent domain for plotting the density. If
-      specified, overrides both minsteps and maxsteps to set an exact number of uniform samples.
-      Potentially useful in conjunction with a fixed extent to ensure consistent sample points
-      for stacked densities.
-      """,
-      section: :density_transform
-    ],
-    alias: [
-      type: {:custom, Tucan.Options, :density_alias, []},
-      doc: """
-      An alias for the sample value and corresponding density estimate. If not set it will
-      correspond to `value`, `density`. If set the output fields will be named `{alias}_value`
-      and `{alias}_density`.
-      """,
-      section: :density_transform
     ],
 
     # Uncategorized

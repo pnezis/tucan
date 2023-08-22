@@ -293,6 +293,97 @@ defmodule TucanTest do
     end
   end
 
+  describe "density/3" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25
+        )
+        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.density(@iris_dataset, "petal_width") ==
+               expected
+    end
+
+    test "with density values set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          groupby: ["species"],
+          bandwidth: 5,
+          counts: true,
+          cumulative: true,
+          maxsteps: 30,
+          minsteps: 5
+        )
+        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.density(@iris_dataset, "petal_width",
+               counts: true,
+               bandwidth: 5.0,
+               minsteps: 5,
+               maxsteps: 30,
+               cumulative: true,
+               groupby: ["species"]
+             ) ==
+               expected
+    end
+
+    test "with color_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25,
+          groupby: ["species"]
+        )
+        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:color, "species")
+
+      assert Tucan.density(@iris_dataset, "petal_width", color_by: "species") ==
+               expected
+    end
+
+    test "with both groupby and color_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25,
+          groupby: ["other"]
+        )
+        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:color, "species")
+
+      assert Tucan.density(@iris_dataset, "petal_width", groupby: ["other"], color_by: "species") ==
+               expected
+    end
+  end
+
   describe "pie/4" do
     @pie_data [
       %{category: "A", value: 30},
