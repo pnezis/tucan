@@ -1410,17 +1410,44 @@ defmodule Tucan do
 
   ## Utility functions
 
+  @doc """
+  Sets the width of the plot (in pixels).
+  """
   @doc section: :utilities
-  def set_width(vl, width) when is_struct(vl, VegaLite) do
+  @spec set_width(vl :: VegaLite.t(), width :: pos_integer()) :: VegaLite.t()
+  def set_width(vl, width) when is_struct(vl, VegaLite) and is_integer(width) and width > 0 do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
   end
 
+  @doc """
+  Sets the width of the plot (in pixels).
+  """
   @doc section: :utilities
-  def set_height(vl, height) when is_struct(vl, VegaLite) do
+  @spec set_height(vl :: VegaLite.t(), height :: pos_integer()) :: VegaLite.t()
+  def set_height(vl, height) when is_struct(vl, VegaLite) and is_integer(height) and height > 0 do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
   end
 
+  @doc """
+  Sets the title of the plot.
+
+  You can optionally pass any title option supported by vega-lite to customize the
+  style of it.
+
+  ## Examples
+
+  ```vega-lite
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.set_title("My awesome plot",
+      color: "red",
+      subtitle: "with a subtitle",
+      subtitle_color: "green",
+      anchor: "start"
+    )
+  ```
+  """
   @doc section: :utilities
+  @spec set_title(vl :: VegaLite.t(), title :: binary(), opts :: keyword()) :: VegaLite.t()
   def set_title(vl, title, opts \\ [])
       when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
     title_opts = Keyword.merge(opts, text: title)

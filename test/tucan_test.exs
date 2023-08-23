@@ -603,6 +603,54 @@ defmodule TucanTest do
     end
   end
 
+  describe "set_width/2" do
+    test "sets the width" do
+      vl = Tucan.set_width(Vl.new(), 100)
+
+      assert vl.spec["width"] == 100
+    end
+
+    test "can be called multiple times" do
+      vl =
+        Vl.new()
+        |> Tucan.set_width(100)
+        |> Tucan.set_width(300)
+
+      assert vl.spec["width"] == 300
+    end
+  end
+
+  describe "set_height/2" do
+    test "sets the height" do
+      vl = Tucan.set_height(Vl.new(), 100)
+
+      assert vl.spec["height"] == 100
+    end
+
+    test "can be called multiple times" do
+      vl =
+        Vl.new()
+        |> Tucan.set_height(100)
+        |> Tucan.set_height(300)
+
+      assert vl.spec["height"] == 300
+    end
+  end
+
+  describe "set_title/3" do
+    test "sets the title" do
+      vl = Tucan.set_title(Vl.new(), "A title")
+
+      assert vl.spec["title"]["text"] == "A title"
+    end
+
+    test "with extra options" do
+      vl = Tucan.set_title(Vl.new(), "A title", color: "red")
+
+      assert vl.spec["title"] == %{"color" => "red", "text" => "A title"}
+    end
+  end
+
   defp concatenated_test_plots(encoding) do
     vl_encoded = Vl.encode_field(Vl.new(), encoding, "field")
 
