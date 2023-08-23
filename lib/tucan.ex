@@ -1295,9 +1295,19 @@ defmodule Tucan do
 
   ## Grouping functions
 
+  @doc """
+  Adds a color encoding for the given field.
+
+  `opts` can be an arbitrary keyword list with vega-lite supported options.
+
+  If `:recursive` is set the color encoding is applied in all subplots of the given plot.
+  """
   @doc section: :grouping
+  @spec color_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def color_by(vl, field, opts \\ []) do
-    case opts[:recursive] do
+    {recursive, opts} = Keyword.pop(opts, :recursive)
+
+    case recursive do
       true ->
         apply_recursively(vl, fn spec ->
           VegaLiteUtils.encode_field_raw(spec, :color, field, opts)
@@ -1308,29 +1318,37 @@ defmodule Tucan do
     end
   end
 
-  # defp encode_recursively(vl, )
-
   @doc section: :grouping
+  @spec shape_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def shape_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :shape, field, opts)
   end
 
   @doc section: :grouping
+  @spec stroke_dash_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def stroke_dash_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :stroke_dash, field, opts)
   end
 
   @doc section: :grouping
+  @spec fill_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def fill_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :fill, field, opts)
   end
 
   @doc section: :grouping
+  @spec size_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def size_by(vl, field, opts \\ []) do
     Vl.encode_field(vl, :size, field, opts)
   end
 
   @doc section: :grouping
+  @spec facet_by(
+          vl :: VegaLite.t(),
+          faceting_mode :: :row | :column,
+          field :: binary(),
+          opts :: keyword()
+        ) :: VegaLite.t()
   def facet_by(vl, faceting_mode, field, opts \\ [])
 
   def facet_by(vl, :row, field, opts) do

@@ -512,4 +512,62 @@ defmodule TucanTest do
              ) == expected
     end
   end
+
+  describe "color_by/3" do
+    test "applies encoding on single view plot" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:color, "field", foo: 1, bar: "a")
+
+      assert Tucan.color_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+    end
+
+    test "applies encoding recursively" do
+      test_plots = concatenated_test_plots(:color)
+
+      for {vl, expected} <- test_plots do
+        assert Tucan.color_by(vl, "field", recursive: true) == expected
+      end
+    end
+  end
+
+  defp concatenated_test_plots(encoding) do
+    vl_encoded = Vl.encode_field(Vl.new(), encoding, "field")
+
+    horizontal_concat = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+    horizontal_concat_expected = Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :horizontal)
+
+    vertical_concat = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :vertical)
+    vertical_concat_expected = Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :vertical)
+
+    wrappable_concat = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :wrappable)
+    wrappable_concat_expected = Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :wrappable)
+
+    nested_concat =
+      Vl.concat(
+        Vl.new(),
+        [
+          Vl.concat(Vl.new(), [Vl.new(), Vl.new(), Vl.new()], :horizontal),
+          Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+        ],
+        :vertical
+      )
+
+    nested_concat_expected =
+      Vl.concat(
+        Vl.new(),
+        [
+          Vl.concat(Vl.new(), [vl_encoded, vl_encoded, vl_encoded], :horizontal),
+          Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :horizontal)
+        ],
+        :vertical
+      )
+
+    [
+      {horizontal_concat, horizontal_concat_expected},
+      {vertical_concat, vertical_concat_expected},
+      {wrappable_concat, wrappable_concat_expected},
+      {nested_concat, nested_concat_expected}
+    ]
+  end
 end
