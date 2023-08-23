@@ -531,6 +531,78 @@ defmodule TucanTest do
     end
   end
 
+  describe "shape_by/3" do
+    test "applies encoding on single view plot" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:shape, "field", foo: 1, bar: "a")
+
+      assert Tucan.shape_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+    end
+
+    test "applies encoding recursively" do
+      test_plots = concatenated_test_plots(:shape)
+
+      for {vl, expected} <- test_plots do
+        assert Tucan.shape_by(vl, "field", recursive: true) == expected
+      end
+    end
+  end
+
+  describe "fill_by/3" do
+    test "applies encoding on single view plot" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:fill, "field", foo: 1, bar: "a")
+
+      assert Tucan.fill_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+    end
+
+    test "applies encoding recursively" do
+      test_plots = concatenated_test_plots(:fill)
+
+      for {vl, expected} <- test_plots do
+        assert Tucan.fill_by(vl, "field", recursive: true) == expected
+      end
+    end
+  end
+
+  describe "size_by/3" do
+    test "applies encoding on single view plot" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:size, "field", foo: 1, bar: "a")
+
+      assert Tucan.size_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+    end
+
+    test "applies encoding recursively" do
+      test_plots = concatenated_test_plots(:size)
+
+      for {vl, expected} <- test_plots do
+        assert Tucan.size_by(vl, "field", recursive: true) == expected
+      end
+    end
+  end
+
+  describe "stroke_dash_by/3" do
+    test "applies encoding on single view plot" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:stroke_dash, "field", foo: 1, bar: "a")
+
+      assert Tucan.stroke_dash_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+    end
+
+    test "applies encoding recursively" do
+      test_plots = concatenated_test_plots(:stroke_dash)
+
+      for {vl, expected} <- test_plots do
+        assert Tucan.stroke_dash_by(vl, "field", recursive: true) == expected
+      end
+    end
+  end
+
   defp concatenated_test_plots(encoding) do
     vl_encoded = Vl.encode_field(Vl.new(), encoding, "field")
 
