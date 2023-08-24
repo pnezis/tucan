@@ -40,6 +40,15 @@ defmodule TucanTest do
         assert Map.get(vl.spec, "title") == "Plot title", "title not set for #{inspect(name)}"
       end
     end
+
+    test "raises for invalid options", context do
+      for {name, plot_fun} <- context.plot_funs do
+        assert_raise NimbleOptions.ValidationError, fn ->
+          IO.inspect(name)
+          plot_fun.(invalid_option: 1)
+        end
+      end
+    end
   end
 
   describe "histogram/3" do

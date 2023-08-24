@@ -447,7 +447,7 @@ defmodule Tucan do
     |> maybe_color_by(opts[:color_by])
   end
 
-  stripplot_schema = [
+  stripplot_opts = [
     group: [
       type: :string,
       doc: """
@@ -472,7 +472,7 @@ defmodule Tucan do
 
   @stripplot_opts Tucan.Options.take!(
                     [@global_opts, @global_mark_opts, :orient],
-                    stripplot_schema
+                    stripplot_opts
                   )
   @stripplot_schema Tucan.Options.to_nimble_schema!(@stripplot_opts)
 
@@ -621,6 +621,30 @@ defmodule Tucan do
     end
   end
 
+  density_heatmap_opts = [
+    z: [
+      type: :string,
+      doc: """
+      If set corresponds to the field that will be used for calculating the color fo the
+      bin using the provided aggregate. If not set (the default behaviour) the count of
+      observations are used for coloring the bin.
+      """
+    ],
+    aggregate: [
+      type: :atom,
+      doc: """
+      The statistic that will be used for aggregating the observations within a bin. The
+      `z` field must be set if `aggregate` is set.
+      """
+    ]
+  ]
+
+  @density_heatmap_opts Tucan.Options.take!(
+                          [@global_opts, @global_mark_opts],
+                          density_heatmap_opts
+                        )
+  @density_heatmap_schema Tucan.Options.to_nimble_schema!(@density_heatmap_opts)
+
   @doc """
   Draws a density heatmap.
 
@@ -636,6 +660,10 @@ defmodule Tucan do
   concentration of data points in a two-dimensional space. They are particularly
   effective when dealing with large datasets, allowing you to uncover patterns,
   clusters, and trends that might be difficult to discern in raw data.
+
+  ## Options
+
+  #{Tucan.Options.docs(@density_heatmap_schema)}
 
   ## Examples
 
@@ -653,6 +681,11 @@ defmodule Tucan do
   """
   @doc section: :plots
   def density_heatmap(plotdata, x, y, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @density_heatmap_schema)
+
+    spec_opts = take_options(opts, @density_heatmap_opts, :spec)
+    mark_opts = take_options(opts, @density_heatmap_opts, :mark)
+
     color_fn = fn vl ->
       case opts[:z] do
         nil -> Vl.encode(vl, :color, type: :quantitative, aggregate: opts[:aggregate] || :count)
@@ -661,8 +694,8 @@ defmodule Tucan do
     end
 
     plotdata
-    |> new(opts)
-    |> Vl.mark(:rect)
+    |> new(spec_opts)
+    |> Vl.mark(:rect, mark_opts)
     |> Vl.encode_field(:x, x, type: :quantitative, bin: true)
     |> Vl.encode_field(:y, y, type: :quantitative, bin: true)
     |> color_fn.()
