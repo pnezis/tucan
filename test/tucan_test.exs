@@ -10,6 +10,38 @@ defmodule TucanTest do
   @iris_dataset Tucan.Datasets.dataset(:iris)
   @tips_dataset Tucan.Datasets.dataset(:tips)
 
+  describe "sanity checks" do
+    setup do
+      # add all plots here in alphabetical order (composite plots excluded)
+      plot_funs = [
+        {:bubble, fn opts -> Tucan.bubble(@dataset, "x", "y", "z", opts) end},
+        {:countplot, fn opts -> Tucan.countplot(@dataset, "x", opts) end},
+        {:density, fn opts -> Tucan.density(@dataset, "x", opts) end},
+        {:density_heatmap, fn opts -> Tucan.density_heatmap(@dataset, "x", "y", opts) end},
+        {:donut, fn opts -> Tucan.donut(@dataset, "x", "y", opts) end},
+        {:histogram, fn opts -> Tucan.histogram(@dataset, "x", opts) end},
+        {:lineplot, fn opts -> Tucan.lineplot(@dataset, "x", "y", opts) end},
+        {:pie, fn opts -> Tucan.pie(@dataset, "x", "y", opts) end},
+        {:scatter, fn opts -> Tucan.scatter(@dataset, "x", "y", opts) end},
+        {:stripplot, fn opts -> Tucan.stripplot(@dataset, "x", opts) end}
+      ]
+
+      [plot_funs: plot_funs]
+    end
+
+    test "global spec settings are applicable to all plots", context do
+      opts = [width: 135, height: 82, title: "Plot title"]
+
+      for {name, plot_fun} <- context.plot_funs do
+        vl = plot_fun.(opts)
+
+        assert Map.get(vl.spec, "width") == 135, "width not set for #{inspect(name)}"
+        assert Map.get(vl.spec, "height") == 82, "height not set for #{inspect(name)}"
+        assert Map.get(vl.spec, "title") == "Plot title", "title not set for #{inspect(name)}"
+      end
+    end
+  end
+
   describe "histogram/3" do
     test "with default options" do
       expected =

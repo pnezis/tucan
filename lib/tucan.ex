@@ -734,9 +734,12 @@ defmodule Tucan do
   def countplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @countplot_schema)
 
+    spec_opts = take_options(opts, @countplot_opts, :spec)
+    mark_opts = take_options(opts, @countplot_opts, :mark)
+
     plotdata
-    |> new()
-    |> Vl.mark(:bar, fill_opacity: 0.5)
+    |> new(spec_opts)
+    |> Vl.mark(:bar, mark_opts)
     |> Vl.encode_field(:x, field, type: :nominal)
     |> Vl.encode_field(:y, field, aggregate: "count")
     |> maybe_color_by(opts[:color_by])
@@ -1014,9 +1017,12 @@ defmodule Tucan do
   def lineplot(plotdata, x, y, opts \\ []) do
     _opts = NimbleOptions.validate!(opts, @lineplot_schema)
 
+    spec_opts = take_options(opts, @lineplot_opts, :spec)
+    mark_opts = take_options(opts, @lineplot_opts, :mark)
+
     plotdata
-    |> new()
-    |> Vl.mark(:line)
+    |> new(spec_opts)
+    |> Vl.mark(:line, mark_opts)
     |> Vl.encode_field(:x, x, type: :temporal)
     |> Vl.encode_field(:y, y, type: :quantitative)
   end
@@ -1146,6 +1152,37 @@ defmodule Tucan do
 
   ## Composite plots
 
+  pairplot_opts = [
+    diagonal: [
+      type: {:in, [:scatter, :density, :histogram]},
+      default: :scatter,
+      doc: """
+      The plot type to be used for the diagonal subplots. Can be one on
+      `:scatter`, `:density` and `:histogram`.
+      """
+    ],
+    plot_fn: [
+      type: {:fun, 3},
+      doc: """
+      An optional function for customizing the look any subplot. It expects a
+      function with the following signature:
+
+      ```elixir
+      (vl :: VegaLite.t(), row :: {binary(), integer()}, column :: {binary(), integer()})
+        :: VegaLite.t() 
+      ```
+
+      where both `row` and `column` are tuples containing the index and field of
+      the current and row and column respectively.
+
+      You are free to specify any function for every cell of the grid.
+      """
+    ]
+  ]
+
+  @pairplot_opts Tucan.Options.take!([@global_opts], pairplot_opts)
+  @pairplot_schema Tucan.Options.to_nimble_schema!(@pairplot_opts)
+
   @doc """
   Plot pairwise relationships in a dataset.
 
@@ -1158,6 +1195,13 @@ defmodule Tucan do
   > Notice that currently `pairplot/3` works only with numerical (`:quantitative`)
   > variables. If you need to create a pair plot containing other variable types
   > you need to manually build the grid using the `VegaLite` concatenation operations.
+
+  ## Options
+
+  #{Tucan.Options.docs(@pairplot_schema)}
+
+  Notice that if set `width` and `height` will be applied to individual sub plots. On
+  the other hand `title` is applied to the composite plot.
 
   ## Examples
 
@@ -1233,6 +1277,8 @@ defmodule Tucan do
   """
   @doc section: :composite
   def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
+    opts = NimbleOptions.validate!(opts, @pairplot_schema)
+
     children =
       for {row_field, row_index} <- Enum.with_index(fields),
           {col_field, col_index} <- Enum.with_index(fields) do
@@ -1243,10 +1289,6 @@ defmodule Tucan do
     |> new(title: opts[:title])
     |> Vl.concat(children, :wrappable)
     |> put_spec_field("columns", length(fields))
-
-    # This is a bit hacky but it works for aligning the plots in case
-    # of both integer and float axis values
-    # |> Vl.config(axis_y: [min_extent: 30])
   end
 
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
