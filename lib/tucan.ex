@@ -326,7 +326,10 @@ defmodule Tucan do
                   [
                     @global_opts,
                     @global_mark_opts,
-                    :color_by
+                    :color_by,
+                    :x,
+                    :y,
+                    :color
                   ],
                   density_opts
                 )
@@ -437,8 +440,8 @@ defmodule Tucan do
     |> new(spec_opts)
     |> Vl.transform(transform_opts)
     |> Vl.mark(:area, mark_opts)
-    |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
-    |> Vl.encode_field(:y, "density", type: :quantitative)
+    |> encode_field(:x, "value", opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:y, "density", opts, type: :quantitative)
     |> maybe_color_by(opts[:color_by])
   end
 
@@ -466,7 +469,7 @@ defmodule Tucan do
   ]
 
   @stripplot_opts Tucan.Options.take!(
-                    [@global_opts, @global_mark_opts, :orient],
+                    [@global_opts, @global_mark_opts, :orient, :x, :y, :y_offset],
                     stripplot_opts
                   )
   @stripplot_schema Tucan.Options.to_nimble_schema!(@stripplot_opts)
@@ -585,8 +588,8 @@ defmodule Tucan do
     plotdata
     |> new(opts)
     |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
-    |> Vl.encode_field(:x, field, type: :quantitative)
-    |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], type: :nominal)
+    |> encode_field(:x, field, opts, type: :quantitative)
+    |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], opts, type: :nominal)
     |> maybe_add_jitter(opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
@@ -594,13 +597,13 @@ defmodule Tucan do
   defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, opts)
   defp stripplot_mark(vl, _other, opts), do: Vl.mark(vl, :point, [size: 16] ++ opts)
 
-  defp maybe_encode_field(vl, channel, condition_fn, field, opts) do
+  defp maybe_encode_field(vl, channel, condition_fn, field, opts, extra_opts) do
     case condition_fn.() do
       false ->
         vl
 
       true ->
-        Vl.encode_field(vl, channel, field, opts)
+        encode_field(vl, channel, field, opts, extra_opts)
     end
   end
 
@@ -609,7 +612,7 @@ defmodule Tucan do
       :jitter ->
         vl
         |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
-        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
+        |> encode_field(:y_offset, "jitter", opts, type: :quantitative, axis: nil)
 
       _other ->
         vl
@@ -635,7 +638,7 @@ defmodule Tucan do
   ]
 
   @density_heatmap_opts Tucan.Options.take!(
-                          [@global_opts, @global_mark_opts],
+                          [@global_opts, @global_mark_opts, :x, :y, :color],
                           density_heatmap_opts
                         )
   @density_heatmap_schema Tucan.Options.to_nimble_schema!(@density_heatmap_opts)
@@ -683,16 +686,19 @@ defmodule Tucan do
 
     color_fn = fn vl ->
       case opts[:z] do
-        nil -> Vl.encode(vl, :color, type: :quantitative, aggregate: opts[:aggregate] || :count)
-        field -> color_by(vl, field, aggregate: opts[:aggregate] || :count)
+        nil ->
+          encode(vl, :color, opts, type: :quantitative, aggregate: opts[:aggregate] || :count)
+
+        field ->
+          color_by(vl, field, aggregate: opts[:aggregate] || :count)
       end
     end
 
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:rect, mark_opts)
-    |> Vl.encode_field(:x, x, type: :quantitative, bin: true)
-    |> Vl.encode_field(:y, y, type: :quantitative, bin: true)
+    |> encode_field(:x, x, opts, type: :quantitative, bin: true)
+    |> encode_field(:y, y, opts, type: :quantitative, bin: true)
     |> color_fn.()
   end
 
@@ -701,7 +707,11 @@ defmodule Tucan do
                     @global_mark_opts,
                     :stacked,
                     :color_by,
-                    :orient
+                    :orient,
+                    :x,
+                    :y,
+                    :color,
+                    :x_offset
                   ])
   @countplot_schema Tucan.Options.to_nimble_schema!(@countplot_opts)
 
@@ -768,26 +778,31 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:bar, mark_opts)
-    |> Vl.encode_field(:x, field, type: :nominal)
-    |> Vl.encode_field(:y, field, aggregate: "count")
+    |> encode_field(:x, field, opts, type: :nominal)
+    |> encode_field(:y, field, opts, aggregate: "count")
     |> maybe_color_by(opts[:color_by])
-    |> maybe_x_offset(opts[:color_by], opts[:stacked])
+    |> maybe_x_offset(opts[:color_by], opts[:stacked], opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
   defp maybe_color_by(vl, nil), do: vl
   defp maybe_color_by(vl, field), do: color_by(vl, field)
 
-  defp maybe_x_offset(vl, nil, _stacked), do: vl
-  defp maybe_x_offset(vl, _field, true), do: vl
-  defp maybe_x_offset(vl, field, false), do: Vl.encode_field(vl, :x_offset, field)
+  defp maybe_x_offset(vl, nil, _stacked, _opts), do: vl
+  defp maybe_x_offset(vl, _field, true, _opts), do: vl
+  defp maybe_x_offset(vl, field, false, opts), do: encode_field(vl, :x_offset, field, opts)
 
   @scatter_opts Tucan.Options.take!([
                   @global_opts,
                   @global_mark_opts,
                   :color_by,
                   :shape_by,
-                  :size_by
+                  :size_by,
+                  :x,
+                  :y,
+                  :color,
+                  :shape,
+                  :size
                 ])
   @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
 
@@ -920,15 +935,15 @@ defmodule Tucan do
     plotdata
     |> new(opts)
     |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
-    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
-    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
-    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by],
+    |> encode_field(:x, x, opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:y, y, opts, type: :quantitative, scale: [zero: false])
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts,
       type: :nominal
     )
-    |> maybe_encode_field(:shape, fn -> opts[:shape_by] != nil end, opts[:shape_by],
+    |> maybe_encode_field(:shape, fn -> opts[:shape_by] != nil end, opts[:shape_by], opts,
       type: :nominal
     )
-    |> maybe_encode_field(:size, fn -> opts[:size_by] != nil end, opts[:size_by],
+    |> maybe_encode_field(:size, fn -> opts[:size_by] != nil end, opts[:size_by], opts,
       type: :quantitative
     )
   end
@@ -936,7 +951,11 @@ defmodule Tucan do
   @bubble_opts Tucan.Options.take!([
                  @global_opts,
                  @global_mark_opts,
-                 :color_by
+                 :color_by,
+                 :x,
+                 :y,
+                 :size,
+                 :color
                ])
   @bubble_schema Tucan.Options.to_nimble_schema!(@bubble_opts)
 
@@ -993,15 +1012,15 @@ defmodule Tucan do
     plotdata
     |> new(opts)
     |> Vl.mark(:circle, Keyword.take(opts, [:tooltip]))
-    |> Vl.encode_field(:x, x, type: :quantitative, scale: [zero: false])
-    |> Vl.encode_field(:y, y, type: :quantitative, scale: [zero: false])
-    |> Vl.encode_field(:size, size, type: :quantitative)
-    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by],
+    |> encode_field(:x, x, opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:y, y, opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:size, size, opts, type: :quantitative)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts,
       type: :nominal
     )
   end
 
-  @lineplot_opts Tucan.Options.take!([@global_opts, @global_mark_opts])
+  @lineplot_opts Tucan.Options.take!([@global_opts, @global_mark_opts, :x, :y])
   @lineplot_schema Tucan.Options.to_nimble_schema!(@lineplot_opts)
   Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
 
@@ -1043,7 +1062,7 @@ defmodule Tucan do
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
   def lineplot(plotdata, x, y, opts \\ []) do
-    _opts = NimbleOptions.validate!(opts, @lineplot_schema)
+    opts = NimbleOptions.validate!(opts, @lineplot_schema)
 
     spec_opts = take_options(opts, @lineplot_opts, :spec)
     mark_opts = take_options(opts, @lineplot_opts, :mark)
@@ -1051,8 +1070,8 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:line, mark_opts)
-    |> Vl.encode_field(:x, x, type: :temporal)
-    |> Vl.encode_field(:y, y, type: :quantitative)
+    |> encode_field(:x, x, opts, type: :temporal)
+    |> encode_field(:y, y, opts, type: :quantitative)
   end
 
   pie_opts = [
@@ -1072,7 +1091,7 @@ defmodule Tucan do
     ]
   ]
 
-  @pie_opts Tucan.Options.take!([@global_opts, @global_mark_opts], pie_opts)
+  @pie_opts Tucan.Options.take!([@global_opts, @global_mark_opts, :theta, :color], pie_opts)
   @pie_schema Tucan.Options.to_nimble_schema!(@pie_opts)
 
   @doc """
@@ -1147,7 +1166,7 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:arc, mark_opts)
-    |> Vl.encode_field(:theta, field, theta_opts)
+    |> encode_field(:theta, field, opts, theta_opts)
     |> color_by(category)
   end
 
@@ -1581,8 +1600,8 @@ defmodule Tucan do
     Keyword.take(opts, dest_opts)
   end
 
-  # we use encode_field instead of Vl.encode_field in all tucan plots
-  # for the following reason:
+  # we use encode_field and encode instead of Vl.encode_field and Vl.encode in all
+  # tucan plots for the following reason:
   #
   # - we want to support setting custom vega-lite options on each encoding
   # that may be included in the specification.
@@ -1595,11 +1614,15 @@ defmodule Tucan do
   #   set all possible options for each plot type
   #   - they are set with the proper precedence and deep merged with the extra
   defp encode_field(vl, encoding, field, opts, extra_opts \\ []) do
-    encoding_opts =
-      Keyword.fetch!(opts, encoding)
-      |> Tucan.Keyword.deep_merge(extra_opts)
+    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, Keyword.fetch!(opts, encoding))
 
     Vl.encode_field(vl, encoding, field, encoding_opts)
+  end
+
+  defp encode(vl, encoding, opts, extra_opts) do
+    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, Keyword.fetch!(opts, encoding))
+
+    Vl.encode(vl, encoding, encoding_opts)
   end
 
   @doc false

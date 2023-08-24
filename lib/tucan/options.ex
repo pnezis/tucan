@@ -64,6 +64,17 @@ defmodule Tucan.Options do
       default: [],
       section: :encodings
     ],
+    x_offset: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:x_offset` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
     y: [
       type: :keyword_list,
       doc: """
@@ -75,10 +86,54 @@ defmodule Tucan.Options do
       default: [],
       section: :encodings
     ],
+    y_offset: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:y_offset` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    theta: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:thetar` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
     color: [
       type: :keyword_list,
       doc: """
       Extra vega lite options for the `:color` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    shape: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:shape` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    size: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:size` encoding. It can be an arbitrary keyword list.
       Notice that if set they will be merged with any option set by the plot. Since they
       have a higher precedence they may override the default settings and affect the
       generated plot. **The contents are not validated.**
