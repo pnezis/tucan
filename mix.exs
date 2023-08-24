@@ -1,14 +1,27 @@
 defmodule Tucan.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @scm_url "https://github.com/pnezis/tucan"
+
   def project do
     [
       app: :tucan,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.13",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      docs: docs()
+      docs: docs(),
+      package: [
+        maintainers: [
+          "Panagiotis Nezis"
+        ],
+        license: ["MIT"],
+        links: %{"GitHub" => @scm_url},
+        files: ~w(lib themes mix.exs README.md)
+      ],
+      source_url: @scm_url,
+      description: "A plotting library on top of VegaLite"
     ]
   end
 
