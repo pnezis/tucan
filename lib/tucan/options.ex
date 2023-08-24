@@ -6,6 +6,10 @@ defmodule Tucan.Options do
     unknown: [
       order: -1
     ],
+    encodings: [
+      order: 3,
+      header: "Encodings Custom Options"
+    ],
     general_mark: [
       order: 7,
       header: "Interactivity Options"
@@ -35,6 +39,52 @@ defmodule Tucan.Options do
       doc: "The title of the graph",
       section: :global,
       dest: :spec
+    ],
+
+    # Encoding opts
+    x: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:x` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    x2: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:x2` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    y: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:y` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
+    ],
+    color: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:color` encoding. It can be an arbitrary keyword list.
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot. **The contents are not validated.**
+      """,
+      default: [],
+      section: :encodings
     ],
 
     # Mark general properties

@@ -93,7 +93,10 @@ defmodule Tucan do
   ]
 
   # TODO: maybe refactor with a macro
-  @histogram_opts Tucan.Options.take!([@global_opts, @global_mark_opts], histogram_opts)
+  @histogram_opts Tucan.Options.take!(
+                    [@global_opts, @global_mark_opts, :x, :x2, :y],
+                    histogram_opts
+                  )
   @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
   Module.put_attribute(__MODULE__, :schemas, {:histogram, @histogram_opts})
 
@@ -172,8 +175,8 @@ defmodule Tucan do
     |> Vl.mark(:bar, mark_opts)
     |> bin_count_transform(field, opts)
     |> maybe_add_relative_frequency_transform(field, opts)
-    |> Vl.encode_field(:x, "bin_#{field}", bin: [binned: true], title: field)
-    |> Vl.encode_field(:x2, "bin_#{field}_end")
+    |> encode_field(:x, "bin_#{field}", opts, bin: [binned: true], title: field)
+    |> encode_field(:x2, "bin_#{field}_end", opts)
     |> histogram_y_encoding(field, opts)
     |> maybe_color_by(opts[:color_by])
     |> maybe_flip_axes(opts[:orient] == :vertical)
@@ -227,10 +230,10 @@ defmodule Tucan do
   defp histogram_y_encoding(vl, field, opts) do
     case opts[:relative] do
       false ->
-        Vl.encode_field(vl, :y, "count_#{field}", type: :quantitative, stack: opts[:stacked])
+        encode_field(vl, :y, "count_#{field}", opts, type: :quantitative, stack: opts[:stacked])
 
       true ->
-        Vl.encode_field(vl, :y, "percent_#{field}",
+        encode_field(vl, :y, "percent_#{field}", opts,
           type: :quantitative,
           axis: [format: ".1~%"],
           title: "Relative Frequency",
@@ -429,14 +432,6 @@ defmodule Tucan do
       |> Tucan.Keyword.put_new_conditionally(:groupby, [opts[:color_by]], fn ->
         opts[:color_by] != nil
       end)
-
-    # # if groupby is not set and color_by is set we apply it to the transform as well
-    # transform_opts =
-    #   cond do
-    #     opts[:groupby] != nil -> transform_opts
-    #     opts[:color_by] != nil -> Keyword.put(transform_opts, :groupby, [opts[:color_by]])
-    #     true -> transform_opts
-    #   end
 
     plotdata
     |> new(spec_opts)
@@ -1584,6 +1579,27 @@ defmodule Tucan do
       |> Keyword.keys()
 
     Keyword.take(opts, dest_opts)
+  end
+
+  # we use encode_field instead of Vl.encode_field in all tucan plots
+  # for the following reason:
+  #
+  # - we want to support setting custom vega-lite options on each encoding
+  # that may be included in the specification.
+  # - these options are passed in the options of the plots as encoding: [options]
+  # e.g. x: [...], y: []
+  # - by having this custom function we can ensure that:
+  #   - the encoding options are extracted by the opts on each call and merged
+  #   with the extra_opts the function call may set
+  #   - if they are missing the tests will raise ensuring that we have properly
+  #   set all possible options for each plot type
+  #   - they are set with the proper precedence and deep merged with the extra
+  defp encode_field(vl, encoding, field, opts, extra_opts \\ []) do
+    encoding_opts =
+      Keyword.fetch!(opts, encoding)
+      |> Tucan.Keyword.deep_merge(extra_opts)
+
+    Vl.encode_field(vl, encoding, field, encoding_opts)
   end
 
   @doc false
