@@ -117,33 +117,6 @@ defmodule Tucan.Options do
   @options options
 
   @doc """
-  Extracts the options keys of the given `sections` adding any `extra` option added.
-
-  `Tucan` options are defined globally, and mostly follow the VegaLite options with some
-  exceptions. They are splitted in various sections based on their type. This helper
-  function takes as input a set of sections and an optional array of extra options and
-  returns a list of valid options.
-
-  This is mainly used for options definition for a specific plot. Since most options are
-  shared this is a convenience function.
-
-      @plot_options Tucan.Options.filter_options([:global, :general_mark, :rect], [:color_by])
-      @plot_options_schema Tucan.Options.schema!(@plot_options)
-    
-  See also `to_nimble_options/1` and `schema!/1` in order to convert the returned
-  list to a valid `NimbleOptions` schema.
-  """
-  # TODO: to be removed and replaced with the `take` below
-  @spec options(sections :: [atom()], extra :: [atom()]) :: [atom()]
-  def options(sections, extra \\ []) do
-    # TODO: validate that extra includes valid options
-
-    Enum.map(sections, &section_options/1)
-    |> List.flatten()
-    |> Enum.concat(extra)
-  end
-
-  @doc """
   Take the given options from the globally defined options list and optionally merge them
   with `extra`.
 
@@ -222,22 +195,6 @@ defmodule Tucan.Options do
   @tucan_opts_fields [:section, :dest]
   defp drop_tucan_opts_fields(opts) do
     Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
-  end
-
-  @doc """
-  Converts a list of options to a `NimbleOptions` schema.
-
-  Additinally an extra schema definition can be provided, which will be merged
-  with the schema defined by the selected options.
-  """
-  @spec schema!(options :: [atom()], extra :: keyword()) :: NimbleOptions.t()
-  def schema!(options, extra \\ []) do
-    extra = drop_tucan_opts_fields(extra)
-
-    options
-    |> to_nimble_options()
-    |> Keyword.merge(extra)
-    |> NimbleOptions.new!()
   end
 
   def docs(%NimbleOptions{schema: schema}) do

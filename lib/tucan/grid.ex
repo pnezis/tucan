@@ -14,7 +14,7 @@ defmodule Tucan.Grid do
 
   A scatter plot with the grid disabled:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.Grid.set_enabled(false)
   ```
@@ -47,7 +47,7 @@ defmodule Tucan.Grid do
 
   A scatter plot with the `y-axis` grid disabled:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.Grid.set_enabled(:y, false)
   ```
@@ -67,7 +67,7 @@ defmodule Tucan.Grid do
 
   A scatter plot with the `y-axis` grid colored red and `x-axis` grid with a custom RGB color:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.Grid.set_color(:y, "red")
   |> Tucan.Grid.set_color(:x, "#2A32F4")
@@ -92,7 +92,7 @@ defmodule Tucan.Grid do
   A scatter plot with the `y-axis` grid colored red and `x-axis` grid with a custom RGB color and
   opacity values set. Also the width is increased to make the opacity changes more clear.
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.Grid.set_color(:x, "red")
   |> Tucan.Grid.set_color(:y, "cyan")
@@ -135,7 +135,7 @@ defmodule Tucan.Grid do
 
   A scatter plot with the different dashed styles across the two axes:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.Grid.set_dash_style(:x, 10, 2)
   |> Tucan.Grid.set_dash_style(:y, 2, 10)

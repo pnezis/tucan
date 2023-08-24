@@ -110,25 +110,25 @@ defmodule Tucan do
 
   Histogram of `Horsepower`
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower")
   ```
 
   You can flip the plot by setting the `:orient` option to `:vertical`:
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower", orient: :vertical)
   ```
 
   By setting the `:relative` flag you can get a relative frequency histogram:
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower", relative: true)
   ```
 
   You can increase the number of bins by settings the `maxbins` or the `step` options:
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower", step: 5)
   ```
 
@@ -136,19 +136,19 @@ defmodule Tucan do
   *categorical* variable:
 
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower", color_by: "Origin", fill_opacity: 0.5)
   ```
 
   By default the histograms are plotted layered, but you can also stack them:
 
-  ```vega-lite
+  ```tucan
   Tucan.histogram(:cars, "Horsepower", color_by: "Origin", fill_opacity: 0.5, stacked: true)
   ```
 
   or you can facet it, in order to make the histograms more clear:
 
-  ```vega-lite
+  ```tucan
   histograms =
     Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
     |> Tucan.facet_by(:column, "Origin")
@@ -345,7 +345,7 @@ defmodule Tucan do
   >
   > Calling `color_by/3` would produce this graph:
   >
-  > ```vega-lite
+  > ```tucan
   > Tucan.density(:penguins, "Body Mass (g)")
   > |> Tucan.color_by("Species")
   > ```
@@ -354,14 +354,14 @@ defmodule Tucan do
   > and you cannot color by the `Species`. Instead you should use the `:color_by`
   > option which would calculate the density function per group:
   >
-  > ```vega-lite
+  > ```tucan
   > Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
   > ```
   >
   > Alternatively you should use the `:groupby` option in order to group the density
   > tranform by the `Species` field and then apply the `color_by/3` function:
   >
-  > ```vega-lite
+  > ```tucan
   > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
   > |> Tucan.color_by("Species")
   > ```
@@ -374,7 +374,7 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)")
   ```
 
@@ -382,7 +382,7 @@ defmodule Tucan do
   options exist to do so. You can plot all items on the same chart, using transparency and
   annotation to make the comparison possible.
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)", color_by: "Species")
   ```
 
@@ -390,7 +390,7 @@ defmodule Tucan do
   of the grouping variable. Notice that we need to set the `:groupby` variable in order
   to correctly calculate the density plot per field's value.
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
   |> Tucan.color_by("Species")
   |> Tucan.facet_by(:column, "Species")
@@ -399,19 +399,19 @@ defmodule Tucan do
   You can control the smoothing by setting a specific `bandwidth` value (if not set it is
   automatically calculated by vega lite):
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", bandwidth: 20.0)
   ```
 
   You can plot a cumulative density distribution by setting the `:cumulative` option to `true`:
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true)
   ```
 
   or calculate a separate cumulative distribution for each group: 
 
-  ```vega-lite
+  ```tucan
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true, color_by: "Species")
   |> Tucan.facet_by(:column, "Species")
   ```
@@ -522,14 +522,14 @@ defmodule Tucan do
   Assigning a single numeric variable shows the univariate distribution. The default
   style is the `:tick`:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill")
   ```
 
   For very dense distribution it makes more sense to use the `:jitter` style in order
   to reduce overlapping points:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", style: :jitter, height: 30, width: 300)
   ```
 
@@ -537,48 +537,48 @@ defmodule Tucan do
   the field must be categorical.
 
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
   ```
 
   The plot would be more clear if you also colored the points with the same field:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
   |> Tucan.color_by("day")
   ```
 
   Or you can color by a distinct variable to show a multi-dimensional relationship:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
   |> Tucan.color_by("sex")
   ```
 
   or you can color by a numerical variable:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
   |> Tucan.color_by("size", type: :ordinal)
   ```
 
   You could draw the same with points but without jittering:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :point)
   |> Tucan.color_by("sex")
   ```
 
   or with ticks which is the default one:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :tick)
   |> Tucan.color_by("sex")
   ```
 
   You can set the `:orient` flag to `:vertical` to change the orientation:
 
-  ```vega-lite
+  ```tucan
   Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter, orient: :vertical)
   |> Tucan.color_by("sex")
   ```
@@ -641,13 +641,13 @@ defmodule Tucan do
 
   Let's start with a default denisty heatmap on the penguins dataset:
 
-  ```vega-lite
+  ```tucan
   Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)")
   ```
 
   You can summarize over another field:
 
-  ```vega-lite
+  ```tucan
   Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)", z: "Body Mass (g)", aggregate: :mean)
   ```
   """
@@ -668,8 +668,14 @@ defmodule Tucan do
     |> color_fn.()
   end
 
-  @countplot_opts Tucan.Options.options([:global, :general_mark], [:stacked, :color_by, :orient])
-  @countplot_schema Tucan.Options.schema!(@countplot_opts)
+  @countplot_opts Tucan.Options.take!([
+                    @global_opts,
+                    @global_mark_opts,
+                    :stacked,
+                    :color_by,
+                    :orient
+                  ])
+  @countplot_schema Tucan.Options.to_nimble_schema!(@countplot_opts)
 
   @doc """
   Plot the counts of observations for a categorical variable.
@@ -701,26 +707,26 @@ defmodule Tucan do
   We will use the `:titanic` dataset on the following examples. We can
   plot the number of passengers by ticket class:
 
-  ```vega-lite
+  ```tucan
   Tucan.countplot(:titanic, "Pclass")
   ```
 
   You can make the bars horizontal by setting the `:orient` option:
 
-  ```vega-lite
+  ```tucan
   Tucan.countplot(:titanic, "Pclass", orient: :vertical)
   ```
 
   You can set `:color_by` to group it by a second variable:
 
-  ```vega-lite
+  ```tucan
   Tucan.countplot(:titanic, "Pclass", color_by: "Survived")
   ```
 
   By default the bars are stacked. You can unstack them by setting the
   `:stacked` option:
 
-  ```vega-lite
+  ```tucan
   Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
   ```
   """
@@ -771,7 +777,7 @@ defmodule Tucan do
   > three semantic types, but this style of plot can be hard to interpret and is often
   > ineffective.
   >
-  > ```vega-lite
+  > ```tucan
   > Tucan.scatter(:tips, "total_bill", "tip",
   >   color_by: "day",
   >   shape_by: "sex",
@@ -791,7 +797,7 @@ defmodule Tucan do
   > Using redundant semantics (i.e. both color and shape for the same variable) can be
   > helpful for making graphics more accessible.
   >
-  > ```vega-lite
+  > ```tucan
   > Tucan.scatter(:tips, "total_bill", "tip",
   >   color_by: "day",
   >   shape_by: "day"
@@ -808,13 +814,13 @@ defmodule Tucan do
 
   Drawing a scatter plot betwen two variables:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip")
   ```
 
   You can combine it with `color_by/3` to color code the points:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip")
   |> Tucan.color_by("time")
   ```
@@ -822,7 +828,7 @@ defmodule Tucan do
   Assigning the same variable to `shape_by/3` will also vary the markers and create a
   more accessible plot:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 400)
   |> Tucan.color_by("time")
   |> Tucan.shape_by("time")
@@ -831,7 +837,7 @@ defmodule Tucan do
   Assigning `color_by/3` and `shape_by/3` to different variables will vary colors and
   markers independently:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 400)
   |> Tucan.color_by("day")
   |> Tucan.shape_by("time")
@@ -840,7 +846,7 @@ defmodule Tucan do
   You can also color the points by a numeric variable, the semantic mapping will be
   quantitative and will use a different default palette:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 400)
   |> Tucan.color_by("size", type: :quantitative)
   ```
@@ -848,7 +854,7 @@ defmodule Tucan do
   A numeric variable can also be assigned to size to apply a semantic mapping to the
   areas of the points:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 400, tooltip: :data)
   |> Tucan.color_by("size", type: :quantitative)
   |> Tucan.size_by("size", type: :quantitative)
@@ -857,7 +863,7 @@ defmodule Tucan do
   You can also combine it with `facet_by/3` in order to group within additional
   categorical variables, and plot them across multiple subplots.
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 300)
   |> Tucan.color_by("day")
   |> Tucan.shape_by("day")
@@ -867,7 +873,7 @@ defmodule Tucan do
   You can also apply faceting on more than one variables, both horizontally and
   vertically:
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:tips, "total_bill", "tip", width: 300)
   |> Tucan.color_by("day")
   |> Tucan.shape_by("day")
@@ -918,7 +924,7 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.bubble(:gapminder, "income", "health", "population", width: 400)
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
@@ -927,7 +933,7 @@ defmodule Tucan do
   You could use a fourth variable to color the graph. As always you can set the `tooltip` in
   order to make the plot interactive:
 
-  ```vega-lite
+  ```tucan
   Tucan.bubble(:gapminder, "income", "health", "population", color_by: "region", width: 400, tooltip: :data)
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
@@ -935,7 +941,7 @@ defmodule Tucan do
 
   It makes more sense to use a log scale for the _x axis_:
 
-  ```vega-lite
+  ```tucan
   Tucan.bubble(:gapminder, "income", "health", "population", color_by: "region", width: 400, tooltip: :data)
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
@@ -964,8 +970,8 @@ defmodule Tucan do
     )
   end
 
-  @lineplot_opts Tucan.Options.options([:global, :general_mark])
-  @lineplot_schema Tucan.Options.schema!(@lineplot_opts)
+  @lineplot_opts Tucan.Options.take!([@global_opts, @global_mark_opts])
+  @lineplot_schema Tucan.Options.to_nimble_schema!(@lineplot_opts)
   Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
 
   @doc """
@@ -977,11 +983,11 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.lineplot(:flights, "year", "passengers")
   ```
 
-  ```vega-lite
+  ```tucan
   months = [
     "January",
     "February",
@@ -1056,7 +1062,7 @@ defmodule Tucan do
   > The following example showcases the limitations of a pie chart, compared to a
   > bar chart:
   >
-  > ```vega-lite
+  > ```tucan
   > alias VegaLite, as: Vl
   >
   > data = [
@@ -1087,7 +1093,7 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.pie(:barley, "yield", "site", aggregate: :sum, tooltip: true)
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
@@ -1126,7 +1132,7 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.donut(:barley, "yield", "site", aggregate: :sum, tooltip: true)
   |> Tucan.facet_by(:column, "year", type: :nominal)
   ```
@@ -1157,7 +1163,7 @@ defmodule Tucan do
 
   By default a scatter plot will be drawn for all pairwise plots:
 
-  ```vega-lite
+  ```tucan
   fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
 
   Tucan.pairplot(:iris, fields, width: 130, height: 130)
@@ -1167,7 +1173,7 @@ defmodule Tucan do
   that you need the `recursive` option to `true` for the grouping to be applied on all
   internal subplots.
 
-  ```vega-lite
+  ```tucan
   fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
 
   Tucan.pairplot(:iris, fields, width: 130, height: 130)
@@ -1177,7 +1183,7 @@ defmodule Tucan do
   By specifying the `:diagonal` option you can change the default plot for the diagonal
   elements to a histogram:
 
-  ```vega-lite
+  ```tucan
   fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
 
   Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram)
@@ -1190,7 +1196,7 @@ defmodule Tucan do
   example we draw differently the diagonal, the lower and the upper grid. Notice that we don't
   call `color_by/3` since we color differently the plots based on their index positions.
 
-  ```vega-lite
+  ```tucan
   Tucan.pairplot(:iris, ["petal_width", "petal_length", "sepal_width", "sepal_length"],
     width: 150,
     height: 150,
@@ -1436,7 +1442,7 @@ defmodule Tucan do
 
   ## Examples
 
-  ```vega-lite
+  ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.set_title("My awesome plot",
       color: "red",
