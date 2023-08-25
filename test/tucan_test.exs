@@ -424,6 +424,37 @@ defmodule TucanTest do
     end
   end
 
+  describe "density_heatmap/3" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, bin: true)
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, bin: true)
+        |> Vl.encode(:color, type: :quantitative, aggregate: :count)
+
+      assert Tucan.density_heatmap(@iris_dataset, "petal_width", "petal_length") ==
+               expected
+    end
+
+    test "with z and aggregate set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, bin: true)
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, bin: true)
+        |> Vl.encode_field(:color, "sepal_width", type: :quantitative, aggregate: :max)
+
+      assert Tucan.density_heatmap(@iris_dataset, "petal_width", "petal_length",
+               z: "sepal_width",
+               aggregate: :max
+             ) ==
+               expected
+    end
+  end
+
   describe "pie/4" do
     @pie_data [
       %{category: "A", value: 30},
