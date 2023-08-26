@@ -26,8 +26,6 @@ defmodule Tucan.Axes do
 
   @doc """
   Set the title of the given `axis`.
-
-  An `ArgumentError` is raised if the `x` encoding channel is not defined.
   """
   @spec set_title(vl :: VegaLite.t(), axis :: axis(), title :: binary()) :: VegaLite.t()
   def set_title(vl, axis, title) do
@@ -51,6 +49,16 @@ defmodule Tucan.Axes do
     VegaLiteUtils.put_encoding_options(vl, :y, scale: [type: scale])
   end
 
+  @doc """
+  Sets an arbitrary set of options to the given `encoding` axis object.
+
+  Notice that no validation is performed, any option set will be merged with
+  the existing `axis` options of the given `encoding`.
+
+  An `ArgumentError` is raised if the `x` encoding channel is not defined.
+  """
+  @spec put_axis_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
+          VegaLite.t()
   def put_axis_options(vl, encoding, options) do
     VegaLiteUtils.put_encoding_options(vl, encoding, axis: options)
   end
