@@ -9,6 +9,7 @@ defmodule TucanTest do
   @cars_dataset Tucan.Datasets.dataset(:cars)
   @iris_dataset Tucan.Datasets.dataset(:iris)
   @tips_dataset Tucan.Datasets.dataset(:tips)
+  @stocks_dataset Tucan.Datasets.dataset(:stocks)
 
   describe "sanity checks" do
     setup do
@@ -281,6 +282,90 @@ defmodule TucanTest do
                shape_by: "species",
                size_by: "sepal_length"
              ) == expected
+    end
+  end
+
+  describe "lineplot/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price") == expected
+    end
+
+    test "with color_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price", color_by: "symbol") == expected
+    end
+
+    test "with group_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+        |> Vl.encode_field(:detail, "symbol", type: :nominal)
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price", group_by: "symbol") == expected
+    end
+
+    test "with points overlayed" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, point: true)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price", color_by: "symbol", points: true) ==
+               expected
+    end
+
+    test "with non filled points overlayed" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, point: [filled: false, fill: "white"])
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               points: true,
+               filled: false
+             ) ==
+               expected
+    end
+
+    test "with different interpoplation method" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, point: true, interpolate: "step")
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.lineplot(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               points: true,
+               interpolate: "step"
+             ) ==
+               expected
     end
   end
 

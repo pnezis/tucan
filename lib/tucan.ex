@@ -1045,12 +1045,43 @@ defmodule Tucan do
     )
   end
 
-  @lineplot_opts Tucan.Options.take!([@global_opts, @global_mark_opts, :x, :y])
+  lineplot_opts = [
+    group_by: [
+      type: :string,
+      doc: "A field to group by the lines without affecting the style of it."
+    ],
+    points: [
+      type: :boolean,
+      doc: "Whether points will be included in the chart.",
+      default: false
+    ],
+    filled: [
+      type: :boolean,
+      doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
+      default: true
+    ]
+  ]
+
+  @lineplot_opts Tucan.Options.take!(
+                   [
+                     @global_opts,
+                     @global_mark_opts,
+                     :interpolate,
+                     :tension,
+                     :color_by,
+                     :x,
+                     :y,
+                     :color
+                   ],
+                   lineplot_opts
+                 )
   @lineplot_schema Tucan.Options.to_nimble_schema!(@lineplot_opts)
   Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
 
   @doc """
   Draw a line plot between `x` and `y`
+
+  Both `x` and `y` are considered numerical variables.
 
   ## Options
 
@@ -1058,31 +1089,72 @@ defmodule Tucan do
 
   ## Examples
 
+  Plotting a simple line chart of Google stock price over time. Notice how we change the
+  `x` axis type from the default (`:quantitative`) to `:temporal` using the generic
+  `:x` channel configuration option: 
+
   ```tucan
-  Tucan.lineplot(:flights, "year", "passengers")
+  Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal])
+  |> VegaLite.transform(filter: "datum.symbol==='GOOG'")
   ```
 
-  ```tucan
-  months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ]
+  You could plot all stocks of the dataset with different colors by setting the `:color_by`
+  option. If you do not want to color lines differently, you can pass the `:group_by` option
+  instead of `:color_by`:
 
-  Tucan.lineplot(:flights, "year", "passengers")
-  |> Tucan.color_by("month", sort: months, type: :nominal)
-  |> Tucan.stroke_dash_by("month", sort: months)
+  ```tucan
+  left = Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal], color_by: "symbol")
+  right = Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal], group_by: "symbol")
+
+  VegaLite.concat(VegaLite.new(), [left, right], :horizontal)
+  ```
+
+  You can also overlay the points by setting the `:points` and `:filled` opts. Notice
+  that below we plot by year and aggregating the `y` values:
+
+  ```tucan
+  filled_points =
+    Tucan.lineplot(:stocks, "date", "price",
+      x: [type: :temporal, time_unit: :year],
+      y: [aggregate: :mean],
+      color_by: "symbol",
+      points: true,
+      tooltip: true,
+      width: 300
+    )
+
+  stroked_points =
+    Tucan.lineplot(:stocks, "date", "price",
+      x: [type: :temporal, time_unit: :year],
+      y: [aggregate: :mean],
+      color_by: "symbol",
+      points: true,
+      filled: false,
+      tooltip: true,
+      width: 300
+    )
+
+  VegaLite.concat(VegaLite.new(), [filled_points, stroked_points], :horizontal)
+  ```
+
+  You can use various interpolation methods. Some examples follow:
+
+  ```tucan
+  plots = 
+    for interpolation <- ["linear", "step", "cardinal", "monotone"] do
+      Tucan.lineplot(:stocks, "date", "price",
+        x: [type: :temporal, time_unit: :year],
+        y: [aggregate: :mean],
+        color_by: "symbol",
+        interpolate: interpolation
+      )
+      |> Tucan.set_title(interpolation)
+    end
+
+  VegaLite.concat(VegaLite.new(columns: 2), plots, :wrappable)
   ```
   """
+  # TODO: maybe support passing a list of y fields and repeat layer
   @doc section: :plots
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
@@ -1090,13 +1162,36 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @lineplot_schema)
 
     spec_opts = take_options(opts, @lineplot_opts, :spec)
-    mark_opts = take_options(opts, @lineplot_opts, :mark)
+
+    mark_opts =
+      take_options(opts, @lineplot_opts, :mark)
+      |> maybe_add_point_opts(opts[:points], opts)
 
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:line, mark_opts)
     |> encode_field(:x, x, opts, type: :quantitative)
     |> encode_field(:y, y, opts, type: :quantitative)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_encode_field(
+      :detail,
+      fn -> opts[:group_by] != nil end,
+      opts[:group_by],
+      [detail: []],
+      type: :nominal
+    )
+  end
+
+  defp maybe_add_point_opts(mark_opts, false, _opts), do: mark_opts
+
+  defp maybe_add_point_opts(mark_opts, true, opts) do
+    point_opts =
+      case opts[:filled] do
+        true -> [point: true]
+        false -> [point: [filled: false, fill: "white"]]
+      end
+
+    Keyword.merge(mark_opts, point_opts)
   end
 
   pie_opts = [
