@@ -68,7 +68,7 @@ defmodule Tucan.MixProject do
         {FancyFences,
          [
            fences: %{
-             "tucan" => {Tucan.Docs, :vl, []}
+             "tucan" => {Tucan.Docs, :tucan, []}
            }
          ]},
       before_closing_body_tag: fn
