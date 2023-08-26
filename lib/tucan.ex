@@ -10,12 +10,22 @@ defmodule Tucan do
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
 
-  @spec new() :: VegaLite.t()
-  def new(), do: VegaLite.new()
+  @doc """
+  Creates if needed a `VegaLite` plot and adds data to it.
 
+  The behaviour of this function depends on the type of `plotdata`:
+
+  * if a `VegaLite.t()` struct is passed then it is returned unchanged.
+  * If it is a binary it is considered a url and the `VegaLite.data_from_url/2` is
+    called on a newly created `VegaLite` struct.
+  * if it is an atom then it is considered a `Tucan.Dataset` and it is translated to
+    the dataset's url. If the dataset name is invalid an exception is raised.
+  * in any other case it is considered a set of data values and the values are set
+    as data to a newly created `VegaLite` struct.
+  """
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
   def new(plotdata, opts \\ []),
-    do: to_vega_plot(plotdata, Keyword.take(opts, [:width, :height, :title, :columns]))
+    do: to_vega_plot(plotdata, opts)
 
   defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
 
@@ -164,6 +174,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec histogram(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def histogram(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
@@ -423,6 +434,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec density(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
@@ -582,11 +594,14 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec stripplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def stripplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
+    spec_opts = take_options(opts, @stripplot_opts, :spec)
+
     plotdata
-    |> new(opts)
+    |> new(spec_opts)
     |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
     |> encode_field(:x, field, opts, type: :quantitative)
     |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], opts, type: :nominal)
@@ -678,6 +693,8 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec density_heatmap(plotdata :: plotdata(), x :: binary(), y :: binary(), opts :: keyword()) ::
+          VegaLite.t()
   def density_heatmap(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_heatmap_schema)
 
@@ -769,6 +786,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec countplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def countplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @countplot_schema)
 
@@ -929,6 +947,8 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec scatter(plotdata :: plotdata(), x :: binary(), y :: binary(), opts :: keyword()) ::
+          VegaLite.t()
   def scatter(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @scatter_schema)
 
@@ -1012,8 +1032,10 @@ defmodule Tucan do
   def bubble(plotdata, x, y, size, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bubble_schema)
 
+    spec_opts = take_options(opts, @bubble_opts, :spec)
+
     plotdata
-    |> new(opts)
+    |> new(spec_opts)
     |> Vl.mark(:circle, Keyword.take(opts, [:tooltip]))
     |> encode_field(:x, x, opts, type: :quantitative, scale: [zero: false])
     |> encode_field(:y, y, opts, type: :quantitative, scale: [zero: false])
@@ -1155,6 +1177,8 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec pie(plotdata :: plotdata(), field :: binary(), category :: binary(), opts :: keyword()) ::
+          VegaLite.t()
   def pie(plotdata, field, category, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @pie_schema)
 
@@ -1194,6 +1218,8 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
+  @spec donut(plotdata :: plotdata(), field :: binary(), category :: binary(), opts :: keyword()) ::
+          VegaLite.t()
   def donut(plotdata, field, category, opts \\ []) do
     opts = Keyword.put_new(opts, :inner_radius, 50)
 
@@ -1326,6 +1352,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :composite
+  @spec pairplot(plotdata :: plotdata(), fields :: [binary()], opts :: keyword()) :: VegaLite.t()
   def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
     opts = NimbleOptions.validate!(opts, @pairplot_schema)
 
@@ -1461,6 +1488,30 @@ defmodule Tucan do
     end
   end
 
+  @doc """
+  Apply facetting on the input plot `vl` by the given `field`.
+
+  This will create multiple plots either horizontally (`:column` faceting mode) or
+  vertically (`:row` faceting mode), one for each distinct value of the given
+  `field`, which must be a categorical variable.
+
+  `opts` is an arbitraty keyword list that will be passed to the `:row` or `:column`
+  encoding.
+
+  > #### Facet plots {: .info}
+  >
+  > Facet plots, also known as trellis plots or small multiples, are figures made up
+  > of multiple subplots which have the same set of axes, where each subplot shows
+  > a subset of the data.
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.facet_by(:column, "species")
+  |> Tucan.color_by("species")
+  ```
+  """
   @doc section: :grouping
   @spec facet_by(
           vl :: VegaLite.t(),
@@ -1634,5 +1685,6 @@ defmodule Tucan do
   end
 
   @doc false
+  @spec __schema__(plot :: atom()) :: keyword()
   def __schema__(plot), do: Keyword.fetch!(@schemas, plot)
 end

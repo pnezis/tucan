@@ -48,6 +48,53 @@ defmodule TucanTest do
         end
       end
     end
+
+    test "__schema__" do
+      # TODO: check for all functions
+      assert is_list(Tucan.__schema__(:histogram))
+    end
+  end
+
+  describe "new/2" do
+    test "with a tucan dataset" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+
+      assert Tucan.new(:iris) == expected
+    end
+
+    test "a binary is treated as url" do
+      url = "http://some/dataset.csv"
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(url)
+
+      assert Tucan.new(url) == expected
+    end
+
+    test "with data" do
+      data = [%{a: 1}, %{a: 2}, %{a: 3}]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+
+      assert Tucan.new(data) == expected
+    end
+
+    test "with vega plot" do
+      assert Tucan.new(Vl.new()) == Vl.new()
+    end
+
+    test "with options set" do
+      expected =
+        Vl.new(width: 100, height: 100, foo: 2)
+        |> Vl.data_from_url(@iris_dataset)
+
+      assert Tucan.new(:iris, width: 100, height: 100, foo: 2) == expected
+    end
   end
 
   describe "histogram/3" do
@@ -821,6 +868,24 @@ defmodule TucanTest do
       for {vl, expected} <- test_plots do
         assert Tucan.stroke_dash_by(vl, "field", recursive: true) == expected
       end
+    end
+  end
+
+  describe "facet_by/4" do
+    test "facet horizontally" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:column, "field")
+
+      assert Tucan.facet_by(Vl.new(), :column, "field") == expected
+    end
+
+    test "facet vertically" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:row, "field")
+
+      assert Tucan.facet_by(Vl.new(), :row, "field") == expected
     end
   end
 
