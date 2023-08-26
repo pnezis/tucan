@@ -13,6 +13,7 @@ defmodule Tucan.DatasetsTest do
     :stocks,
     :tips,
     :titanic,
+    :unemployment,
     :weather
   ]
 

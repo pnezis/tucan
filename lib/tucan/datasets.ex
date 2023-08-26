@@ -16,6 +16,7 @@ defmodule Tucan.Datasets do
           | :flights
           | :tips
           | :movies
+          | :unemployment
 
   @datasets [
     barley: [
@@ -53,7 +54,8 @@ defmodule Tucan.Datasets do
     flights: [
       url: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/flights.csv"
     ],
-    tips: [url: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv"]
+    tips: [url: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/tips.csv"],
+    unemployment: [url: "https://vega.github.io/editor/data/unemployment-across-industries.json"]
   ]
 
   @valid_datasets @datasets
