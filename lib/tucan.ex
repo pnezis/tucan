@@ -707,7 +707,10 @@ defmodule Tucan do
           encode(vl, :color, opts, type: :quantitative, aggregate: opts[:aggregate] || :count)
 
         field ->
-          color_by(vl, field, aggregate: opts[:aggregate] || :count, type: :quantitative)
+          encode_field(vl, :color, field, opts,
+            aggregate: opts[:aggregate] || :count,
+            type: :quantitative
+          )
       end
     end
 
