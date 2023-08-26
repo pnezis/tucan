@@ -1243,6 +1243,152 @@ defmodule Tucan do
     ]
   ]
 
+  area_opts = [
+    points: [
+      type: :boolean,
+      doc: "Whether points will be included in the chart.",
+      default: false
+    ],
+    line: [
+      type: :boolean,
+      doc: "Whether the line will be included in the chart",
+      default: false,
+      dest: :mark
+    ],
+    mode: [
+      type: {:in, [:stacked, :normalize, :streamgraph, :no_stack]},
+      doc: """
+      The stacking mode, applied only if `color_by is set`. Can be one of the
+      following:
+        * `:stacked` - the default one, areas are stacked 
+        * `:normalize` - the stacked charts are normalized
+        * `:streamgraph` - the chart is displaced around a central axis
+        * `:no_stack` - no stacking is applied
+      """,
+      default: :stacked
+    ]
+  ]
+
+  @area_opts Tucan.Options.take!(
+               [
+                 @global_opts,
+                 @global_mark_opts,
+                 :interpolate,
+                 :tension,
+                 :color_by,
+                 :x,
+                 :y,
+                 :color
+               ],
+               area_opts
+             )
+  @area_schema Tucan.Options.to_nimble_schema!(@area_opts)
+
+  @doc """
+  Returns the specification of an area plot.
+
+  ## Options
+
+  #{Tucan.Options.docs(@area_schema)}
+
+  ## Examples
+
+  A simple area chart of Google stock price over time. Notice how we change the
+  `x` axis type from the default (`:quantitative`) to `:temporal` using the generic
+  `:x` channel configuration option: 
+
+  ```tucan
+  Tucan.area(:stocks, "date", "price", x: [type: :temporal])
+  |> VegaLite.transform(filter: "datum.symbol==='GOOG'")
+  ```
+
+  You can overlay the points and/or the line:
+
+  ```tucan
+  Tucan.area(:stocks, "date", "price", x: [type: :temporal], points: true, line: true)
+  |> VegaLite.transform(filter: "datum.symbol==='GOOG'")
+  ```
+
+  If you add the `:color_by` property then the area charts are stacked by default. Below
+  you can see how the generic encoding options can be used in order to modify any part
+  of the underlying `VegaLite` specification:
+
+  ```tucan
+  Tucan.area(:unemployment, "date", "count",
+    color_by: "series",
+    x: [type: :temporal, time_unit: :yearmonth, axis: [format: "%Y"]],
+    y: [aggregate: :sum],
+    color: [scale: [scheme: "category20b"]],
+    width: 300,
+    height: 200,
+    fill_opacity: 1.0
+  )
+  ```
+
+  You could change the mode to `:normalize` or `:stramgraph`:
+
+  ```tucan
+  left =
+    Tucan.area(:unemployment, "date", "count",
+      color_by: "series",
+      mode: :normalize,
+      x: [type: :temporal, time_unit: :yearmonth, axis: [format: "%Y"]],
+      y: [aggregate: :sum]
+    )
+    |> Tucan.set_title("normalize")
+
+  right =
+    Tucan.area(:unemployment, "date", "count",
+      color_by: "series",
+      mode: :streamgraph,
+      x: [type: :temporal, time_unit: :yearmonth, axis: [format: "%Y"]],
+      y: [aggregate: :sum]
+    )
+    |> Tucan.set_title("streamgraph")
+
+  VegaLite.concat(VegaLite.new(), [left, right], :horizontal)
+  ```
+
+  Or you could disable the stacking at all:
+
+  ```tucan
+  Tucan.area(:stocks, "date", "price",
+    color_by: "symbol",
+    mode: :no_stack,
+    x: [type: :temporal],
+    width: 400
+  )
+  |> Tucan.Axes.set_y_scale(:log)
+  ```
+  """
+  @doc section: :plots
+  @spec area(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
+          VegaLite.t()
+  def area(plotdata, x, y, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @area_schema)
+
+    spec_opts = take_options(opts, @area_opts, :spec)
+
+    mark_opts =
+      take_options(opts, @area_opts, :mark)
+      |> Keyword.put(:point, Keyword.get(opts, :points, false))
+
+    stack =
+      case opts[:mode] do
+        :stacked -> true
+        :normalize -> "normalize"
+        :streamgraph -> "center"
+        :no_stack -> false
+      end
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:area, mark_opts)
+    |> encode_field(:x, x, opts, type: :quantitative)
+    |> encode_field(:y, y, opts, type: :quantitative, stack: stack)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+  end
+
   @pie_opts Tucan.Options.take!([@global_opts, @global_mark_opts, :theta, :color], pie_opts)
   @pie_schema Tucan.Options.to_nimble_schema!(@pie_opts)
 

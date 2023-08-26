@@ -404,6 +404,104 @@ defmodule TucanTest do
     end
   end
 
+  describe "area/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
+
+      assert Tucan.area(@stocks_dataset, "date", "price") == expected
+    end
+
+    test "with points and line set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: true, point: true)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
+
+      assert Tucan.area(@stocks_dataset, "date", "price", points: true, line: true) == expected
+    end
+
+    test "stacked area charts" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
+        |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: true)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               x: [type: :temporal, time_unit: :yearmonth],
+               y: [aggregate: "mean"]
+             ) == expected
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               mode: :stacked,
+               x: [type: :temporal, time_unit: :yearmonth],
+               y: [aggregate: "mean"]
+             ) == expected
+    end
+
+    test "stacked area charts with mode normalize" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
+        |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :normalize)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               mode: :normalize,
+               x: [type: :temporal, time_unit: :yearmonth],
+               y: [aggregate: "mean"]
+             ) == expected
+    end
+
+    test "stacked area charts with mode streamgraph" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
+        |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :center)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               mode: :streamgraph,
+               x: [type: :temporal, time_unit: :yearmonth],
+               y: [aggregate: "mean"]
+             ) == expected
+    end
+
+    test "stacked area charts with stack set to false" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
+        |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: false)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               mode: :no_stack,
+               x: [type: :temporal, time_unit: :yearmonth],
+               y: [aggregate: "mean"]
+             ) == expected
+    end
+  end
+
   describe "bubble/5" do
     test "with default settings" do
       expected =
