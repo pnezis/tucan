@@ -15,7 +15,7 @@ defmodule Tucan do
 
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
   def new(plotdata, opts \\ []),
-    do: to_vega_plot(plotdata, Keyword.take(opts, [:width, :height, :title]))
+    do: to_vega_plot(plotdata, Keyword.take(opts, [:width, :height, :title, :columns]))
 
   defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
 
@@ -932,9 +932,12 @@ defmodule Tucan do
   def scatter(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @scatter_schema)
 
+    spec_opts = take_options(opts, @scatter_opts, :spec)
+    mark_opts = take_options(opts, @scatter_opts, :mark)
+
     plotdata
-    |> new(opts)
-    |> Vl.mark(:point, Keyword.take(opts, [:tooltip]))
+    |> new(spec_opts)
+    |> Vl.mark(:point, mark_opts)
     |> encode_field(:x, x, opts, type: :quantitative, scale: [zero: false])
     |> encode_field(:y, y, opts, type: :quantitative, scale: [zero: false])
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts,
@@ -1332,10 +1335,11 @@ defmodule Tucan do
         pairplot_child_spec({row_field, row_index}, {col_field, col_index}, length(fields), opts)
       end
 
+    spec_opts = Keyword.take(opts, [:title]) ++ [columns: length(fields)]
+
     plotdata
-    |> new(title: opts[:title])
+    |> new(spec_opts)
     |> Vl.concat(children, :wrappable)
-    |> put_spec_field("columns", length(fields))
   end
 
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
@@ -1359,7 +1363,9 @@ defmodule Tucan do
       end
     end
 
-    Vl.new(width: opts[:width], height: opts[:height])
+    spec_opts = Keyword.take(opts, [:width, :height])
+
+    Vl.new(spec_opts)
     |> pairplot_child_plot(row_field, row_index, col_field, col_index, opts)
     |> x_axis_title.(row_index)
     |> y_axis_title.(col_index)
@@ -1382,10 +1388,6 @@ defmodule Tucan do
       true ->
         Tucan.scatter(vl, col_field, row_field)
     end
-  end
-
-  defp put_spec_field(vl, name, value) do
-    update_in(vl.spec, fn spec -> Map.put(spec, name, value) end)
   end
 
   ## Grouping functions

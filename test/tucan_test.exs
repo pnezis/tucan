@@ -211,7 +211,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:point)
+        |> Vl.mark(:point, fill_opacity: 0.5)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
 
@@ -222,7 +222,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:point)
+        |> Vl.mark(:point, fill_opacity: 0.5)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species", type: :nominal)
@@ -581,6 +581,156 @@ defmodule TucanTest do
                stacked: false,
                orient: :vertical
              ) == expected
+    end
+  end
+
+  describe "pairplot/3" do
+    test "with default options" do
+      top_left =
+        Tucan.scatter(Vl.new(), "petal_width", "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: "petal_width"]]
+        )
+
+      top_right =
+        Tucan.scatter(Vl.new(), "petal_length", "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: nil]]
+        )
+
+      bottom_left =
+        Tucan.scatter(Vl.new(), "petal_width", "petal_length",
+          x: [axis: [title: "petal_width"]],
+          y: [axis: [title: "petal_length"]]
+        )
+
+      bottom_right =
+        Tucan.scatter(Vl.new(), "petal_length", "petal_length",
+          x: [axis: [title: "petal_length"]],
+          y: [axis: [title: nil]]
+        )
+
+      expected =
+        Vl.new(columns: 2)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.concat([top_left, top_right, bottom_left, bottom_right], :wrappable)
+
+      assert Tucan.pairplot(@iris_dataset, ["petal_width", "petal_length"]) == expected
+    end
+
+    test "with diagonal set to :histogram" do
+      top_left =
+        Tucan.histogram(Vl.new(), "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: "petal_width"]]
+        )
+
+      top_right =
+        Tucan.scatter(Vl.new(), "petal_length", "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: nil]]
+        )
+
+      bottom_left =
+        Tucan.scatter(Vl.new(), "petal_width", "petal_length",
+          x: [axis: [title: "petal_width"]],
+          y: [axis: [title: "petal_length"]]
+        )
+
+      bottom_right =
+        Tucan.histogram(Vl.new(), "petal_length",
+          x: [axis: [title: "petal_length"]],
+          y: [axis: [title: nil]]
+        )
+
+      expected =
+        Vl.new(columns: 2)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.concat([top_left, top_right, bottom_left, bottom_right], :wrappable)
+
+      assert Tucan.pairplot(@iris_dataset, ["petal_width", "petal_length"], diagonal: :histogram) ==
+               expected
+    end
+
+    test "with diagonal set to :density" do
+      top_left =
+        Tucan.density(Vl.new(), "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: "petal_width"]]
+        )
+
+      top_right =
+        Tucan.scatter(Vl.new(), "petal_length", "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: nil]]
+        )
+
+      bottom_left =
+        Tucan.scatter(Vl.new(), "petal_width", "petal_length",
+          x: [axis: [title: "petal_width"]],
+          y: [axis: [title: "petal_length"]]
+        )
+
+      bottom_right =
+        Tucan.density(Vl.new(), "petal_length",
+          x: [axis: [title: "petal_length"]],
+          y: [axis: [title: nil]]
+        )
+
+      expected =
+        Vl.new(columns: 2)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.concat([top_left, top_right, bottom_left, bottom_right], :wrappable)
+
+      assert Tucan.pairplot(@iris_dataset, ["petal_width", "petal_length"], diagonal: :density) ==
+               expected
+    end
+
+    test "with custom plot_fn" do
+      top_left =
+        Tucan.density(Vl.new(), "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: "petal_width"]]
+        )
+
+      top_right =
+        Tucan.scatter(Vl.new(), "petal_length", "petal_width",
+          x: [axis: [title: nil]],
+          y: [axis: [title: nil]]
+        )
+
+      bottom_left =
+        Tucan.scatter(Vl.new(), "petal_width", "petal_length",
+          x: [axis: [title: "petal_width"]],
+          y: [axis: [title: "petal_length"]]
+        )
+
+      bottom_right =
+        Tucan.histogram(Vl.new(), "petal_length",
+          x: [axis: [title: "petal_length"]],
+          y: [axis: [title: nil]]
+        )
+
+      expected =
+        Vl.new(columns: 2)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.concat([top_left, top_right, bottom_left, bottom_right], :wrappable)
+
+      assert Tucan.pairplot(@iris_dataset, ["petal_width", "petal_length"],
+               plot_fn: fn vl, {row_field, row_index}, {col_field, col_index} ->
+                 cond do
+                   row_index == 0 and col_index == 0 ->
+                     Tucan.density(vl, row_field)
+
+                   row_index == 1 and col_index == 1 ->
+                     Tucan.histogram(vl, row_field)
+
+                   true ->
+                     Tucan.scatter(vl, col_field, row_field)
+                 end
+               end
+             ) ==
+               expected
     end
   end
 
