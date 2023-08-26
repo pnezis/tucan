@@ -21,20 +21,16 @@ defmodule Tucan.Themes.Helpers do
       theme
     else
       {:error, reason} ->
-        IO.inspect(reason)
         IO.warn(reason)
         nil
     end
   end
 
   defp eval_theme(path) do
-    try do
-      {theme, _bindings} = Code.eval_file(path)
-      {:ok, theme}
-    rescue
-      _e ->
-        {:error, "failed to load theme from #{path}"}
-    end
+    {theme, _bindings} = Code.eval_file(path)
+    {:ok, theme}
+  rescue
+    _e -> {:error, "failed to load theme from #{path}"}
   end
 
   defp validate_theme(theme) do
@@ -48,11 +44,7 @@ defmodule Tucan.Themes.Helpers do
   end
 
   @spec docs(themes :: keyword()) :: binary()
-  def docs(themes) do
-    themes
-    |> Enum.map(fn {_name, opts} -> theme_docs(opts) end)
-    |> Enum.join("\n\n")
-  end
+  def docs(themes), do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts) end)
 
   defp theme_docs(opts) do
     theme_name =

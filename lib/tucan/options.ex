@@ -314,8 +314,7 @@ defmodule Tucan.Options do
       |> Keyword.fetch!(section)
       |> Keyword.fetch!(:order)
     end)
-    |> Enum.map(fn {section, opts} -> section_opts_docs(section, opts) end)
-    |> Enum.join("\n\n")
+    |> Enum.map_join("\n\n", fn {section, opts} -> section_opts_docs(section, opts) end)
   end
 
   defp section_opts_docs(section, opts) do

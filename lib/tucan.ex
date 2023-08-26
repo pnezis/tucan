@@ -1371,22 +1371,18 @@ defmodule Tucan do
 
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
     x_axis_title = fn vl, row_index ->
-      cond do
-        row_index == fields_count - 1 ->
-          Tucan.Axes.put_axis_options(vl, :x, title: col_field)
-
-        true ->
-          Tucan.Axes.put_axis_options(vl, :x, title: nil)
+      if row_index == fields_count - 1 do
+        Tucan.Axes.put_axis_options(vl, :x, title: col_field)
+      else
+        Tucan.Axes.put_axis_options(vl, :x, title: nil)
       end
     end
 
     y_axis_title = fn vl, col_index ->
-      cond do
-        col_index == 0 ->
-          Tucan.Axes.put_axis_options(vl, :y, title: row_field)
-
-        true ->
-          Tucan.Axes.put_axis_options(vl, :y, title: nil)
+      if col_index == 0 do
+        Tucan.Axes.put_axis_options(vl, :y, title: row_field)
+      else
+        Tucan.Axes.put_axis_options(vl, :y, title: nil)
       end
     end
 

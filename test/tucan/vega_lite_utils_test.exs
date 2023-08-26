@@ -1,8 +1,8 @@
 defmodule Tucan.VegaLiteUtilsTest do
   use ExUnit.Case
 
-  alias VegaLite, as: Vl
   alias Tucan.VegaLiteUtils
+  alias VegaLite, as: Vl
 
   doctest Tucan.VegaLiteUtils
 
