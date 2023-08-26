@@ -120,4 +120,112 @@ defmodule Tucan.VegaLiteUtilsTest do
              }
     end
   end
+
+  describe "drop_encoding_channels/2" do
+    test "raises if not single view" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      expected =
+        "drop_encoding_channels/2 expects a single view spec, multi view detected: :hconcat key is defined"
+
+      assert_raise ArgumentError,
+                   expected,
+                   fn ->
+                     VegaLiteUtils.drop_encoding_channels(vl, :x)
+                   end
+    end
+
+    test "drops a single channel" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+
+      assert VegaLiteUtils.drop_encoding_channels(vl, :x) == Vl.new()
+    end
+
+    test "drops multiple channels" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+        |> Vl.encode_field(:color, "y")
+
+      assert VegaLiteUtils.drop_encoding_channels(vl, [:x, :color]) ==
+               Vl.encode_field(Vl.new(), :y, "y")
+    end
+  end
+
+  describe "put_in_spec/3" do
+    test "adds non existing options" do
+      expected = Vl.new(width: 100)
+
+      assert VegaLiteUtils.put_in_spec(Vl.new(), :width, 100) == expected
+    end
+
+    test "replaces existing options" do
+      expected = Vl.new(width: 100, height: 20)
+
+      assert VegaLiteUtils.put_in_spec(Vl.new(width: 50, height: 20), :width, 100) == expected
+    end
+  end
+
+  describe "encode_raw/3" do
+    test "raises if not single view" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      expected =
+        "encode_raw/3 expects a single view spec, multi view detected: :hconcat key is defined"
+
+      assert_raise ArgumentError,
+                   expected,
+                   fn ->
+                     VegaLiteUtils.encode_raw(vl, :x, foo: 1)
+                   end
+
+      assert_raise ArgumentError,
+                   expected,
+                   fn ->
+                     VegaLiteUtils.encode_raw(vl.spec, :x, foo: 1)
+                   end
+    end
+
+    test "encodes a channel" do
+      expected = Vl.new() |> Vl.encode(:x, field: "x", type: :nominal)
+
+      assert Tucan.VegaLiteUtils.encode_raw(Vl.new(), :x, field: "x", type: :nominal) == expected
+
+      assert Tucan.VegaLiteUtils.encode_raw(Vl.new().spec, :x, field: "x", type: :nominal) ==
+               expected.spec
+    end
+  end
+
+  describe "encode_field_raw/4" do
+    test "raises if not single view" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      expected =
+        "encode_field_raw/4 expects a single view spec, multi view detected: :hconcat key is defined"
+
+      assert_raise ArgumentError,
+                   expected,
+                   fn ->
+                     VegaLiteUtils.encode_field_raw(vl, :x, "x", foo: 1)
+                   end
+
+      assert_raise ArgumentError,
+                   expected,
+                   fn ->
+                     VegaLiteUtils.encode_field_raw(vl.spec, :x, "x", foo: 1)
+                   end
+    end
+
+    test "encodes a channel" do
+      expected = Vl.new() |> Vl.encode_field(:x, "x", type: :nominal)
+
+      assert Tucan.VegaLiteUtils.encode_field_raw(Vl.new(), :x, "x", type: :nominal) == expected
+
+      assert Tucan.VegaLiteUtils.encode_field_raw(Vl.new().spec, :x, "x", type: :nominal) ==
+               expected.spec
+    end
+  end
 end

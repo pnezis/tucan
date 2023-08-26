@@ -76,7 +76,14 @@ defmodule Tucan.VegaLiteUtils do
     end)
   end
 
-  def put_in_spec(%VegaLite{spec: spec} = vl, key, opts) when is_list(opts) do
+  @doc """
+  Puts the given `opts` under the given `key` in the provided `VegaLite` struct.
+
+  This is a destructive operation, any existing value for the provided `key` will be
+  replaced by `opts`.
+  """
+  @spec put_in_spec(vl :: VegaLite.t(), key :: atom(), opts :: term()) :: VegaLite.t()
+  def put_in_spec(%VegaLite{spec: spec} = vl, key, opts) do
     key = to_vl_key(key)
     opts = to_vl(opts)
 
@@ -108,16 +115,56 @@ defmodule Tucan.VegaLiteUtils do
     end
   end
 
+  @doc """
+  Similar to `VegaLite.encode_field/4` but handles also plain maps.
+
+  Accepts as input either a `VegaLite` struct or a plain map that is assumed to be
+  a `VegaLite` spec, and encodes the given field.
+
+  If the input is a `VegaLite` struct then a `VegaLite` is returned, otherwise a
+  map is returned.
+
+  This is useful in case you want to modify an existing multi-layer/multi-plot spec
+  where you cannot call directly `VegaLite.encode_field/4`
+
+  All provided options are converted to channel properties.
+  """
+  @spec encode_field_raw(
+          vl :: VegaLite.t() | map(),
+          channel :: atom(),
+          field :: binary(),
+          opts :: keyword()
+        ) :: VegaLite.t() | map()
   def encode_field_raw(vl, channel, field, opts) do
+    validate_single_view!(vl, "encode_field_raw/4")
+
     opts = Keyword.put(opts, :field, field)
     encode_raw(vl, channel, opts)
   end
 
+  @doc """
+  Similar to `VegaLite.encode/3` but handles also plain maps.
+
+  Accepts as input either a `VegaLite` struct or a plain map that is assumed to be
+  a `VegaLite` spec, and encodes the given field.
+
+  If the input is a `VegaLite` struct then a `VegaLite` is returned, otherwise a
+  map is returned.
+
+  This is useful in case you want to modify an existing multi-layer/multi-plot spec
+  where you cannot call directly `VegaLite.encode/3`
+
+  All provided options are converted to channel properties.
+  """
+  @spec encode_raw(vl :: VegaLite.t() | map(), channel :: atom(), opts :: keyword()) ::
+          VegaLite.t() | map()
   def encode_raw(%VegaLite{} = vl, channel, opts) do
     update_in(vl.spec, fn spec -> encode_raw(spec, channel, opts) end)
   end
 
   def encode_raw(%{} = spec, channel, opts) do
+    validate_single_view!(spec, "encode_raw/3")
+
     channel = to_vl_key(channel)
     opts = to_vl(opts)
 
@@ -129,10 +176,18 @@ defmodule Tucan.VegaLiteUtils do
     Map.put(spec, "encoding", encoding)
   end
 
-  def drop_encoding_channels(vl, channel) when is_binary(channel),
+  @doc """
+  Drops the given encoding channel or channels.
+
+  An error is raised if `vl` is not a single view.
+  """
+  @spec drop_encoding_channels(vl :: VegaLite.t(), channel :: atom() | [atom()]) :: VegaLite.t()
+  def drop_encoding_channels(vl, channel) when is_atom(channel),
     do: drop_encoding_channels(vl, [channel])
 
   def drop_encoding_channels(vl, channels) when is_list(channels) do
+    validate_single_view!(vl, "drop_encoding_channels/2")
+
     channels = Enum.map(channels, &to_vl_key/1)
 
     update_in(vl.spec, fn spec ->
@@ -141,7 +196,11 @@ defmodule Tucan.VegaLiteUtils do
         |> Map.get("encoding", %{})
         |> Map.drop(channels)
 
-      Map.put(spec, "encoding", encoding)
+      if encoding == %{} do
+        Map.drop(spec, ["encoding"])
+      else
+        Map.put(spec, "encoding", encoding)
+      end
     end)
   end
 
