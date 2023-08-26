@@ -1194,6 +1194,38 @@ defmodule Tucan do
     Keyword.merge(mark_opts, point_opts)
   end
 
+  @doc """
+  Returns the specification of a step chart.
+
+  This is a simple wrapper around `lineplot/4` with `:interpolate` set by default
+  to `"step"`. If `:interpolate` is set to any of `step, step-before, step-after` it
+  will be used. In any other case defaults to `step`.
+
+  ## Options
+
+  Check `lineplot/4`
+
+  ## Examples
+
+  ```tucan
+  Tucan.step(:stocks, "date", "price", color_by: "symbol", width: 300, x: [type: :temporal])
+  |> Tucan.Axes.set_y_scale(:log)
+  ```
+  """
+  @doc section: :plots
+  @spec step(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
+          VegaLite.t()
+  def step(plotdata, x, y, opts \\ []) do
+    interpolate =
+      case opts[:interpolate] do
+        step when step in ["step", "step-before", "step-after"] -> step
+        _other -> "step"
+      end
+
+    opts = Keyword.merge(opts, interpolate: interpolate)
+    lineplot(plotdata, x, y, opts)
+  end
+
   pie_opts = [
     inner_radius: [
       type: :integer,

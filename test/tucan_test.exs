@@ -369,6 +369,41 @@ defmodule TucanTest do
     end
   end
 
+  describe "step/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step")
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+
+      assert Tucan.step(@stocks_dataset, "date", "price") == expected
+    end
+
+    test "with another step interpolation" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step-before")
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+
+      assert Tucan.step(@stocks_dataset, "date", "price", interpolate: "step-before") == expected
+    end
+
+    test "with a non step interpolation" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step")
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative)
+
+      assert Tucan.step(@stocks_dataset, "date", "price", interpolate: "monotone") == expected
+    end
+  end
+
   describe "bubble/5" do
     test "with default settings" do
       expected =
