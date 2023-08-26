@@ -102,7 +102,7 @@ defmodule Tucan.Grid do
   |> Tucan.Grid.set_width(:y, 3)
   ```
   """
-  @spec set_color(vl :: VegaLite.t(), channel :: atom(), opacity :: float()) ::
+  @spec set_opacity(vl :: VegaLite.t(), channel :: atom(), opacity :: float()) ::
           VegaLite.t()
   def set_opacity(vl, channel, opacity)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_number(opacity) and opacity >= 0 and
