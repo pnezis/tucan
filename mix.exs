@@ -39,7 +39,21 @@ defmodule Tucan.MixProject do
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:fancy_fences, "~> 0.2", only: :dev, runtime: false}
-    ]
+    ] ++ dev_deps()
+  end
+
+  defp dev_deps do
+    case System.get_env("TUCAN_DEV") do
+      "true" ->
+        [
+          {:doctor, "~> 0.21.0", only: :dev},
+          {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+          {:dialyxir, "~> 1.3", only: :dev, runtime: false}
+        ]
+
+      _other ->
+        []
+    end
   end
 
   defp docs do
