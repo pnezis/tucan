@@ -104,7 +104,7 @@ defmodule Tucan do
 
   # TODO: maybe refactor with a macro
   @histogram_opts Tucan.Options.take!(
-                    [@global_opts, @global_mark_opts, :x, :x2, :y],
+                    [@global_opts, @global_mark_opts, :x, :x2, :y, :color],
                     histogram_opts
                   )
   @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
@@ -189,7 +189,7 @@ defmodule Tucan do
     |> encode_field(:x, "bin_#{field}", opts, bin: [binned: true], title: field)
     |> encode_field(:x2, "bin_#{field}_end", opts)
     |> histogram_y_encoding(field, opts)
-    |> maybe_color_by(opts[:color_by])
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
@@ -454,7 +454,7 @@ defmodule Tucan do
     |> Vl.mark(:area, mark_opts)
     |> encode_field(:x, "value", opts, type: :quantitative, scale: [zero: false])
     |> encode_field(:y, "density", opts, type: :quantitative)
-    |> maybe_color_by(opts[:color_by])
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
   end
 
   stripplot_opts = [
@@ -798,13 +798,10 @@ defmodule Tucan do
     |> Vl.mark(:bar, mark_opts)
     |> encode_field(:x, field, opts, type: :nominal)
     |> encode_field(:y, field, opts, aggregate: "count")
-    |> maybe_color_by(opts[:color_by])
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_x_offset(opts[:color_by], opts[:stacked], opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
-
-  defp maybe_color_by(vl, nil), do: vl
-  defp maybe_color_by(vl, field), do: color_by(vl, field)
 
   defp maybe_x_offset(vl, nil, _stacked, _opts), do: vl
   defp maybe_x_offset(vl, _field, true, _opts), do: vl
@@ -1095,7 +1092,7 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:line, mark_opts)
-    |> encode_field(:x, x, opts, type: :temporal)
+    |> encode_field(:x, x, opts, type: :quantitative)
     |> encode_field(:y, y, opts, type: :quantitative)
   end
 
@@ -1194,7 +1191,7 @@ defmodule Tucan do
     |> new(spec_opts)
     |> Vl.mark(:arc, mark_opts)
     |> encode_field(:theta, field, opts, theta_opts)
-    |> color_by(category)
+    |> encode_field(:color, category, opts)
   end
 
   @doc """
