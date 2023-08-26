@@ -502,6 +502,26 @@ defmodule TucanTest do
     end
   end
 
+  describe "streamgraph/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative, stack: :center)
+        |> Vl.encode_field(:color, "symbol")
+
+      assert Tucan.streamgraph(@stocks_dataset, "date", "price", "symbol") == expected
+
+      # color_by and mode is ignored
+      assert Tucan.streamgraph(@stocks_dataset, "date", "price", "symbol",
+               color_by: "other",
+               mode: :normalize
+             ) == expected
+    end
+  end
+
   describe "bubble/5" do
     test "with default settings" do
       expected =

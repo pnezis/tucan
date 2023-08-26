@@ -1226,23 +1226,6 @@ defmodule Tucan do
     lineplot(plotdata, x, y, opts)
   end
 
-  pie_opts = [
-    inner_radius: [
-      type: :integer,
-      doc: """
-      The inner radius in pixels. `0` for a pie chart, `> 0` for a donut chart. If not
-      set it defaults to 0
-      """,
-      dest: :mark
-    ],
-    # TODO: custom validation with supported types
-    aggregate: [
-      type: :atom,
-      doc: "The statistic to use (if any) for aggregating values per pie slice (e.g. `:mean`).",
-      dest: :theta
-    ]
-  ]
-
   area_opts = [
     points: [
       type: :boolean,
@@ -1388,6 +1371,60 @@ defmodule Tucan do
     |> encode_field(:y, y, opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
   end
+
+  @doc """
+  Returns the specification of a streamgraph.
+
+  This is a simple wrapper around `area/4` with `:mode` set by default
+  to `:streamgraph`. Any value set to the `:mode` option will be ignored.
+
+  A grouping field must also be provided which will be set as `:color_by` to
+  the area chart.
+
+  ## Options
+
+  Check `area/4`
+
+  ## Examples
+
+  ```tucan
+  Tucan.streamgraph(:stocks, "date", "price", "symbol",
+    width: 300,
+    x: [type: :temporal],
+    tooltip: true
+  )
+  ```
+  """
+  @doc section: :plots
+  @spec streamgraph(
+          plotdata :: plotdata(),
+          x :: field(),
+          y :: field(),
+          group :: field(),
+          opts :: keyword()
+        ) ::
+          VegaLite.t()
+  def streamgraph(plotdata, x, y, group, opts \\ []) do
+    opts = Keyword.merge(opts, mode: :streamgraph, color_by: group)
+    area(plotdata, x, y, opts)
+  end
+
+  pie_opts = [
+    inner_radius: [
+      type: :integer,
+      doc: """
+      The inner radius in pixels. `0` for a pie chart, `> 0` for a donut chart. If not
+      set it defaults to 0
+      """,
+      dest: :mark
+    ],
+    # TODO: custom validation with supported types
+    aggregate: [
+      type: :atom,
+      doc: "The statistic to use (if any) for aggregating values per pie slice (e.g. `:mean`).",
+      dest: :theta
+    ]
+  ]
 
   @pie_opts Tucan.Options.take!([@global_opts, @global_mark_opts, :theta, :color], pie_opts)
   @pie_schema Tucan.Options.to_nimble_schema!(@pie_opts)
