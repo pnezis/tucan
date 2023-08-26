@@ -1640,8 +1640,12 @@ defmodule Tucan do
   # copies to left channel, the right channel options from the vl_origing specification
   defp copy_encoding(vl, left, right, vl_origin) do
     case VegaLiteUtils.has_encoding?(vl_origin, left) do
-      false -> vl
-      true -> VegaLiteUtils.encode_raw(vl, right, VegaLiteUtils.encoding_options(vl_origin, left))
+      false ->
+        vl
+
+      true ->
+        opts = VegaLiteUtils.encoding_options(vl_origin, left) || []
+        VegaLiteUtils.encode_raw(vl, right, opts)
     end
   end
 

@@ -131,7 +131,7 @@ defmodule Tucan.VegaLiteUtils do
   """
   @spec encode_field_raw(
           vl :: VegaLite.t() | map(),
-          channel :: atom(),
+          channel :: atom() | binary(),
           field :: binary(),
           opts :: keyword()
         ) :: VegaLite.t() | map()
@@ -156,7 +156,7 @@ defmodule Tucan.VegaLiteUtils do
 
   All provided options are converted to channel properties.
   """
-  @spec encode_raw(vl :: VegaLite.t() | map(), channel :: atom(), opts :: keyword()) ::
+  @spec encode_raw(vl :: VegaLite.t() | map(), channel :: atom() | binary(), opts :: keyword()) ::
           VegaLite.t() | map()
   def encode_raw(%VegaLite{} = vl, channel, opts) do
     update_in(vl.spec, fn spec -> encode_raw(spec, channel, opts) end)
