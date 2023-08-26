@@ -1552,6 +1552,12 @@ defmodule Tucan do
     VegaLiteUtils.put_in_spec(vl, :title, title_opts)
   end
 
+  @doc """
+  Sets the plot's theme.
+
+  Check `Tucan.Themes` for more details on theming.
+  """
+  @spec set_theme(vl :: VegaLite.t(), theme :: atom()) :: VegaLite.t()
   def set_theme(vl, theme) do
     theme = Tucan.Themes.theme(theme)
 

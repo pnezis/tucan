@@ -23,5 +23,21 @@ defmodule Tucan.Themes do
   #{Tucan.Themes.Helpers.docs(@themes)}
   """
 
-  def theme(name), do: Keyword.fetch!(@themes, name)
+  @doc """
+  Returns the configuration object for the given theme.
+
+  An exception will be raised if the theme name is invlaid.
+  """
+  @spec theme(name :: atom()) :: keyword()
+  def theme(name) do
+    case Keyword.has_key?(@themes, name) do
+      true ->
+        Keyword.get(@themes, name)
+        |> Keyword.fetch!(:theme)
+
+      false ->
+        themes = Keyword.keys(@themes)
+        raise ArgumentError, "invalid theme #{inspect(name)}, supported: #{inspect(themes)}"
+    end
+  end
 end

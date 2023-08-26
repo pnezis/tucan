@@ -872,6 +872,21 @@ defmodule TucanTest do
     end
   end
 
+  describe "set_theme/2" do
+    test "raises if invalid theme" do
+      message = "invalid theme :invalid, supported: [:latimes]"
+      assert_raise ArgumentError, message, fn -> Tucan.set_theme(Vl.new(), :invalid) end
+    end
+
+    test "sets a valid theme" do
+      expected =
+        Vl.new()
+        |> Vl.config(Tucan.Themes.theme(:latimes))
+
+      assert Tucan.set_theme(Vl.new(), :latimes) == expected
+    end
+  end
+
   defp concatenated_test_plots(encoding) do
     vl_encoded = Vl.encode_field(Vl.new(), encoding, "field")
 
