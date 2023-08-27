@@ -2,7 +2,7 @@
 
 
 [![Package](https://img.shields.io/badge/-Package-important)](https://hex.pm/packages/tucan)
-[![Documentation](https://img.shields.io/badge/-Documentation-blueviolet)](https://hexdocs.pm/tucan)
+[![Documentation](https://img.shields.io/badge/-Documentation-blueviolet)](https://hexdocs.pm/tucan/Tucan.html)
 
 `Tucan` is an Elixir plotting library built on top of `VegaLite`, designed to simplify
 the creation of interactive and visually stunning plots. With `Tucan`, you can effortlessly
