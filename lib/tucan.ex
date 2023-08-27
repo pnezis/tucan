@@ -835,6 +835,100 @@ defmodule Tucan do
     |> color_fn.()
   end
 
+  @bar_opts Tucan.Options.take!([
+              @global_opts,
+              @global_mark_opts,
+              :stacked,
+              :color_by,
+              :orient,
+              :x,
+              :y,
+              :color,
+              :x_offset
+            ])
+  @bar_schema Tucan.Options.to_nimble_schema!(@bar_opts)
+
+  @doc """
+  Returns the specification of a bar chart.
+
+  A bar chart is consisted by a categorical `field` and a numerical `value` field that
+  defines the height of the bars. You can create a grouped bar chart by setting
+  the `:color_by` option.
+
+  Additionally you should specify the aggregate for the `y` values, if your dataset contains
+  more than one values per category.
+
+  ## Options
+
+  #{Tucan.Options.docs(@bar_schema)}
+
+  ## Examples
+
+  A simple bar chart:
+
+  ```tucan
+  data = [
+    %{"a" => "A", "b" => 28}, %{"a" => "B", "b" => 55}, %{"a" => "C", "b" => 43},
+    %{"a" => "D", "b" => 91}, %{"a" => "E", "b" => 81}, %{"a" => "F", "b" => 53},
+    %{"a" => "G", "b" => 19}, %{"a" => "H", "b" => 87}, %{"a" => "I", "b" => 52}
+  ]
+
+  Tucan.bar(data, "a", "b")
+  ```
+
+  You can set a `color_by` option that will create a stacked bar chart:
+
+  ```tucan
+  Tucan.bar(:weather, "date", "date",
+    color_by: "weather",
+    tooltip: true,
+    x: [type: :ordinal, time_unit: :month],
+    y: [aggregate: :count]
+  )
+  ```
+
+  If you set the `:stacked` option to false you will instead have a different bar
+  per group, you can also change the orientation by setting the `:orient` flag.
+
+  ```tucan
+  data = [
+      %{"category" => "A", "group" => "x", "value" => 0.1},
+      %{"category" => "A", "group" => "y", "value" => 0.6},
+      %{"category" => "A", "group" => "z", "value" => 0.9},
+      %{"category" => "B", "group" => "x", "value" => 0.7},
+      %{"category" => "B", "group" => "y", "value" => 0.2},
+      %{"category" => "B", "group" => "z", "value" => 1.1},
+      %{"category" => "C", "group" => "x", "value" => 0.6},
+      %{"category" => "C", "group" => "y", "value" => 0.1},
+      %{"category" => "C", "group" => "z", "value" => 0.2}
+  ]
+
+  Tucan.bar(data, "category", "value",
+    color_by: "group",
+    stacked: false,
+    orient: :vertical
+  )
+  ```
+  """
+  @doc section: :plots
+  @spec bar(plotdata :: plotdata(), field :: binary(), value :: binary(), opts :: keyword()) ::
+          VegaLite.t()
+  def bar(plotdata, field, value, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @bar_schema)
+
+    spec_opts = take_options(opts, @bar_opts, :spec)
+    mark_opts = take_options(opts, @bar_opts, :mark)
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:bar, mark_opts)
+    |> encode_field(:x, field, opts, type: :nominal)
+    |> encode_field(:y, value, opts, type: :quantitative)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_x_offset(opts[:color_by], opts[:stacked], opts)
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
   @countplot_opts Tucan.Options.take!([
                     @global_opts,
                     @global_mark_opts,
