@@ -965,19 +965,6 @@ defmodule Tucan do
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
-  @countplot_opts Tucan.Options.take!([
-                    @global_opts,
-                    @global_mark_opts,
-                    :stacked,
-                    :color_by,
-                    :orient,
-                    :x,
-                    :y,
-                    :color,
-                    :x_offset
-                  ])
-  @countplot_schema Tucan.Options.to_nimble_schema!(@countplot_opts)
-
   @doc """
   Plot the counts of observations for a categorical variable.
 
@@ -987,6 +974,9 @@ defmodule Tucan do
 
   This is similar to `histogram/3` but specifically for a categorical
   variable.
+
+  This is a simple wrapper around `bar/4` where by default the count of
+  observations is mapped to the `y` variable.
 
   > #### What is a countplot? {: .tip}
   > 
@@ -1001,7 +991,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@countplot_schema)}
+  See `bar/4`
 
   ## Examples
 
@@ -1025,28 +1015,22 @@ defmodule Tucan do
   ```
 
   By default the bars are stacked. You can unstack them by setting the
-  `:stacked` option:
+  `:mode` to `:grouped`
 
   ```tucan
-  Tucan.countplot(:titanic, "Pclass", color_by: "Survived", stacked: false)
+  Tucan.countplot(:titanic, "Pclass", color_by: "Survived", mode: :grouped)
   ```
   """
   @doc section: :plots
   @spec countplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def countplot(plotdata, field, opts \\ []) do
-    opts = NimbleOptions.validate!(opts, @countplot_schema)
+    y_opts =
+      Keyword.get(opts, :y, [])
+      |> Keyword.merge(aggregate: :count)
 
-    spec_opts = take_options(opts, @countplot_opts, :spec)
-    mark_opts = take_options(opts, @countplot_opts, :mark)
+    opts = Keyword.put(opts, :y, y_opts)
 
-    plotdata
-    |> new(spec_opts)
-    |> Vl.mark(:bar, mark_opts)
-    |> encode_field(:x, field, opts, type: :nominal)
-    |> encode_field(:y, field, opts, aggregate: "count")
-    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_x_offset(opts[:color_by], !opts[:stacked], opts)
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    bar(plotdata, field, field, opts)
   end
 
   defp maybe_x_offset(vl, nil, _stacked, _opts), do: vl

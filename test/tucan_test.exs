@@ -971,7 +971,7 @@ defmodule TucanTest do
         |> Vl.data_from_values(data)
         |> Vl.mark(:bar, fill_opacity: 0.5)
         |> Vl.encode_field(:x, "type", type: :nominal)
-        |> Vl.encode_field(:y, "type", aggregate: :count)
+        |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
 
       assert Tucan.countplot(data, "type") == expected
     end
@@ -982,7 +982,7 @@ defmodule TucanTest do
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
         |> Vl.encode_field(:y, "type", type: :nominal)
-        |> Vl.encode_field(:x, "type", aggregate: :count)
+        |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
 
       assert Tucan.countplot(@dataset, "type", orient: :vertical) == expected
     end
@@ -993,23 +993,23 @@ defmodule TucanTest do
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
         |> Vl.encode_field(:x, "type", type: :nominal)
-        |> Vl.encode_field(:y, "type", aggregate: :count)
+        |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
 
       assert Tucan.countplot(@dataset, "type", color_by: "group") == expected
     end
 
-    test "with color_by and stacked set to false" do
+    test "with color_by and mode set to grouped" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
         |> Vl.encode_field(:x, "type", type: :nominal)
-        |> Vl.encode_field(:y, "type", aggregate: :count)
+        |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:x_offset, "group")
 
-      assert Tucan.countplot(@dataset, "type", color_by: "group", stacked: false) == expected
+      assert Tucan.countplot(@dataset, "type", color_by: "group", mode: :grouped) == expected
     end
 
     test "with color_by, stacked set to false and vertical orientation" do
@@ -1018,13 +1018,13 @@ defmodule TucanTest do
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
         |> Vl.encode_field(:y, "type", type: :nominal)
-        |> Vl.encode_field(:x, "type", aggregate: :count)
+        |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:y_offset, "group")
 
       assert Tucan.countplot(@dataset, "type",
                color_by: "group",
-               stacked: false,
+               mode: :grouped,
                orient: :vertical
              ) == expected
     end
