@@ -59,6 +59,8 @@ defmodule Tucan.Themes.Helpers do
     spec =
       vl
       |> VegaLite.config(opts[:theme])
+      |> VegaLite.config(legend: [disable: true])
+      |> VegaLite.resolve(:scale, color: :independent)
       |> VegaLite.to_spec()
       |> Jason.encode!()
 

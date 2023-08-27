@@ -2,9 +2,46 @@ defmodule Tucan.Themes do
   @themes Tucan.Themes.Helpers.load_themes()
 
   @theme_example """
-  Tucan.scatter(:iris, "petal_width", "petal_length")
-  |> Tucan.color_by("species")
-  |> Tucan.shape_by("species")
+  scatter =
+    Tucan.scatter(:iris, "petal_width", "petal_length", tooltip: true)
+    |> Tucan.color_by("species")
+    |> Tucan.shape_by("species")
+
+  lines = Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal])
+
+  area =
+    Tucan.area(:stocks, "date", "price", color_by: "symbol", mode: :normalize, x: [type: :temporal])
+
+  density = Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
+
+  strip =
+    Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+    |> Tucan.color_by("sex")
+
+  boxplot = Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species")
+  histogram = Tucan.histogram(:cars, "Horsepower", color_by: "Origin", fill_opacity: 0.5)
+
+  pie = Tucan.pie(:barley, "yield", "site", aggregate: :sum, tooltip: true)
+
+  donut = Tucan.donut(:barley, "yield", "site", aggregate: :sum, tooltip: true)
+
+  heatmap =
+    Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)", fill_opacity: 1.0)
+
+  first_row = VegaLite.concat(VegaLite.new(), [scatter, lines, area], :horizontal)
+
+  second_row =
+    VegaLite.concat(
+      VegaLite.new(),
+      [density, VegaLite.concat(VegaLite.new(), [strip, boxplot], :vertical), histogram],
+      :horizontal
+    )
+
+  third_row = VegaLite.concat(VegaLite.new(), [pie, donut, heatmap], :horizontal)
+
+  VegaLite.concat(VegaLite.new(), [first_row, second_row, third_row], :vertical)
+  |> VegaLite.config(legend: [disable: true])
+  |> VegaLite.resolve(:scale, color: :independent)
   """
 
   @moduledoc """
