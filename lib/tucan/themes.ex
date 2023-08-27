@@ -81,8 +81,6 @@ defmodule Tucan.Themes do
   """
   @spec theme(name :: atom()) :: keyword()
   def theme(name) do
-    IO.inspect(@themes)
-
     case Keyword.has_key?(@themes, name) do
       true ->
         Keyword.get(@themes, name)

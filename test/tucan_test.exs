@@ -1258,7 +1258,9 @@ defmodule TucanTest do
 
   describe "set_theme/2" do
     test "raises if invalid theme" do
-      message = "invalid theme :invalid, supported: [:latimes]"
+      valid_themes = [:ggplot2, :latimes]
+
+      message = "invalid theme :invalid, supported: #{inspect(valid_themes)}"
       assert_raise ArgumentError, message, fn -> Tucan.set_theme(Vl.new(), :invalid) end
     end
 
