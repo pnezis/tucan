@@ -15,6 +15,7 @@ defmodule TucanTest do
     setup do
       # add all plots here in alphabetical order (composite plots excluded)
       plot_funs = [
+        {:area, fn opts -> Tucan.area(@dataset, "x", "y", opts) end},
         {:bubble, fn opts -> Tucan.bubble(@dataset, "x", "y", "z", opts) end},
         {:countplot, fn opts -> Tucan.countplot(@dataset, "x", opts) end},
         {:density, fn opts -> Tucan.density(@dataset, "x", opts) end},
@@ -24,6 +25,8 @@ defmodule TucanTest do
         {:lineplot, fn opts -> Tucan.lineplot(@dataset, "x", "y", opts) end},
         {:pie, fn opts -> Tucan.pie(@dataset, "x", "y", opts) end},
         {:scatter, fn opts -> Tucan.scatter(@dataset, "x", "y", opts) end},
+        {:step, fn opts -> Tucan.step(@dataset, "x", "y", opts) end},
+        {:streamgraph, fn opts -> Tucan.streamgraph(@dataset, "x", "y", "z", opts) end},
         {:stripplot, fn opts -> Tucan.stripplot(@dataset, "x", opts) end}
       ]
 
