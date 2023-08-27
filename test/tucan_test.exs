@@ -53,6 +53,15 @@ defmodule TucanTest do
       end
     end
 
+    test "tooltip is supported in all plots", context do
+      for {name, plot_fun} <- context.plot_funs do
+        vl = plot_fun.(tooltip: true)
+
+        assert get_in(vl.spec, ["mark", "tooltip"]) == true,
+               "tooltip not set for #{inspect(name)}"
+      end
+    end
+
     test "__schema__" do
       # TODO: check for all functions
       assert is_list(Tucan.__schema__(:histogram))
