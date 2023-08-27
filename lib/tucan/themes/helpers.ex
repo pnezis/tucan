@@ -43,16 +43,31 @@ defmodule Tucan.Themes.Helpers do
     end
   end
 
-  @spec docs(themes :: keyword()) :: binary()
-  def docs(themes), do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts) end)
+  @spec docs(themes :: keyword(), example :: binary()) :: binary()
+  def docs(themes, example),
+    do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts, example) end)
 
-  defp theme_docs(opts) do
+  defp theme_docs(opts, example) do
     theme_name =
       case opts[:source] do
         nil -> inspect(opts[:name])
         source -> "[#{opts[:name]}](#{source})"
       end
 
-    "* #{theme_name} - #{opts[:doc]}"
+    {%VegaLite{} = vl, _} = Code.eval_string(example, [], __ENV__)
+
+    spec =
+      vl
+      |> VegaLite.config(opts[:theme])
+      |> VegaLite.to_spec()
+      |> Jason.encode!()
+
+    """
+    * #{theme_name} - #{opts[:doc]}
+
+    ```vega-lite
+    #{spec}
+    ```
+    """
   end
 end

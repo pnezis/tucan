@@ -1,6 +1,12 @@
 defmodule Tucan.Themes do
   @themes Tucan.Themes.Helpers.load_themes()
 
+  @theme_example """
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.color_by("species")
+  |> Tucan.shape_by("species")
+  """
+
   @moduledoc """
   Helper functions for `Tucan` theme.
 
@@ -18,9 +24,17 @@ defmodule Tucan.Themes do
   ## Default themes
 
   `Tucan` comes pre-packed with a set of themes, borrowed by the [Vega Themes](https://github.com/vega/vega-themes)
-  project. The following themes are currently supported:
+  project. You can set a theme to a plot by calling the `Tucan.set_theme/2` function. If no
+  theme set the default vega-lite theme is used. In all examples below the following example
+  plot is used:
 
-  #{Tucan.Themes.Helpers.docs(@themes)}
+  ```tucan
+  #{@theme_example}
+  ```
+
+  The following themes are currently supported:
+
+  #{Tucan.Themes.Helpers.docs(@themes, @theme_example)}
   """
 
   @doc """
@@ -30,6 +44,8 @@ defmodule Tucan.Themes do
   """
   @spec theme(name :: atom()) :: keyword()
   def theme(name) do
+    IO.inspect(@themes)
+
     case Keyword.has_key?(@themes, name) do
       true ->
         Keyword.get(@themes, name)
