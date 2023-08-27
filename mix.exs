@@ -16,7 +16,7 @@ defmodule Tucan.MixProject do
         maintainers: [
           "Panagiotis Nezis"
         ],
-        license: ["MIT"],
+        licenses: ["MIT"],
         links: %{"GitHub" => @scm_url},
         files: ~w(lib themes mix.exs README.md)
       ],
