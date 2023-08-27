@@ -634,6 +634,119 @@ defmodule Tucan do
     end
   end
 
+  boxplot_opts = [
+    group: [
+      type: :string,
+      doc: """
+      A field to be used for grouping the boxplot. It is used for adding a second dimension to
+      the plot. If not set the plot will be one dimensional. Notice that a grouping is automatically
+      applied if the `:color_by` option is set.
+      """
+    ],
+    mode: [
+      type: {:in, [:tukey, :min_max]},
+      doc: """
+      The type of the box plot. Either a Tukey box plot will be created or a min-max plot.
+      """,
+      default: :tukey
+    ],
+    k: [
+      type: :float,
+      doc: """
+      The constant used for calculating the extent of the whiskers in a Tukey boxplot. Applicable
+      only if `:mode` is set to `:tukey`.
+      """,
+      default: 1.5
+    ]
+  ]
+
+  @boxplot_opts Tucan.Options.take!(
+                  [@global_opts, @global_mark_opts, :orient, :color_by, :x, :y, :color],
+                  boxplot_opts
+                )
+  @boxplot_schema Tucan.Options.to_nimble_schema!(@boxplot_opts)
+
+  @doc """
+  Returns the specification of a box plot.
+
+  By default a one dimensional box plot of the `:field` - which must be a numerical variable - is
+  generated. You can add a second dimension across a categorical variable by either setting the
+  `:group` or `:color_by` options.
+
+  By default a Tukey box plot will be generated. In the Tukey box plot the whisker spans from
+  the smallest data to the largest data within the range `[Q1 - k * IQR, Q3 + k * IQR]` where
+  `Q1`and `Q3` are the first and third quartiles while `IQR` is the interquartile range
+  `(Q3-Q1)`. You can specify if needed the constant `k` which defaults to 1.5.
+
+  Additionally you can set the `mode` to `:min_max`  where the lower and upper whiskers are
+  defined as the min and max respectively. No points will be considered as outliers for this
+  type of box plots. In this case the `k` value is ignored.
+
+  > #### What is a box plot {: .info}
+  >
+  > A box plot (box and whisker plot) displays the five-number summary of a set of data. The
+  > five-number summary is the minimum, first quartile, median, third quartile, and maximum.
+  > In a box plot, we draw a box from the first quartile to the third quartile. A vertical
+  > line goes through the box at the median.
+
+  ## Options
+
+  #{Tucan.Options.docs(@boxplot_schema)}
+
+  ## Examples
+
+  A one dimensional Tukey boxplot: 
+
+  ```tucan
+  Tucan.boxplot(:penguins, "Body Mass (g)")
+  ```
+
+  You can set `:group` or `:color_by` in order to set a second dimension:
+
+  ```tucan
+  Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species")
+  ```
+
+  You can set the mode to `:min_max` in order to extend the whiskers to the min and max values:
+
+  ```tucan
+  Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species", mode: :min_max)
+  ```
+
+  By setting the `:orient` to `:vertical` you can change the default horizontal orientation:
+
+  ```tucan
+  Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species", orient: :vertical)
+  ```
+  """
+  @doc section: :plots
+  @spec boxplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  def boxplot(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @boxplot_schema)
+
+    extent =
+      case opts[:mode] do
+        :tukey -> opts[:k]
+        :min_max -> "min-max"
+      end
+
+    spec_opts = take_options(opts, @boxplot_opts, :spec)
+
+    mark_opts =
+      take_options(opts, @boxplot_opts, :mark)
+      |> Keyword.merge(extent: extent)
+
+    group_field = opts[:group] || opts[:color_by]
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:boxplot, mark_opts)
+    |> encode_field(:x, field, opts, type: :quantitative, scale: [zero: false])
+    |> maybe_encode_field(:y, fn -> group_field != nil end, group_field, opts, type: :nominal)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
   density_heatmap_opts = [
     z: [
       type: :string,

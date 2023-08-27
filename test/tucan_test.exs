@@ -16,6 +16,7 @@ defmodule TucanTest do
       # add all plots here in alphabetical order (composite plots excluded)
       plot_funs = [
         {:area, fn opts -> Tucan.area(@dataset, "x", "y", opts) end},
+        {:boxplot, fn opts -> Tucan.boxplot(@dataset, "x", opts) end},
         {:bubble, fn opts -> Tucan.bubble(@dataset, "x", "y", "z", opts) end},
         {:countplot, fn opts -> Tucan.countplot(@dataset, "x", opts) end},
         {:density, fn opts -> Tucan.density(@dataset, "x", opts) end},
@@ -626,6 +627,74 @@ defmodule TucanTest do
                orient: :vertical,
                group: "sex"
              ) ==
+               expected
+    end
+  end
+
+  describe "boxplot/3" do
+    test "with default options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width") == expected
+    end
+
+    test "with different k set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.2)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width", k: 1.2) == expected
+    end
+
+    test "with mode set to min-max" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: "min-max")
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width", mode: :min_max) == expected
+    end
+
+    test "with group set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "species", type: :nominal)
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width", group: "species") == expected
+    end
+
+    test "with color_by set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "species", type: :nominal)
+        |> Vl.encode_field(:color, "species")
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width", color_by: "species") == expected
+    end
+
+    test "with orient set to vertical" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.encode_field(:y, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "species", type: :nominal)
+        |> Vl.encode_field(:color, "species")
+
+      assert Tucan.boxplot(@iris_dataset, "petal_width", color_by: "species", orient: :vertical) ==
                expected
     end
   end
