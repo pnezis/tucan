@@ -876,6 +876,86 @@ defmodule TucanTest do
     end
   end
 
+  describe "bar/4" do
+    test "with default options" do
+      data = [
+        %{category: "A"},
+        %{category: "B"},
+        %{category: "A"},
+        %{category: "C"},
+        %{category: "B"}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+
+      assert Tucan.bar(data, "x", "y") == expected
+    end
+
+    test "with orient flag set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:y, "x", type: :nominal)
+        |> Vl.encode_field(:x, "y", type: :quantitative)
+
+      assert Tucan.bar(@dataset, "x", "y", orient: :vertical) == expected
+    end
+
+    test "with color_by set and custom aggregate" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
+        |> Vl.encode_field(:color, "group")
+
+      assert Tucan.bar(@dataset, "x", "y", color_by: "group", y: [aggregate: :mean]) ==
+               expected
+    end
+
+    test "with mode set to grouped" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
+        |> Vl.encode_field(:color, "group")
+        |> Vl.encode_field(:x_offset, "group")
+
+      assert Tucan.bar(@dataset, "x", "y",
+               color_by: "group",
+               mode: :grouped,
+               y: [aggregate: :mean]
+             ) ==
+               expected
+    end
+
+    test "with mode set to normalize" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean, stack: :normalize)
+        |> Vl.encode_field(:color, "group")
+
+      assert Tucan.bar(@dataset, "x", "y",
+               color_by: "group",
+               mode: :normalize,
+               y: [aggregate: :mean]
+             ) ==
+               expected
+    end
+  end
+
   describe "countplot/3" do
     test "with default options" do
       data = [

@@ -835,17 +835,33 @@ defmodule Tucan do
     |> color_fn.()
   end
 
-  @bar_opts Tucan.Options.take!([
-              @global_opts,
-              @global_mark_opts,
-              :stacked,
-              :color_by,
-              :orient,
-              :x,
-              :y,
-              :color,
-              :x_offset
-            ])
+  bar_opts = [
+    mode: [
+      type: {:in, [:stacked, :normalize, :grouped]},
+      doc: """
+      The stacking mode, applied only if `:color_by` is set. Can be one of the
+      following:
+        * `:stacked` - the default one, bars are stacked 
+        * `:normalize` - the bars are stacked are normalized
+        * `:grouped` - no stacking is applied, a separate bar for each category
+      """,
+      default: :stacked
+    ]
+  ]
+
+  @bar_opts Tucan.Options.take!(
+              [
+                @global_opts,
+                @global_mark_opts,
+                :color_by,
+                :orient,
+                :x,
+                :y,
+                :color,
+                :x_offset
+              ],
+              bar_opts
+            )
   @bar_schema Tucan.Options.to_nimble_schema!(@bar_opts)
 
   @doc """
@@ -887,8 +903,10 @@ defmodule Tucan do
   )
   ```
 
-  If you set the `:stacked` option to false you will instead have a different bar
+  If you set the mode option to `:grouped` you will instead have a different bar
   per group, you can also change the orientation by setting the `:orient` flag.
+  Similarly you can set the mode to `:normalize` in order to have normalized
+  stacked bars.
 
   ```tucan
   data = [
@@ -903,11 +921,22 @@ defmodule Tucan do
       %{"category" => "C", "group" => "z", "value" => 0.2}
   ]
 
-  Tucan.bar(data, "category", "value",
-    color_by: "group",
-    stacked: false,
-    orient: :vertical
-  )
+  grouped =
+    Tucan.bar(
+      data, "category", "value",
+      color_by: "group",
+      mode: :grouped,
+      orient: :vertical
+    )
+
+  normalized =
+    Tucan.bar(
+      data, "category", "value",
+      color_by: "group",
+      mode: :normalize
+    )
+
+  VegaLite.concat(VegaLite.new(), [grouped, normalized], :horizontal)
   ```
   """
   @doc section: :plots
@@ -919,13 +948,20 @@ defmodule Tucan do
     spec_opts = take_options(opts, @bar_opts, :spec)
     mark_opts = take_options(opts, @bar_opts, :mark)
 
+    y_opts =
+      case opts[:mode] do
+        :normalize -> [stack: :normalize]
+        _other -> []
+      end
+      |> Keyword.merge(type: :quantitative)
+
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:bar, mark_opts)
     |> encode_field(:x, field, opts, type: :nominal)
-    |> encode_field(:y, value, opts, type: :quantitative)
+    |> encode_field(:y, value, opts, y_opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_x_offset(opts[:color_by], opts[:stacked], opts)
+    |> maybe_x_offset(opts[:color_by], opts[:mode] == :grouped, opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
@@ -1009,13 +1045,13 @@ defmodule Tucan do
     |> encode_field(:x, field, opts, type: :nominal)
     |> encode_field(:y, field, opts, aggregate: "count")
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_x_offset(opts[:color_by], opts[:stacked], opts)
+    |> maybe_x_offset(opts[:color_by], !opts[:stacked], opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
   defp maybe_x_offset(vl, nil, _stacked, _opts), do: vl
-  defp maybe_x_offset(vl, _field, true, _opts), do: vl
-  defp maybe_x_offset(vl, field, false, opts), do: encode_field(vl, :x_offset, field, opts)
+  defp maybe_x_offset(vl, _field, false, _opts), do: vl
+  defp maybe_x_offset(vl, field, true, opts), do: encode_field(vl, :x_offset, field, opts)
 
   @scatter_opts Tucan.Options.take!([
                   @global_opts,
@@ -1448,7 +1484,7 @@ defmodule Tucan do
     mode: [
       type: {:in, [:stacked, :normalize, :streamgraph, :no_stack]},
       doc: """
-      The stacking mode, applied only if `color_by is set`. Can be one of the
+      The stacking mode, applied only if `:color_by` is set. Can be one of the
       following:
         * `:stacked` - the default one, areas are stacked 
         * `:normalize` - the stacked charts are normalized
