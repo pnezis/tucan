@@ -1,0 +1,35 @@
+{
+    // Enable your dictionary by adding it to the list of `dictionaries`
+    "dictionaries": ["tucan"],
+
+    // Tell CSpell about your dictionary
+    "dictionaryDefinitions": [
+        {
+            // The name of the dictionary is used to look it up.
+            "name": "tucan",
+            // Path to the custom word file. Relative to this `cspell.json` file.
+            "path": "tucan.txt",
+            // Some editor extensions will use `addWords` for adding words to your
+            // personal dictionary.
+            "addWords": true
+        }
+    ],
+    "languageSettings": [
+        {
+            "languageId": "markdown",
+            "ignoreRegExpList": ["markdown_code_block"],
+            "dictionaries": [
+                "elixir",
+                "tucan"
+            ]
+        },
+        {
+            "languageId": "*",
+            "dictionaries": [
+                "elixir",
+                "tucan"
+            ],
+            "ignoreRegExpList": ["markdown_code_block", "quoted_string"]
+        }
+    ]
+}
