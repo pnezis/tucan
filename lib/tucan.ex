@@ -1686,18 +1686,10 @@ defmodule Tucan do
   >   %{value: 38, category: "C"}
   > ]
   > 
-  > pie = Tucan.pie(Vl.new(), "value", "category")
-  > 
-  > # TODO: replace with the bar call once implemented
-  > bar =
-  >   Vl.new()
-  >   |> Tucan.new()
-  >   |> Vl.mark(:bar)
-  >   |> Vl.encode_field(:y, "category")
-  >   |> Vl.encode_field(:x, "value", type: :quantitative)
+  > pie = Tucan.pie(data, "value", "category")
+  > bar = Tucan.bar(data, "category", "value", orient: :vertical)
   >
   > Vl.new()
-  > |> Vl.data_from_values(data)
   > |> Vl.concat([pie, bar], :horizontal)
   > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
   > ```
