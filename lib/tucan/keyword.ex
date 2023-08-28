@@ -8,7 +8,7 @@ defmodule Tucan.Keyword do
           keywords :: keyword(),
           key :: atom(),
           value :: term(),
-          fun :: (() -> boolean())
+          fun :: (-> boolean())
         ) :: keyword()
   def put_new_conditionally(keywords, key, value, fun) do
     cond do
