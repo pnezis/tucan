@@ -2084,6 +2084,35 @@ defmodule Tucan do
   ## Utility functions
 
   @doc """
+  Concatenates horizontally the given plots.
+  """
+  @doc section: :utilities
+  @spec hconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
+  def hconcat(vl \\ Vl.new(), plots) when is_list(plots) do
+    VegaLite.concat(vl, plots, :horizontal)
+  end
+
+  @doc """
+  Concatenates vertically the given plots.
+  """
+  @doc section: :utilities
+  @spec vconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
+  def vconcat(vl \\ Vl.new(), plots) when is_list(plots) do
+    VegaLite.concat(vl, plots, :vertical)
+  end
+
+  @doc """
+  Concatenates the given plots.
+
+  This corresponds to the general concatenation of vega-lite (wrappable).
+  """
+  @doc section: :utilities
+  @spec concat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
+  def concat(vl \\ Vl.new(), plots) when is_list(plots) do
+    VegaLite.concat(vl, plots, :wrappable)
+  end
+
+  @doc """
   Sets the width of the plot (in pixels).
   """
   @doc section: :utilities

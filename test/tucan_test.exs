@@ -1288,6 +1288,28 @@ defmodule TucanTest do
     end
   end
 
+  describe "concat and friends" do
+    test "with no input plot" do
+      plot1 = Tucan.scatter(@dataset, "x", "y")
+      plot2 = Tucan.scatter(@dataset, "x", "y")
+
+      assert Tucan.concat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :wrappable)
+      assert Tucan.hconcat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :horizontal)
+      assert Tucan.vconcat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :vertical)
+    end
+
+    test "with input plot" do
+      vl = VegaLite.new(width: 400, height: 300)
+
+      plot1 = Tucan.scatter(@dataset, "x", "y")
+      plot2 = Tucan.scatter(@dataset, "x", "y")
+
+      assert Tucan.concat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :wrappable)
+      assert Tucan.hconcat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :horizontal)
+      assert Tucan.vconcat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :vertical)
+    end
+  end
+
   describe "set_width/2" do
     test "sets the width" do
       vl = Tucan.set_width(Vl.new(), 100)
