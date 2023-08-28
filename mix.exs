@@ -58,6 +58,9 @@ defmodule Tucan.MixProject do
 
   defp docs do
     [
+      main: "readme",
+      canonical: "http://hexdocs.pm/tucan",
+      extras: ["README.md", "CHANGELOG.md", "LICENSE"],
       groups_for_docs: [
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
