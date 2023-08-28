@@ -170,7 +170,7 @@ defmodule Tucan do
     Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin", fill_opacity: 0.5, tooltip: true)
     |> Tucan.facet_by(:column, "Origin")
 
-  VegaLite.concat(VegaLite.new(), [histograms, relative_histograms], :vertical)
+  Tucan.vconcat([histograms, relative_histograms])
   ```
   """
   @doc section: :plots
@@ -936,7 +936,7 @@ defmodule Tucan do
       mode: :normalize
     )
 
-  VegaLite.concat(VegaLite.new(), [grouped, normalized], :horizontal)
+  Tucan.hconcat([grouped, normalized])
   ```
   """
   @doc section: :plots
@@ -1333,7 +1333,7 @@ defmodule Tucan do
   left = Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal], color_by: "symbol")
   right = Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal], group_by: "symbol")
 
-  VegaLite.concat(VegaLite.new(), [left, right], :horizontal)
+  Tucan.hconcat([left, right])
   ```
 
   You can also overlay the points by setting the `:points` and `:filled` opts. Notice
@@ -1361,7 +1361,7 @@ defmodule Tucan do
       width: 300
     )
 
-  VegaLite.concat(VegaLite.new(), [filled_points, stroked_points], :horizontal)
+  Tucan.hconcat([filled_points, stroked_points])
   ```
 
   You can use various interpolation methods. Some examples follow:
@@ -1378,7 +1378,8 @@ defmodule Tucan do
       |> Tucan.set_title(interpolation)
     end
 
-  VegaLite.concat(VegaLite.new(columns: 2), plots, :wrappable)
+  VegaLite.new(columns: 2)
+  |> Tucan.concat(plots)
   ```
   """
   # TODO: maybe support passing a list of y fields and repeat layer
@@ -1556,7 +1557,7 @@ defmodule Tucan do
     )
     |> Tucan.set_title("streamgraph")
 
-  VegaLite.concat(VegaLite.new(), [left, right], :horizontal)
+  Tucan.hconcat([left, right])
   ```
 
   Or you could disable the stacking at all:
@@ -1689,8 +1690,7 @@ defmodule Tucan do
   > pie = Tucan.pie(data, "value", "category")
   > bar = Tucan.bar(data, "category", "value", orient: :vertical)
   >
-  > Vl.new()
-  > |> Vl.concat([pie, bar], :horizontal)
+  > Tucan.hconcat([pie, bar])
   > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
   > ```
 

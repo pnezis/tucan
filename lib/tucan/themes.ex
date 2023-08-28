@@ -28,18 +28,13 @@ defmodule Tucan.Themes do
   heatmap =
     Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)", fill_opacity: 1.0)
 
-  first_row = VegaLite.concat(VegaLite.new(), [scatter, lines, area], :horizontal)
-
-  second_row =
-    VegaLite.concat(
-      VegaLite.new(),
-      [density, VegaLite.concat(VegaLite.new(), [strip, boxplot], :vertical), histogram],
-      :horizontal
-    )
-
-  third_row = VegaLite.concat(VegaLite.new(), [pie, donut, heatmap], :horizontal)
-
-  VegaLite.concat(VegaLite.new(), [first_row, second_row, third_row], :vertical)
+  Tucan.vconcat(
+    [
+      Tucan.hconcat([scatter, lines, area]),
+      Tucan.hconcat([density, Tucan.vconcat([strip, boxplot]), histogram]),
+      Tucan.hconcat([pie, donut, heatmap])
+    ]
+  )
   |> VegaLite.config(legend: [disable: true])
   |> VegaLite.resolve(:scale, color: :independent)
   """
