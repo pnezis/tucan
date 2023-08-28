@@ -376,7 +376,7 @@ defmodule Tucan do
   > ```
   >
   > Alternatively you should use the `:groupby` option in order to group the density
-  > tranform by the `Species` field and then apply the `color_by/3` function:
+  > transform by the `Species` field and then apply the `color_by/3` function:
   >
   > ```tucan
   > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
@@ -494,7 +494,7 @@ defmodule Tucan do
   the dots with the same value may overlap.
 
   You can use the `:jitter` mode for a better view of overlapping points. In this
-  case points are randomnly shifted along with other axis, which has no meaning in
+  case points are randomly shifted along with other axis, which has no meaning in
   itself data-wise.
 
   Typically several strip plots are placed side by side to compare the distribution
@@ -506,7 +506,7 @@ defmodule Tucan do
 
   > ### Internal `VegaLite` representation {: .info}
   > 
-  > If style is set to `:tick` the following `VegaLite` represenation is generated:
+  > If style is set to `:tick` the following `VegaLite` representation is generated:
   >
   > ```elixir
   > Vl.new()
@@ -793,7 +793,7 @@ defmodule Tucan do
 
   ## Examples
 
-  Let's start with a default denisty heatmap on the penguins dataset:
+  Let's start with a default density heatmap on the penguins dataset:
 
   ```tucan
   Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)")
@@ -1101,9 +1101,9 @@ defmodule Tucan do
 
   ## Examples
 
-  > We will use the `:tips` dataset thoughout the following examples.
+  > We will use the `:tips` dataset throughout the following examples.
 
-  Drawing a scatter plot betwen two variables:
+  Drawing a scatter plot between two variables:
 
   ```tucan
   Tucan.scatter(:tips, "total_bill", "tip")
@@ -1535,7 +1535,7 @@ defmodule Tucan do
   )
   ```
 
-  You could change the mode to `:normalize` or `:stramgraph`:
+  You could change the mode to `:normalize` or `:streamgraph`:
 
   ```tucan
   left =
@@ -1661,7 +1661,7 @@ defmodule Tucan do
 
   A pie chart is a circle divided into sectors that each represents a proportion
   of the whole. The `field` specifies the data column that contains the proportions
-  of each category. The chart will be colored by the `caregory` field.
+  of each category. The chart will be colored by the `category` field.
 
   > #### Avoid using pie charts {: .warning}
   >
@@ -1800,7 +1800,7 @@ defmodule Tucan do
   Plot pairwise relationships in a dataset.
 
   This function expects an array of fields to be provided. A grid will be created
-  where each numeric variable in `fields` will be shared acrosss the y-axes across
+  where each numeric variable in `fields` will be shared across the y-axes across
   a single row and the x-axes across a single column.
 
   > #### Numerical field types {: .warning}
@@ -2028,7 +2028,7 @@ defmodule Tucan do
   vertically (`:row` faceting mode), one for each distinct value of the given
   `field`, which must be a categorical variable.
 
-  `opts` is an arbitraty keyword list that will be passed to the `:row` or `:column`
+  `opts` is an arbitrary keyword list that will be passed to the `:row` or `:column`
   encoding.
 
   > #### Facet plots {: .info}
@@ -2170,7 +2170,7 @@ defmodule Tucan do
     end)
   end
 
-  # copies to left channel, the right channel options from the vl_origing specification
+  # copies to left channel, the right channel options from the vl_origin specification
   defp copy_encoding(vl, left, right, vl_origin) do
     case VegaLiteUtils.has_encoding?(vl_origin, left) do
       false ->

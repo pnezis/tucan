@@ -1,7 +1,7 @@
 defmodule Tucan.Themes.Helpers do
   @moduledoc false
 
-  # helper functions for loading themes from the themes toplevel folder
+  # helper functions for loading themes from the themes top level folder
 
   @themes_dir Path.expand("../../../themes", __DIR__)
 

@@ -100,7 +100,7 @@ defmodule Tucan.Options do
     theta: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:thetar` encoding. It can be an arbitrary keyword list.
+      Extra vega lite options for the `:theta` encoding. It can be an arbitrary keyword list.
       Notice that if set they will be merged with any option set by the plot. Since they
       have a higher precedence they may override the default settings and affect the
       generated plot. **The contents are not validated.**
@@ -158,7 +158,7 @@ defmodule Tucan.Options do
       dest: :mark
     ],
 
-    # Uncategorized
+    # Other
     clip: [
       type: :boolean,
       doc: """
@@ -170,7 +170,7 @@ defmodule Tucan.Options do
       type: :float,
       default: 0.5,
       doc: """
-      The fill opacity of the plotted elemets.
+      The fill opacity of the plotted elements.
       """,
       dest: :mark
     ],
@@ -238,7 +238,7 @@ defmodule Tucan.Options do
       doc: """
       The line interpolation method to use for line and area marks. One of the following:
 
-      * `"linear"` - piecewise linear segments, as in a polyline.
+      * `"linear"` - piecewise linear segments, as in a poly-line.
       * `"linear-closed"` - close the linear segments to form a polygon.
       * `"step"` - alternate between horizontal and vertical segments, as in a step function.
       * `"step-before"` - alternate between vertical and horizontal segments, as in a step function.

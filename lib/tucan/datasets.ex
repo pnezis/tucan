@@ -69,7 +69,7 @@ defmodule Tucan.Datasets do
 
   Currently the following datasets are supported:
 
-  #{Enum.map(@valid_datasets, fn d -> "* " <> inspect(d) end) |> Enum.join("\n")}
+  #{Enum.map_join(@valid_datasets, "\n", fn d -> "* " <> inspect(d) end)}
   """
   @spec dataset(atom()) :: binary()
   def dataset(dataset) when is_atom(dataset) do

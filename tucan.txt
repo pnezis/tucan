@@ -1,12 +1,15 @@
 # custom words for cspell - add words in alphabetical order
 
+bivariate
 boxplot
 countplot
 gapminder
 ggplot
 groupby
 hconcat
+heatmaps
 joinaggregate
+interquartile
 latimes
 lineplot
 livebook
@@ -17,11 +20,13 @@ minsteps
 nezis
 pairplot
 panagiotis
+pclass
 plotdata
 scatterplot
 seaborn
 streamgraph
 stripplot
+symlog
 tucan
 tukey
 vconcat

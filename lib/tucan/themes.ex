@@ -77,7 +77,7 @@ defmodule Tucan.Themes do
   @doc """
   Returns the configuration object for the given theme.
 
-  An exception will be raised if the theme name is invlaid.
+  An exception will be raised if the theme name is invalid.
   """
   @spec theme(name :: atom()) :: keyword()
   def theme(name) do

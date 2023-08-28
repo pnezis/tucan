@@ -14,7 +14,7 @@ defmodule TucanTest do
   describe "sanity checks" do
     setup do
       # add all plots here in alphabetical order (composite plots excluded)
-      plot_funs = [
+      plot_functions = [
         {:area, fn opts -> Tucan.area(@dataset, "x", "y", opts) end},
         {:boxplot, fn opts -> Tucan.boxplot(@dataset, "x", opts) end},
         {:bubble, fn opts -> Tucan.bubble(@dataset, "x", "y", "z", opts) end},
@@ -31,14 +31,14 @@ defmodule TucanTest do
         {:stripplot, fn opts -> Tucan.stripplot(@dataset, "x", opts) end}
       ]
 
-      [plot_funs: plot_funs]
+      [plot_functions: plot_functions]
     end
 
     test "global spec settings are applicable to all plots", context do
       opts = [width: 135, height: 82, title: "Plot title"]
 
-      for {name, plot_fun} <- context.plot_funs do
-        vl = plot_fun.(opts)
+      for {name, plot_function} <- context.plot_functions do
+        vl = plot_function.(opts)
 
         assert Map.get(vl.spec, "width") == 135, "width not set for #{inspect(name)}"
         assert Map.get(vl.spec, "height") == 82, "height not set for #{inspect(name)}"
@@ -47,16 +47,16 @@ defmodule TucanTest do
     end
 
     test "raises for invalid options", context do
-      for {_name, plot_fun} <- context.plot_funs do
+      for {_name, plot_function} <- context.plot_functions do
         assert_raise NimbleOptions.ValidationError, fn ->
-          plot_fun.(invalid_option: 1)
+          plot_function.(invalid_option: 1)
         end
       end
     end
 
     test "tooltip is supported in all plots", context do
-      for {name, plot_fun} <- context.plot_funs do
-        vl = plot_fun.(tooltip: true)
+      for {name, plot_function} <- context.plot_functions do
+        vl = plot_function.(tooltip: true)
 
         assert get_in(vl.spec, ["mark", "tooltip"]) == true,
                "tooltip not set for #{inspect(name)}"
@@ -334,7 +334,7 @@ defmodule TucanTest do
       assert Tucan.lineplot(@stocks_dataset, "date", "price", group_by: "symbol") == expected
     end
 
-    test "with points overlayed" do
+    test "with points overlaid" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
@@ -347,7 +347,7 @@ defmodule TucanTest do
                expected
     end
 
-    test "with non filled points overlayed" do
+    test "with non filled points overlaid" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
@@ -364,7 +364,7 @@ defmodule TucanTest do
                expected
     end
 
-    test "with different interpoplation method" do
+    test "with different interpolation method" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)

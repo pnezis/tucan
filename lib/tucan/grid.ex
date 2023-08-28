@@ -1,6 +1,6 @@
 defmodule Tucan.Grid do
   @moduledoc """
-  Helper utilities for customising a plot's grid.
+  Helper utilities for customizing a plot's grid.
   """
 
   @doc """
@@ -127,7 +127,7 @@ defmodule Tucan.Grid do
   @doc """
   Sets the dash style of the grid.
 
-  `stroke` and `space` are alternatinv lengths for the dashed grid lines in pixels.
+  `stroke` and `space` are alternative lengths for the dashed grid lines in pixels.
 
   This will raise if the `channel` is not encoded.
 

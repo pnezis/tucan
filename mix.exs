@@ -21,7 +21,10 @@ defmodule Tucan.MixProject do
         files: ~w(lib themes mix.exs README.md)
       ],
       source_url: @scm_url,
-      description: "A plotting library on top of VegaLite"
+      description: "A plotting library on top of VegaLite",
+      test_coverage: [
+        summary: [threshold: 80]
+      ]
     ]
   end
 
