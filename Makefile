@@ -6,6 +6,12 @@ help: ## Display this help.
 
 ##@ Linting
 
+.PHONE: spell
+spell: ## Run cspell on project
+	cspell lint lib/**/*.ex lib/*.ex
+	cspell lint test/**/*.exs
+	cspell lint *.md
+
 .PHONY: lint
 lint: export TUCAN_DEV=true
 lint: ## Lint tucan
