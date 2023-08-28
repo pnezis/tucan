@@ -307,6 +307,8 @@ defmodule Tucan.Options do
     end
   end
 
+  @doc false
+  @spec to_nimble_schema!(opts :: keyword()) :: NimbleOptions.t()
   def to_nimble_schema!(opts) do
     opts
     |> drop_tucan_opts_fields()
@@ -345,6 +347,8 @@ defmodule Tucan.Options do
     Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
   end
 
+  @doc false
+  @spec docs(NimbleOptions.t()) :: binary()
   def docs(%NimbleOptions{schema: schema}) do
     schema
     |> Enum.group_by(fn {key, _opts} ->
@@ -386,6 +390,7 @@ defmodule Tucan.Options do
   ## Custom validations
 
   @doc false
+  @spec tooltip(value :: term()) :: {:ok, boolean()} | {:error, binary()}
   def tooltip(value) do
     cond do
       is_boolean(value) ->
@@ -406,6 +411,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
+  @spec extent(value :: term()) :: {:ok, [number()]} | {:error, binary()}
   def extent(value) do
     case value do
       [min, max] when is_number(min) and is_number(max) and min < max ->
@@ -418,6 +424,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
+  @spec density_alias(value :: term()) :: {:ok, [binary()]} | {:error, binary()}
   def density_alias(alias) do
     if is_binary(alias) do
       {:ok, ["#{alias}_value", "#{alias}_density"]}

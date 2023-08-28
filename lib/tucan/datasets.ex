@@ -62,6 +62,15 @@ defmodule Tucan.Datasets do
                   |> Keyword.keys()
                   |> Enum.sort()
 
+  @doc """
+  Reruns the url of the given dataset.
+
+  Raises an error if the dataset is invalid.
+
+  Currently the following datasets are supported:
+
+  #{Enum.map(@valid_datasets, fn d -> "* " <> inspect(d) end) |> Enum.join("\n")}
+  """
   @spec dataset(atom()) :: binary()
   def dataset(dataset) when is_atom(dataset) do
     case @datasets[dataset] do

@@ -5,6 +5,7 @@ defmodule Tucan.Themes.Helpers do
 
   @themes_dir Path.expand("../../../themes", __DIR__)
 
+  @doc false
   @spec load_themes() :: keyword()
   def load_themes do
     themes_pattern = Path.join(@themes_dir, "*.exs")
@@ -43,6 +44,7 @@ defmodule Tucan.Themes.Helpers do
     end
   end
 
+  @doc false
   @spec docs(themes :: keyword(), example :: binary()) :: binary()
   def docs(themes, example),
     do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts, example) end)
