@@ -1,6 +1,6 @@
 # Tucan
 
-
+[![Actions Status](https://github.com/pnezis/tucan/actions/workflows/elixir.yml/badge.svg)](https://github.com/pnezis/tucan/actions)
 [![Package](https://img.shields.io/badge/-Package-important)](https://hex.pm/packages/tucan)
 [![Documentation](https://img.shields.io/badge/-Documentation-blueviolet)](https://hexdocs.pm/tucan/Tucan.html)
 
