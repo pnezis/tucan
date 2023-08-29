@@ -1,6 +1,120 @@
 defmodule Tucan do
   @moduledoc """
-  Documentation for `Tucan`.
+  A high level API interface for creating plots on top of `VegaLite`.
+
+  Tucan is an Elixir plotting library built on top of `VegaLite`,
+  designed to simplify the creation of interactive and visually stunning
+  plots. With `Tucan`, you can effortlessly generate a wide range of plots,
+  from simple bar charts to complex composite plots, all while enjoying the
+  power and flexibility of a clean composable functional API.
+
+  Tucan offers a simple API for creating most common plot types similarly
+  to the widely used python packages `matplotlib` and `seaborn` without
+  requiring the end user to be familiar with the Vega Lite grammar.
+
+  ## Features
+
+  - **Versatile Plot Types** - Tucan provides an array of plot types, including
+  bar charts, line plots, scatter plots, histograms, and more, allowing you to
+  effectively represent diverse data sets.
+  - **Clean and consistent API** - A clean and consistent plotting API similar
+  to `matplotlib` or `seaborn` is provided. You should be able to create most
+  common plots with a single function call and minimal configuration.
+  - **Grouping and Faceting** - Enhance your visualizations with grouping and
+  faceting features, enabling you to examine patterns and trends within subgroups
+  of your data.
+  - **Customization** - Customize your plots with ease using Tucan's utilities
+  for adjusting plot dimensions, titles, and **themes**.
+  - **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used
+  seamlessly with `Tucan` for advanced customizations if needed.
+  - **Low level API** - A low level API with helper functions allow you to modify
+  any part of a `VegaLite` specification.
+
+  ## Basic usage
+
+  All supported plots expect as first argument some data, a `VegaLite` specification
+  or a binary which is considered a url to some data. Additionally you can use
+  one of the available `Tucan.Datasets`.
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  ```
+
+  You can apply semantic grouping by a third variable by modifying the color, the
+  shape or the size of the points: 
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species", shape_by: "species")
+  ```
+
+  Alternatively you could use the helper grouping functions:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.color_by("species")
+  |> Tucan.shape_by("species")
+  ```
+
+  > #### Use the functional API carefully {: .warning}
+  >
+  > For some plot types where transformations are applied on the input data it
+  > is recommended to use the options instead of the functional API, since in the
+  > first case any required grouping will also be applied to the transformations.
+
+  ## Composite plots
+
+  Tucan also provides some helper functions for generating composite plots.
+  `pairplot/3` can be used to plot pairwise relationships across a dataset.
+
+  ```tucan
+  fields = ["Beak Length (mm)", "Beak Depth (mm)", "Body Mass (g)"]
+
+  Tucan.pairplot(:penguins, fields, diagonal: :density)
+  ```
+   
+  ## Customization & Themes
+
+  Various methods and helper modules allow you to easily modify the style of
+  a plot.
+
+  ```tucan
+  Tucan.bubble(:gapminder, "income", "health", "population",
+    color_by: "region",
+    width: 400,
+    tooltip: :data
+  )
+  |> Tucan.Axes.set_x_title("Gdp per Capita")
+  |> Tucan.Axes.set_y_title("Life expectancy")
+  |> Tucan.Axes.set_x_scale(:log)
+  |> Tucan.Grid.set_color(:x, "red")
+  ```
+
+  Additionally `set_theme/2` allows you to set one of the supported `Tucan.Themes`.
+
+  ```tucan
+  Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)")
+  |> Tucan.set_theme(:latimes)
+  ```
+
+  ## Encoding channels options
+
+  All Tucan plots are building a `VegaLite` specification based on some sane
+  default parameters. Notice that only a tiny subset of vega-lite configuration
+  options are exported in Tucan's public API. This is more than enough in most
+  cases. Additionally, an optional configuration option is added for every
+  encoding channel that is used, that allows you to add any vega-lite option
+  or change the default options set by Tucan.
+
+  For example:
+
+  ```tucan
+  Tucan.bar(:weather, "date", "date",
+    color_by: "weather",
+    tooltip: true,
+    x: [type: :ordinal, time_unit: :month],
+    y: [aggregate: :count]
+  )
+  ```
   """
   alias Tucan.VegaLiteUtils
   alias VegaLite, as: Vl

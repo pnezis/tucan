@@ -25,12 +25,11 @@ function call and minimal configuration.
 - **Grouping and Faceting** - Enhance your visualizations with grouping and faceting
 features, enabling you to examine patterns and trends within subgroups of your data.
 - **Customization** - Customize your plots with ease using Tucan's utilities for adjusting
-plot dimensions, titles, and **themes**. Additionally and vega-lite supported option can
-be set.
-- **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used on top of
+plot dimensions, titles, and **themes**.
+- **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used seamlessly with
 `Tucan` in order to enhance/customize your plots.
-- **Low level API** - A low level API with helper functions nut currently supported by
-`VegaLite` is exposed that allow you to modify existing specifications.
+- **Low level API** - A low level API with helper functions is provided for modifying
+`VegaLite` specifications.
 
 ## Basic usage
 
