@@ -82,7 +82,7 @@ defmodule Tucan.Themes do
         |> Keyword.fetch!(:theme)
 
       false ->
-        themes = Keyword.keys(@themes)
+        themes = Keyword.keys(@themes) |> Enum.sort()
         raise ArgumentError, "invalid theme #{inspect(name)}, supported: #{inspect(themes)}"
     end
   end
