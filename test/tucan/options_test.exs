@@ -48,4 +48,81 @@ defmodule Tucan.OptionsTest do
     refute Keyword.has_key?(schema[:foo], :section)
     assert Keyword.has_key?(schema[:foo], :type)
   end
+
+  describe "docs/1" do
+    test "properly rendered docs" do
+      opts = [
+        foo: [type: :string, doc: "an option", default: "a", section: :section1],
+        bar: [type: :integer, doc: "another option", default: 1, section: :section1],
+        baz: [type: :string, doc: "a baz option", required: true],
+        xyz: [type: :string, doc: "an extra option", section: :other]
+      ]
+
+      # raises with invalid sections
+      assert_raise KeyError, fn -> Tucan.Options.docs(opts) end
+
+      # renders properly the docs if the sections are valid
+
+      section_opts = [
+        unknown: [order: -1],
+        section1: [
+          header: "Awesome Options",
+          order: 100
+        ],
+        other: [
+          header: "Another Section",
+          order: 5,
+          doc: "with some extra docs"
+        ]
+      ]
+
+      expected = """
+      * `:baz` (`t:String.t/0`) - Required. a baz option
+
+      ### Another Section
+
+      with some extra docs
+
+      * `:xyz` (`t:String.t/0`) - an extra option
+
+      ### Awesome Options
+
+      * `:bar` (`t:integer/0`) - another option The default value is `1`.
+      * `:foo` (`t:String.t/0`) - an option The default value is `"a"`.\
+      """
+
+      assert Tucan.Options.docs(opts, section_opts) == expected
+
+      # sections order affects the output
+      section_opts = [
+        unknown: [order: -1],
+        section1: [
+          header: "Awesome Options",
+          order: -100
+        ],
+        other: [
+          header: "Another Section",
+          order: 5,
+          doc: "with some extra docs"
+        ]
+      ]
+
+      expected = """
+      ### Awesome Options
+
+      * `:bar` (`t:integer/0`) - another option The default value is `1`.
+      * `:foo` (`t:String.t/0`) - an option The default value is `"a"`.
+
+      * `:baz` (`t:String.t/0`) - Required. a baz option
+
+      ### Another Section
+
+      with some extra docs
+
+      * `:xyz` (`t:String.t/0`) - an extra option\
+      """
+
+      assert Tucan.Options.docs(opts, section_opts) == expected
+    end
+  end
 end

@@ -316,22 +316,24 @@ defmodule Tucan.Options do
 
   @doc false
   # TODO remove this clause
-  @spec docs(keyword()) :: binary()
-  def docs(opts) when is_list(opts) do
+  @spec docs(keyword(), keyword()) :: binary()
+  def docs(opts, section_opts \\ @sections) when is_list(opts) do
     opts
     |> Enum.group_by(fn {_key, opts} -> Keyword.get(opts, :section, :unknown) end)
-    |> Enum.sort_by(fn {section, _opts} -> section_order(section) end)
-    |> Enum.map_join("\n\n", fn {section, opts} -> section_opts_docs(section, opts) end)
+    |> Enum.sort_by(fn {section, _opts} -> section_order(section, section_opts) end)
+    |> Enum.map_join("\n\n", fn {section, opts} ->
+      section_opts_docs(section, opts, section_opts)
+    end)
   end
 
-  defp section_order(section) do
-    @sections
+  defp section_order(section, section_opts) do
+    section_opts
     |> Keyword.fetch!(section)
     |> Keyword.fetch!(:order)
   end
 
-  defp section_opts_docs(section, opts) do
-    section_settings = Keyword.fetch!(@sections, section)
+  defp section_opts_docs(section, opts, section_opts) do
+    section_settings = Keyword.fetch!(section_opts, section)
 
     [
       section_header(section, section_settings),
@@ -351,6 +353,7 @@ defmodule Tucan.Options do
     # NimbleOptions adds an extra empty line between each option definition, which I do
     # not like for documenting many options
     |> String.replace("\n\n*", "\n*")
+    |> String.trim()
   end
 
   ## Custom validations
