@@ -7,6 +7,7 @@ defmodule Tucan.DatasetsTest do
     :corruption,
     :flights,
     :gapminder,
+    :glue,
     :iris,
     :movies,
     :penguins,

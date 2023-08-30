@@ -9,6 +9,7 @@ defmodule Tucan.Datasets do
           | :corruption
           | :cars
           | :gapminder
+          | :glue
           | :weather
           | :titanic
           | :penguins
@@ -36,6 +37,7 @@ defmodule Tucan.Datasets do
     gapminder: [
       url: "https://vega.github.io/vega-datasets/data/gapminder-health-income.csv"
     ],
+    glue: [url: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/glue.csv"],
     weather: [
       url: "https://vega.github.io/editor/data/weather.csv"
     ],
