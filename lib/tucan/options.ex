@@ -6,17 +6,21 @@ defmodule Tucan.Options do
     unknown: [
       order: -1
     ],
-    encodings: [
+    grouping: [
       order: 3,
+      header: "Data Grouping Options"
+    ],
+    encodings: [
+      order: 5,
       header: "Encodings Custom Options"
     ],
-    general_mark: [
+    interactivity: [
       order: 7,
       header: "Interactivity Options"
     ],
-    global: [
+    style: [
       order: 10,
-      header: "Global Options"
+      header: "Styling Options"
     ]
   ]
 
@@ -25,19 +29,19 @@ defmodule Tucan.Options do
     width: [
       type: :integer,
       doc: "Width of the image",
-      section: :global,
+      section: :style,
       dest: :spec
     ],
     height: [
       type: :integer,
       doc: "Height of the image",
-      section: :global,
+      section: :style,
       dest: :spec
     ],
     title: [
       type: :string,
       doc: "The title of the graph",
-      section: :global,
+      section: :style,
       dest: :spec
     ],
 
@@ -154,7 +158,7 @@ defmodule Tucan.Options do
       * `true` - same as `:encoding`
       * `false`, `nil` - no tooltip is used
       """,
-      section: :general_mark,
+      section: :interactivity,
       dest: :mark
     ],
 
@@ -172,6 +176,7 @@ defmodule Tucan.Options do
       doc: """
       The fill opacity of the plotted elements.
       """,
+      section: :style,
       dest: :mark
     ],
     opacity: [
@@ -179,6 +184,7 @@ defmodule Tucan.Options do
       doc: """
       The overall opacity of the mark
       """,
+      section: :style,
       dest: :mark
     ],
     stacked: [
@@ -194,21 +200,24 @@ defmodule Tucan.Options do
       doc: """
       If set a data field that will be used for coloring the data. It is considered
       `:nominal` by default.
-      """
+      """,
+      section: :grouping
     ],
     shape_by: [
       type: :string,
       doc: """
       If set a data field that will be used for setting the shape of the data points.
       It is considered `:nominal` by default.
-      """
+      """,
+      section: :grouping
     ],
     size_by: [
       type: :string,
       doc: """
       If set a data field that will be used for controlling the size of the data points.
       It is considered `:quantitative` by default.
-      """
+      """,
+      section: :grouping
     ],
     orient: [
       type: {:in, [:horizontal, :vertical]},
@@ -322,20 +331,19 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  @spec docs(NimbleOptions.t()) :: binary()
-  def docs(%NimbleOptions{schema: schema}) do
-    schema
-    |> Enum.group_by(fn {key, _opts} ->
-      @options
-      |> Keyword.get(key, [])
-      |> Keyword.get(:section, :unknown)
-    end)
-    |> Enum.sort_by(fn {section, _opts} ->
-      @sections
-      |> Keyword.fetch!(section)
-      |> Keyword.fetch!(:order)
-    end)
+  # TODO remove this clause
+  @spec docs(keyword()) :: binary()
+  def docs(opts) when is_list(opts) do
+    opts
+    |> Enum.group_by(fn {_key, opts} -> Keyword.get(opts, :section, :unknown) end)
+    |> Enum.sort_by(fn {section, _opts} -> section_order(section) end)
     |> Enum.map_join("\n\n", fn {section, opts} -> section_opts_docs(section, opts) end)
+  end
+
+  defp section_order(section) do
+    @sections
+    |> Keyword.fetch!(section)
+    |> Keyword.fetch!(:order)
   end
 
   defp section_opts_docs(section, opts) do

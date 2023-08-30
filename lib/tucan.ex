@@ -231,7 +231,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@histogram_schema)}
+  #{Tucan.Options.docs(@histogram_opts)}
 
   ## Examples
 
@@ -501,7 +501,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@density_schema)}
+  #{Tucan.Options.docs(@density_opts)}
 
   ## Examples
 
@@ -616,7 +616,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@stripplot_schema)}
+  #{Tucan.Options.docs(@stripplot_opts)}
 
   > ### Internal `VegaLite` representation {: .info}
   > 
@@ -755,7 +755,8 @@ defmodule Tucan do
       A field to be used for grouping the boxplot. It is used for adding a second dimension to
       the plot. If not set the plot will be one dimensional. Notice that a grouping is automatically
       applied if the `:color_by` option is set.
-      """
+      """,
+      section: :grouping
     ],
     mode: [
       type: {:in, [:tukey, :min_max]},
@@ -805,7 +806,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@boxplot_schema)}
+  #{Tucan.Options.docs(@boxplot_opts)}
 
   ## Examples
 
@@ -902,7 +903,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@heatmap_schema)}
+  #{Tucan.Options.docs(@heatmap_opts)}
 
   ## Examples
 
@@ -1043,7 +1044,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@density_heatmap_schema)}
+  #{Tucan.Options.docs(@density_heatmap_opts)}
 
   ## Examples
 
@@ -1130,7 +1131,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@bar_schema)}
+  #{Tucan.Options.docs(@bar_opts)}
 
   ## Examples
 
@@ -1351,7 +1352,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@scatter_schema)}
+  #{Tucan.Options.docs(@scatter_opts)}
 
   ## Examples
 
@@ -1474,7 +1475,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@bubble_schema)}
+  #{Tucan.Options.docs(@bubble_opts)}
 
   ## Examples
 
@@ -1566,7 +1567,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@lineplot_schema)}
+  #{Tucan.Options.docs(@lineplot_opts)}
 
   ## Examples
 
@@ -1754,7 +1755,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@area_schema)}
+  #{Tucan.Options.docs(@area_opts)}
 
   ## Examples
 
@@ -1950,7 +1951,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@pie_schema)}
+  #{Tucan.Options.docs(@pie_opts)}
 
   ## Examples
 
@@ -2057,7 +2058,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@pairplot_schema)}
+  #{Tucan.Options.docs(@pairplot_opts)}
 
   Notice that if set `width` and `height` will be applied to individual sub plots. On
   the other hand `title` is applied to the composite plot.
