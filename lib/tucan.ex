@@ -861,6 +861,140 @@ defmodule Tucan do
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
+  heatmap_opts = [
+    aggregate: [
+      type: :atom,
+      doc: """
+      The statistic that will be used for aggregating the observations within a heatmap
+      tile. Defaults to `:mean` which in case of single data will encode the value of
+      the `color` data field.
+
+      Ignored if `:color` is set to `nil`.
+      """
+    ]
+  ]
+
+  @heatmap_opts Tucan.Options.take!(
+                  [
+                    @global_opts,
+                    @global_mark_opts,
+                    :x,
+                    :y,
+                    :color
+                  ],
+                  heatmap_opts
+                )
+  @heatmap_schema Tucan.Options.to_nimble_schema!(@heatmap_opts)
+
+  @doc """
+  Returns the specification of a heatmap.
+
+  A heatmap is a graphical representation of data where the individual values
+  contained in a matrix are represented as colors.
+
+  It expects two categorical fields `x`, `y` which will be used for the axes
+  and a numerical field `color`. If `color` is `nil` then the color represents
+  the count of the observations for each `x, y`.
+
+  If an `:aggregate` is set this statistic will be used for encoding the color.
+  If no `:aggregate` is set the color encodes by default the `:mean` of the
+  data.
+
+  ## Options
+
+  #{Tucan.Options.docs(@heatmap_schema)}
+
+  ## Examples
+
+  A simple heatmap of two categorical variables, using a third one for the
+  color values.
+
+  ```tucan
+  data = [
+    %{"x" => "A", "y" => "K", "value" => 0.5},
+    %{"x" => "A", "y" => "L", "value" => 1.5},
+    %{"x" => "A", "y" => "M", "value" => 4.5},
+    %{"x" => "B", "y" => "K", "value" => 1.5},
+    %{"x" => "B", "y" => "L", "value" => 2.5},
+    %{"x" => "B", "y" => "M", "value" => 0.5},
+    %{"x" => "C", "y" => "K", "value" => -1.5},
+    %{"x" => "C", "y" => "L", "value" => 5.5},
+    %{"x" => "C", "y" => "M", "value" => 1.5},
+  ]
+
+  Tucan.heatmap(data, "x", "y", "value", width: 200, height: 200, fill_opacity: 1.0)
+  ```
+
+  You can change the color scheme:
+
+  ```tucan
+  Tucan.heatmap(:glue, "Task", "Model", "Score",
+    color: [scale: [scheme: "redgrey", reverse: true]],
+    fill_opacity: 1.0,
+    tooltip: true
+  )
+  ```
+
+  Heatmaps are also useful for visualizing temporal data. Let's use a heatmap to examine
+  how Seattle's max temperature changes over the year. On the _x-axis_ we will encode the
+  days of the month along the x-axis, and the months on the _y-axis_. We will aggregate
+  over the max temperature for the color field. (example borrowed from
+  [here](https://observablehq.com/@jonfroehlich/basic-time-series-plots-in-vega-lite?collection=@jonfroehlich/intro-to-vega-lite))
+
+  ```tucan
+  Tucan.heatmap(:weather, "date", "date", "temp_max",
+    color: [
+      title: "Avg Max Temp",
+      scale: [scheme: "redyellowblue", reverse: true]
+    ],
+    fill_opacity: 1.0,
+    tooltip: true,
+    x: [type: :ordinal, time_unit: :date],
+    y: [type: :ordinal, time_unit: :month]
+  )
+  |> Tucan.Axes.set_x_title("Day")
+  |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
+  ```
+  """
+  # TODO: support text layer
+  # TODO: expose color scheme
+  @doc section: :plots
+  @spec heatmap(
+          plotdata :: plotdata(),
+          x :: binary(),
+          y :: binary(),
+          color :: nil | binary(),
+          opts :: keyword()
+        ) ::
+          VegaLite.t()
+  def heatmap(plotdata, x, y, color, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @heatmap_schema)
+
+    spec_opts = take_options(opts, @heatmap_opts, :spec)
+    mark_opts = take_options(opts, @heatmap_opts, :mark)
+
+    color_fn = fn vl ->
+      case color do
+        nil ->
+          encode(vl, :color, opts, type: :quantitative, aggregate: :count)
+
+        field ->
+          encode_field(vl, :color, field, opts,
+            aggregate: opts[:aggregate] || :mean,
+            type: :quantitative
+          )
+      end
+    end
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:rect, mark_opts)
+    |> encode_field(:x, x, opts, type: :nominal)
+    |> encode_field(:y, y, opts, type: :nominal)
+    |> color_fn.()
+  end
+
   density_heatmap_opts = [
     z: [
       type: :string,
@@ -880,7 +1014,13 @@ defmodule Tucan do
   ]
 
   @density_heatmap_opts Tucan.Options.take!(
-                          [@global_opts, @global_mark_opts, :x, :y, :color],
+                          [
+                            @global_opts,
+                            @global_mark_opts,
+                            :x,
+                            :y,
+                            :color
+                          ],
                           density_heatmap_opts
                         )
   @density_heatmap_schema Tucan.Options.to_nimble_schema!(@density_heatmap_opts)

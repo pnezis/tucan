@@ -22,6 +22,7 @@ defmodule TucanTest do
         {:density, fn opts -> Tucan.density(@dataset, "x", opts) end},
         {:density_heatmap, fn opts -> Tucan.density_heatmap(@dataset, "x", "y", opts) end},
         {:donut, fn opts -> Tucan.donut(@dataset, "x", "y", opts) end},
+        {:heatmap, fn opts -> Tucan.heatmap(@dataset, "x", "y", "color", opts) end},
         {:histogram, fn opts -> Tucan.histogram(@dataset, "x", opts) end},
         {:lineplot, fn opts -> Tucan.lineplot(@dataset, "x", "y", opts) end},
         {:pie, fn opts -> Tucan.pie(@dataset, "x", "y", opts) end},
@@ -790,7 +791,48 @@ defmodule TucanTest do
     end
   end
 
-  describe "density_heatmap/3" do
+  describe "heatmap/5" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean)
+
+      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill") ==
+               expected
+    end
+
+    test "with nil color option" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode(:color, type: :quantitative, aggregate: :count)
+
+      assert Tucan.heatmap(@tips_dataset, "day", "sex", nil) ==
+               expected
+    end
+
+    test "with different aggregation" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :max)
+
+      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill", aggregate: :max) ==
+               expected
+    end
+  end
+
+  describe "density_heatmap/4" do
     test "with default values" do
       expected =
         Vl.new()
