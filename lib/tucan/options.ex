@@ -352,7 +352,7 @@ defmodule Tucan.Options do
     [
       section_header(section, section_settings),
       Keyword.get(section_settings, :doc, nil),
-      section_nimble_options_docs(%NimbleOptions{schema: opts})
+      section_nimble_options_docs(%NimbleOptions{schema: Enum.sort(opts)})
     ]
     |> Enum.filter(fn item -> not is_nil(item) end)
     |> Enum.join("\n\n")
