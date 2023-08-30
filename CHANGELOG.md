@@ -1,5 +1,10 @@
 # Changelog
 
+## [UNRELEASED]
+
+- Add `heatmap/5` plot.
+- Port more themes.
+
 ## [v0.1.1](https://github.com/pnezis/tucan/tree/v0.1.1) (2023-08-29)
 
 ### Enhancements
