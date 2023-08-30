@@ -12,7 +12,18 @@ defmodule Tucan.Options do
     ],
     encodings: [
       order: 5,
-      header: "Encodings Custom Options"
+      header: "Encodings Custom Options",
+      doc: """
+      All Tucan plots are building a `VegaLite` specification based on some sane
+      default parameters. Through these econdings options you are free to set any
+      vega-lite supported option to any encoding channel of the plot.
+
+      Notice that if set they will be merged with any option set by the plot. Since they
+      have a higher precedence they may override the default settings and affect the
+      generated plot.
+
+      You can set an arbitrary keyword list. Notice that **the contents are not validated.**
+      """
     ],
     interactivity: [
       order: 7,
@@ -49,10 +60,7 @@ defmodule Tucan.Options do
     x: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:x` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:x` encoding.
       """,
       default: [],
       section: :encodings
@@ -60,10 +68,7 @@ defmodule Tucan.Options do
     x2: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:x2` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:x2` encoding.
       """,
       default: [],
       section: :encodings
@@ -71,10 +76,7 @@ defmodule Tucan.Options do
     x_offset: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:x_offset` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:x_offset` encoding.
       """,
       default: [],
       section: :encodings
@@ -82,10 +84,7 @@ defmodule Tucan.Options do
     y: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:y` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:y` encoding.
       """,
       default: [],
       section: :encodings
@@ -93,10 +92,7 @@ defmodule Tucan.Options do
     y_offset: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:y_offset` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:y_offset` encoding.
       """,
       default: [],
       section: :encodings
@@ -104,10 +100,7 @@ defmodule Tucan.Options do
     theta: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:theta` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:theta` encoding.
       """,
       default: [],
       section: :encodings
@@ -115,10 +108,7 @@ defmodule Tucan.Options do
     color: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:color` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:color` encoding.
       """,
       default: [],
       section: :encodings
@@ -126,10 +116,7 @@ defmodule Tucan.Options do
     shape: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:shape` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:shape` encoding.
       """,
       default: [],
       section: :encodings
@@ -137,10 +124,7 @@ defmodule Tucan.Options do
     size: [
       type: :keyword_list,
       doc: """
-      Extra vega lite options for the `:size` encoding. It can be an arbitrary keyword list.
-      Notice that if set they will be merged with any option set by the plot. Since they
-      have a higher precedence they may override the default settings and affect the
-      generated plot. **The contents are not validated.**
+      Extra vega lite options for the `:size` encoding.
       """,
       default: [],
       section: :encodings
