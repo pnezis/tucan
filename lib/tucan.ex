@@ -183,7 +183,8 @@ defmodule Tucan do
       doc: """
       The field to group observations by. This will used for coloring the histogram
       if set.
-      """
+      """,
+      section: :grouping
     ],
     maxbins: [
       type: :integer,
