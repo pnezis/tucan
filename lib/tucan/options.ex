@@ -286,7 +286,7 @@ defmodule Tucan.Options do
     |> List.flatten()
     |> ensure_no_duplicates!()
     |> Enum.map(fn option -> {option, Keyword.fetch!(@options, option)} end)
-    |> Keyword.merge(extra)
+    |> Tucan.Keyword.deep_merge(extra)
   end
 
   defp ensure_no_duplicates!(opts) do
@@ -315,34 +315,8 @@ defmodule Tucan.Options do
     |> NimbleOptions.new!()
   end
 
-  @doc """
-  Get the options (keys) of the given `section`.
-
-  Raises if no option exists for the given `section`.
-  """
-  @spec section_options(section :: atom()) :: [atom()]
-  def section_options(section) do
-    options =
-      Enum.filter(@options, fn {_key, opts} -> opts[:section] == section end)
-      |> Keyword.keys()
-
-    if options == [] do
-      raise ArgumentError, "no option defined for section: #{inspect(section)}"
-    end
-
-    options
-  end
-
-  @doc """
-  Converts the given tucan options to nimble options
-  """
-  @spec to_nimble_options(options :: [atom()]) :: keyword()
-  def to_nimble_options(options) do
-    Keyword.take(@options, options)
-    |> drop_tucan_opts_fields()
-  end
-
   @tucan_opts_fields [:section, :dest]
+
   defp drop_tucan_opts_fields(opts) do
     Enum.map(opts, fn {key, opts} -> {key, Keyword.drop(opts, @tucan_opts_fields)} end)
   end
