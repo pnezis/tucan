@@ -22,6 +22,8 @@ pairplot
 panagiotis
 pclass
 plotdata
+redgrey
+redyellowblue
 scatterplot
 seaborn
 streamgraph

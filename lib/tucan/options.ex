@@ -15,7 +15,7 @@ defmodule Tucan.Options do
       header: "Encodings Custom Options",
       doc: """
       All Tucan plots are building a `VegaLite` specification based on some sane
-      default parameters. Through these econdings options you are free to set any
+      default parameters. Through these encodings options you are free to set any
       vega-lite supported option to any encoding channel of the plot.
 
       Notice that if set they will be merged with any option set by the plot. Since they
