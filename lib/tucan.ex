@@ -2376,7 +2376,7 @@ defmodule Tucan do
   end
 
   @doc """
-  Sets the width of the plot (in pixels).
+  Sets the height of the plot (in pixels).
   """
   @doc section: :utilities
   @spec set_height(vl :: VegaLite.t(), height :: pos_integer()) :: VegaLite.t()
