@@ -374,7 +374,7 @@ defmodule Tucan.Options do
       true ->
         {
           :error,
-          "expected :tooltip to be boolean, :encoding or :data, got: #{inspect(value)}"
+          "expected a boolean, :encoding or :data, got: #{inspect(value)}"
         }
     end
   end
@@ -386,9 +386,12 @@ defmodule Tucan.Options do
       [min, max] when is_number(min) and is_number(max) and min < max ->
         {:ok, [min, max]}
 
+      [min, max] when is_number(min) and is_number(max) ->
+        {:error, "expected [min, max] where max > min, got: #{inspect(value)}"}
+
       other ->
         {:error,
-         "expected :tooltip to be an array of the form [min, max], got: #{inspect(other)}"}
+         "expected [min, max] where min, max numbers and max > min, got: #{inspect(other)}"}
     end
   end
 
@@ -398,7 +401,7 @@ defmodule Tucan.Options do
     if is_binary(alias) do
       {:ok, ["#{alias}_value", "#{alias}_density"]}
     else
-      {:error, "expected :alias to be a string, got: #{inspect(alias)}"}
+      {:error, "expected a string, got: #{inspect(alias)}"}
     end
   end
 end
