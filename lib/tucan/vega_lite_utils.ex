@@ -219,19 +219,7 @@ defmodule Tucan.VegaLiteUtils do
   Raises if the input `vl` is not a single view or layered specification.
   """
   @spec prepend_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
-  def prepend_layers(vl, %VegaLite{} = layer), do: prepend_layers(vl, [layer])
-
-  def prepend_layers(vl, layers) when is_list(layers) do
-    validate_single_or_layered_view!(vl, "prepend_layers/2")
-
-    layers = extract_raw_layers(layers)
-
-    update_in(vl.spec, fn spec ->
-      spec
-      |> maybe_enlayer()
-      |> Map.update("layer", layers, &(layers ++ &1))
-    end)
-  end
+  def prepend_layers(vl, layers), do: add_layers(vl, layers, :prepend, "prepend_layers/2")
 
   @doc """
   Appends the given layer or layers to the input specification.
@@ -242,17 +230,25 @@ defmodule Tucan.VegaLiteUtils do
   Raises if the input `vl` is not a single view or layered specification.
   """
   @spec append_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
-  def append_layers(vl, %VegaLite{} = layer), do: append_layers(vl, [layer])
+  def append_layers(vl, layers), do: add_layers(vl, layers, :append, "append_layers/2")
 
-  def append_layers(vl, layers) when is_list(layers) do
-    validate_single_or_layered_view!(vl, "append_layers/2")
+  defp add_layers(vl, %VegaLite{} = layer, mode, caller),
+    do: add_layers(vl, [layer], mode, caller)
+
+  defp add_layers(vl, layers, mode, caller) when is_list(layers) do
+    validate_single_or_layered_view!(vl, caller)
 
     layers = extract_raw_layers(layers)
 
     update_in(vl.spec, fn spec ->
       spec
       |> maybe_enlayer()
-      |> Map.update("layer", layers, &(&1 ++ layers))
+      |> Map.update("layer", layers, fn input_layers ->
+        case mode do
+          :append -> input_layers ++ layers
+          :prepend -> layers ++ input_layers
+        end
+      end)
     end)
   end
 
