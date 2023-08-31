@@ -93,14 +93,20 @@ defmodule Tucan.VegaLiteUtils do
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
   # validates that the specification corresponds to a single view plot
-  defp validate_single_view!(%VegaLite{spec: spec}, caller),
-    do: validate_single_view!(spec, caller)
+  defp validate_single_view!(vl, caller, allowed \\ @multi_view_only_keys)
 
-  defp validate_single_view!(%{} = spec, caller) do
-    for key <- @multi_view_only_keys, Map.has_key?(spec, to_vl_key(key)) do
+  defp validate_single_view!(%VegaLite{spec: spec}, caller, allowed),
+    do: validate_single_view!(spec, caller, allowed)
+
+  defp validate_single_view!(%{} = spec, caller, allowed) do
+    for key <- allowed, Map.has_key?(spec, to_vl_key(key)) do
       raise ArgumentError,
             "#{caller} expects a single view spec, multi view detected: #{inspect(key)} key is defined"
     end
+  end
+
+  defp validate_single_or_layered_view!(%VegaLite{} = vl, caller) do
+    validate_single_view!(vl, caller, @multi_view_only_keys -- [:layer])
   end
 
   # validates that the channel exists in the encoding options
@@ -202,6 +208,67 @@ defmodule Tucan.VegaLiteUtils do
         Map.put(spec, "encoding", encoding)
       end
     end)
+  end
+
+  @doc """
+  Prepends the given layer or layers to the input specification.
+
+  If no `layer` exists in the input spec, a new layer object will be added
+  with the `encoding` and `mark` options of the input spec.
+
+  Raises if the input `vl` is not a single view or layered specification.
+  """
+  @spec prepend_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
+  def prepend_layers(vl, %VegaLite{} = layer), do: prepend_layers(vl, [layer])
+
+  def prepend_layers(vl, layers) when is_list(layers) do
+    validate_single_or_layered_view!(vl, "prepend_layers/2")
+
+    layers = extract_raw_layers(layers)
+
+    update_in(vl.spec, fn spec ->
+      spec
+      |> maybe_enlayer()
+      |> Map.update("layer", layers, &(layers ++ &1))
+    end)
+  end
+
+  @doc """
+  Appends the given layer or layers to the input specification.
+
+  If no `layer` exists in the input spec, a new layer object will be added
+  with the `encoding` and `mark` options of the input spec.
+
+  Raises if the input `vl` is not a single view or layered specification.
+  """
+  @spec append_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
+  def append_layers(vl, %VegaLite{} = layer), do: append_layers(vl, [layer])
+
+  def append_layers(vl, layers) when is_list(layers) do
+    validate_single_or_layered_view!(vl, "append_layers/2")
+
+    layers = extract_raw_layers(layers)
+
+    update_in(vl.spec, fn spec ->
+      spec
+      |> maybe_enlayer()
+      |> Map.update("layer", layers, &(&1 ++ layers))
+    end)
+  end
+
+  defp extract_raw_layers(layers),
+    do: Enum.map(layers, &(&1 |> VegaLite.to_spec() |> Map.delete("$schema")))
+
+  defp maybe_enlayer(%{"layer" => _layers} = spec), do: spec
+
+  defp maybe_enlayer(spec) do
+    layer_fields = ["encoding", "mark"]
+
+    layer_spec = Map.take(spec, layer_fields)
+
+    spec
+    |> Map.put("layer", [layer_spec])
+    |> Map.drop(layer_fields)
   end
 
   # these are copied verbatim from VegaLite
