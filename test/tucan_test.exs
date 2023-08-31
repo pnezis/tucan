@@ -1352,6 +1352,109 @@ defmodule TucanTest do
     end
   end
 
+  describe "line, hline, vline" do
+    test "adds a line to the given numerical position" do
+      base_plot =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+
+      plot = Vl.data_from_url(base_plot, @dataset)
+
+      expected_horizontal =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          base_plot,
+          Vl.new()
+          |> Vl.mark(:rule, color: "black", stroke_width: 1)
+          |> Vl.encode(:y, datum: 5)
+        ])
+
+      assert Tucan.hline(plot, 5) == expected_horizontal
+
+      expected_vertical =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          base_plot,
+          Vl.new()
+          |> Vl.mark(:rule, color: "red", stroke_width: 3)
+          |> Vl.encode(:x, datum: 5)
+        ])
+
+      assert Tucan.vline(plot, 5, line_color: "red", stroke_width: 3) == expected_vertical
+    end
+
+    test "works also with fields and aggregations" do
+      base_plot =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+
+      plot = Vl.data_from_url(base_plot, @dataset)
+
+      expected_horizontal =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          base_plot,
+          Vl.new()
+          |> Vl.mark(:rule, color: "black", stroke_width: 1)
+          |> Vl.encode_field(:y, "z", aggregate: :mean, type: :quantitative)
+        ])
+
+      assert Tucan.hline(plot, "z") == expected_horizontal
+
+      expected_vertical =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          base_plot,
+          Vl.new()
+          |> Vl.mark(:rule, color: "red", stroke_width: 3)
+          |> Vl.encode_field(:x, "z", aggregate: :median, type: :quantitative)
+        ])
+
+      assert Tucan.vline(plot, "z", aggregate: :median, line_color: "red", stroke_width: 3) ==
+               expected_vertical
+    end
+
+    test "works with color_by option" do
+      base_plot =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+
+      plot = Vl.data_from_url(base_plot, @dataset)
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          base_plot,
+          Vl.new()
+          |> Vl.mark(:rule, color: "black", stroke_width: 1)
+          |> Vl.encode_field(:y, "z", aggregate: :mean, type: :quantitative)
+          |> Vl.encode_field(:color, "r")
+        ])
+
+      assert Tucan.hline(plot, "z", color_by: "r") == expected
+    end
+
+    test "can be used multiple times" do
+      plot = Tucan.scatter(@iris_dataset, "petal_width", "petal_length")
+
+      with_lines =
+        plot
+        |> Tucan.hline(3)
+        |> Tucan.hline(5)
+        |> Tucan.vline(2)
+
+      assert length(with_lines.spec["layer"]) == 4
+    end
+  end
+
   describe "set_width/2" do
     test "sets the width" do
       vl = Tucan.set_width(Vl.new(), 100)
