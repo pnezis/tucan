@@ -1373,6 +1373,9 @@ defmodule TucanTest do
 
       assert Tucan.hline(plot, 5) == expected_horizontal
 
+      # color_by is ignored
+      assert Tucan.hline(plot, 5, color_by: "z") == expected_horizontal
+
       expected_vertical =
         Vl.new()
         |> Vl.data_from_url(@dataset)
@@ -1384,6 +1387,10 @@ defmodule TucanTest do
         ])
 
       assert Tucan.vline(plot, 5, line_color: "red", stroke_width: 3) == expected_vertical
+
+      # color_by is ignored with number
+      assert Tucan.vline(plot, 5, color_by: "z", line_color: "red", stroke_width: 3) ==
+               expected_vertical
     end
 
     test "works also with fields and aggregations" do

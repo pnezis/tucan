@@ -2427,7 +2427,13 @@ defmodule Tucan do
       Vl.new()
       |> Vl.mark(:rule, mark_opts)
       |> encode_line(axis, position, opts)
-      |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+      |> maybe_encode_field(
+        :color,
+        fn -> opts[:color_by] != nil and is_binary(position) end,
+        opts[:color_by],
+        opts,
+        []
+      )
 
     VegaLiteUtils.append_layers(vl, line)
   end
