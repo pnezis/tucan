@@ -137,6 +137,7 @@ defmodule Tucan do
   * in any other case it is considered a set of data values and the values are set
     as data to a newly created `VegaLite` struct.
   """
+  @doc section: :utilities
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
   def new(plotdata, opts \\ []),
     do: to_vega_plot(plotdata, opts)
@@ -2337,7 +2338,7 @@ defmodule Tucan do
     Enum.map(spec, fn item -> apply_recursively(item, fun) end)
   end
 
-  ## Layer functions
+  ## Utilities functions
 
   line_opts = [
     stroke_width: [
@@ -2408,6 +2409,7 @@ defmodule Tucan do
   |> Tucan.line(:y, "petal_length", color_by: "species")
   ```
   """
+  @doc section: :utilities
   @spec line(
           vl :: VegaLite.t(),
           axis :: :x | :y,
@@ -2435,6 +2437,7 @@ defmodule Tucan do
 
   For supported options check `line/4`.
   """
+  @doc section: :utilities
   @spec vline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
           VegaLite.t()
   def vline(vl, x, opts \\ []) do
@@ -2446,6 +2449,7 @@ defmodule Tucan do
 
   For supported options check `line/4`.
   """
+  @doc section: :utilities
   @spec hline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
           VegaLite.t()
   def hline(vl, y, opts \\ []) do
@@ -2458,8 +2462,6 @@ defmodule Tucan do
   defp encode_line(vl, channel, field, opts) when is_binary(field) do
     Vl.encode_field(vl, channel, field, type: :quantitative, aggregate: opts[:aggregate])
   end
-
-  ## Utility functions
 
   @doc """
   Concatenates horizontally the given plots.
@@ -2488,63 +2490,6 @@ defmodule Tucan do
   @spec concat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def concat(vl \\ Vl.new(), plots) when is_list(plots) do
     VegaLite.concat(vl, plots, :wrappable)
-  end
-
-  @doc """
-  Sets the width of the plot (in pixels).
-  """
-  @doc section: :utilities
-  @spec set_width(vl :: VegaLite.t(), width :: pos_integer()) :: VegaLite.t()
-  def set_width(vl, width) when is_struct(vl, VegaLite) and is_integer(width) and width > 0 do
-    update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
-  end
-
-  @doc """
-  Sets the height of the plot (in pixels).
-  """
-  @doc section: :utilities
-  @spec set_height(vl :: VegaLite.t(), height :: pos_integer()) :: VegaLite.t()
-  def set_height(vl, height) when is_struct(vl, VegaLite) and is_integer(height) and height > 0 do
-    update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
-  end
-
-  @doc """
-  Sets the title of the plot.
-
-  You can optionally pass any title option supported by vega-lite to customize the
-  style of it.
-
-  ## Examples
-
-  ```tucan
-  Tucan.scatter(:iris, "petal_width", "petal_length")
-  |> Tucan.set_title("My awesome plot",
-      color: "red",
-      subtitle: "with a subtitle",
-      subtitle_color: "green",
-      anchor: "start"
-    )
-  ```
-  """
-  @doc section: :utilities
-  @spec set_title(vl :: VegaLite.t(), title :: binary(), opts :: keyword()) :: VegaLite.t()
-  def set_title(vl, title, opts \\ [])
-      when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
-    title_opts = Keyword.merge(opts, text: title)
-
-    VegaLiteUtils.put_in_spec(vl, :title, title_opts)
-  end
-
-  @doc """
-  Sets the plot's theme.
-
-  Check `Tucan.Themes` for more details on theming.
-  """
-  @spec set_theme(vl :: VegaLite.t(), theme :: atom()) :: VegaLite.t()
-  def set_theme(vl, theme) do
-    theme = Tucan.Themes.theme(theme)
-
-    Vl.config(vl, theme)
   end
 
   @doc """
@@ -2580,6 +2525,68 @@ defmodule Tucan do
         VegaLiteUtils.encode_raw(vl, right, opts)
     end
   end
+
+  ## Styling functions
+
+  @doc """
+  Sets the width of the plot (in pixels).
+  """
+  @doc section: :styling
+  @spec set_width(vl :: VegaLite.t(), width :: pos_integer()) :: VegaLite.t()
+  def set_width(vl, width) when is_struct(vl, VegaLite) and is_integer(width) and width > 0 do
+    update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
+  end
+
+  @doc """
+  Sets the height of the plot (in pixels).
+  """
+  @doc section: :styling
+  @spec set_height(vl :: VegaLite.t(), height :: pos_integer()) :: VegaLite.t()
+  def set_height(vl, height) when is_struct(vl, VegaLite) and is_integer(height) and height > 0 do
+    update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
+  end
+
+  @doc """
+  Sets the title of the plot.
+
+  You can optionally pass any title option supported by vega-lite to customize the
+  style of it.
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.set_title("My awesome plot",
+      color: "red",
+      subtitle: "with a subtitle",
+      subtitle_color: "green",
+      anchor: "start"
+    )
+  ```
+  """
+  @doc section: :styling
+  @spec set_title(vl :: VegaLite.t(), title :: binary(), opts :: keyword()) :: VegaLite.t()
+  def set_title(vl, title, opts \\ [])
+      when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
+    title_opts = Keyword.merge(opts, text: title)
+
+    VegaLiteUtils.put_in_spec(vl, :title, title_opts)
+  end
+
+  @doc """
+  Sets the plot's theme.
+
+  Check `Tucan.Themes` for more details on theming.
+  """
+  @doc section: :styling
+  @spec set_theme(vl :: VegaLite.t(), theme :: atom()) :: VegaLite.t()
+  def set_theme(vl, theme) do
+    theme = Tucan.Themes.theme(theme)
+
+    Vl.config(vl, theme)
+  end
+
+  ## Private functions
 
   defp maybe_flip_axes(vl, false), do: vl
   defp maybe_flip_axes(vl, true), do: flip_axes(vl)

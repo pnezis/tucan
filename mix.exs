@@ -68,7 +68,24 @@ defmodule Tucan.MixProject do
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
         Grouping: &(&1[:section] == :grouping),
-        Utilities: &(&1[:section] == :utilities)
+        Utilities: &(&1[:section] == :utilities),
+        Styling: &(&1[:section] == :styling)
+      ],
+      groups_for_modules: [
+        Plots: [
+          Tucan
+        ],
+        Styling: [
+          Tucan.Axes,
+          Tucan.Grid,
+          Tucan.Themes
+        ],
+        Datasets: [
+          Tucan.Datasets
+        ],
+        Utilities: [
+          Tucan.VegaLiteUtils
+        ]
       ],
       markdown_processor:
         {FancyFences,
