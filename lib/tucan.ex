@@ -2408,6 +2408,12 @@ defmodule Tucan do
   |> Tucan.line(:y, "petal_length", color_by: "species")
   ```
   """
+  @spec line(
+          vl :: VegaLite.t(),
+          axis :: :x | :y,
+          position :: number() | binary(),
+          opts :: keyword()
+        ) :: VegaLite.t()
   def line(vl, axis, position, opts) when axis in [:x, :y] do
     opts = NimbleOptions.validate!(opts, @line_schema)
 
@@ -2429,6 +2435,8 @@ defmodule Tucan do
 
   For supported options check `line/4`.
   """
+  @spec vline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+          VegaLite.t()
   def vline(vl, x, opts \\ []) do
     line(vl, :x, x, opts)
   end
@@ -2438,6 +2446,8 @@ defmodule Tucan do
 
   For supported options check `line/4`.
   """
+  @spec hline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+          VegaLite.t()
   def hline(vl, y, opts \\ []) do
     line(vl, :y, y, opts)
   end
