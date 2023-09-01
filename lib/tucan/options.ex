@@ -362,9 +362,10 @@ defmodule Tucan.Options do
   @spec number_between(value :: term(), min :: number(), max :: number()) ::
           {:ok, number()} | {:error, binary()}
   def number_between(value, min, max) do
-    cond do
-      is_number(value) and value >= min and value <= max -> {:ok, value}
-      true -> {:error, "expected a number between #{min} and #{max}, got: #{inspect(value)}"}
+    if is_number(value) and value >= min and value <= max do
+      {:ok, value}
+    else
+      {:error, "expected a number between #{min} and #{max}, got: #{inspect(value)}"}
     end
   end
 
@@ -390,7 +391,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  @spec extent(value :: term()) :: {:ok, [number()]} | {:error, binary()}
+  @spec extent(value :: term()) :: {:ok, [number(), ...]} | {:error, String.t()}
   def extent(value) do
     case value do
       [min, max] when is_number(min) and is_number(max) and min < max ->
@@ -401,12 +402,12 @@ defmodule Tucan.Options do
 
       other ->
         {:error,
-         "expected [min, max] where min, max numbers and max > min, got: #{inspect(other)}"}
+         "g expected [min, max] where min, max numbers and max > min, got: #{inspect(other)}"}
     end
   end
 
   @doc false
-  @spec density_alias(value :: term()) :: {:ok, [binary()]} | {:error, binary()}
+  @spec density_alias(value :: term()) :: {:ok, [binary(), ...]} | {:error, String.t()}
   def density_alias(alias) do
     if is_binary(alias) do
       {:ok, ["#{alias}_value", "#{alias}_density"]}

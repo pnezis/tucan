@@ -19,6 +19,10 @@ lint: ## Lint tucan
 	mix format --check-formatted
 	mix credo --strict
 	mix doctor --failed
-	mix dialyzer --format dialyxir
+	mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns --missing_return
 	mix docs -f html
 	mix test --warnings-as-errors --cover
+
+.PHONY: lint-full
+lint-full: lint spell
+lint-full: ## Lint tucan & spellcheck
