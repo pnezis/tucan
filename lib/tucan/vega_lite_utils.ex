@@ -103,6 +103,8 @@ defmodule Tucan.VegaLiteUtils do
       raise ArgumentError,
             "#{caller} expects a single view spec, multi view detected: #{inspect(key)} key is defined"
     end
+
+    :ok
   end
 
   defp validate_single_or_layered_view!(%VegaLite{} = vl, caller) do

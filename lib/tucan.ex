@@ -2312,30 +2312,30 @@ defmodule Tucan do
   end
 
   defp apply_recursively(%VegaLite{} = vl, fun) do
-    put_in(vl.spec, apply_recursively(vl.spec, fun))
+    put_in(vl.spec, do_apply_recursively(vl.spec, fun))
   end
 
-  defp apply_recursively(%{"vconcat" => vconcat} = spec, fun) do
-    vconcat = apply_recursively(vconcat, fun)
+  defp do_apply_recursively(%{"vconcat" => vconcat} = spec, fun) do
+    vconcat = do_apply_recursively(vconcat, fun)
     Map.put(spec, "vconcat", vconcat)
   end
 
-  defp apply_recursively(%{"hconcat" => hconcat} = spec, fun) do
-    hconcat = apply_recursively(hconcat, fun)
+  defp do_apply_recursively(%{"hconcat" => hconcat} = spec, fun) do
+    hconcat = do_apply_recursively(hconcat, fun)
     Map.put(spec, "hconcat", hconcat)
   end
 
-  defp apply_recursively(%{"concat" => concat} = spec, fun) do
-    concat = apply_recursively(concat, fun)
+  defp do_apply_recursively(%{"concat" => concat} = spec, fun) do
+    concat = do_apply_recursively(concat, fun)
     Map.put(spec, "concat", concat)
   end
 
-  defp apply_recursively(spec, fun) when is_map(spec) do
+  defp do_apply_recursively(spec, fun) when is_map(spec) do
     fun.(spec)
   end
 
-  defp apply_recursively(spec, fun) when is_list(spec) do
-    Enum.map(spec, fn item -> apply_recursively(item, fun) end)
+  defp do_apply_recursively(spec, fun) when is_list(spec) do
+    Enum.map(spec, fn item -> do_apply_recursively(item, fun) end)
   end
 
   ## Utilities functions
