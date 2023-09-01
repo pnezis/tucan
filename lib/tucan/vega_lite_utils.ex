@@ -110,9 +110,6 @@ defmodule Tucan.VegaLiteUtils do
   end
 
   # validates that the channel exists in the encoding options
-  defp validate_channel!(%VegaLite{spec: spec}, channel) when is_atom(channel),
-    do: validate_channel!(spec, channel)
-
   defp validate_channel!(%{} = spec, channel) when is_atom(channel) do
     encoding_opts = get_in(spec, ["encoding", to_vl_key(channel)])
 

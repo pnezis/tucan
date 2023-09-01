@@ -160,6 +160,8 @@ defmodule Tucan.VegaLiteUtilsTest do
       expected = Vl.new(width: 100)
 
       assert VegaLiteUtils.put_in_spec(Vl.new(), :width, 100) == expected
+      assert VegaLiteUtils.put_in_spec(Vl.new(), "width", 100) == expected
+      assert VegaLiteUtils.put_in_spec(Vl.new(), "struct", Vl.new()).spec["struct"] == Vl.new()
     end
 
     test "replaces existing options" do
