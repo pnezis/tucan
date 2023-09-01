@@ -155,7 +155,7 @@ defmodule Tucan.Options do
       dest: :mark
     ],
     fill_opacity: [
-      type: :float,
+      type: {:custom, Tucan.Options, :number_between, [0, 1]},
       default: 0.5,
       doc: """
       The fill opacity of the plotted elements.
@@ -164,7 +164,7 @@ defmodule Tucan.Options do
       dest: :mark
     ],
     opacity: [
-      type: :float,
+      type: {:custom, Tucan.Options, :number_between, [0, 1]},
       doc: """
       The overall opacity of the mark
       """,
@@ -249,7 +249,7 @@ defmodule Tucan.Options do
       dest: :mark
     ],
     tension: [
-      type: :float,
+      type: {:or, [:integer, :float]},
       doc: "Depending on the interpolation type, sets the tension parameter",
       dest: :mark
     ]
@@ -359,7 +359,17 @@ defmodule Tucan.Options do
   ## Custom validations
 
   @doc false
-  @spec tooltip(value :: term()) :: {:ok, boolean()} | {:error, binary()}
+  @spec number_between(value :: term(), min :: number(), max :: number()) ::
+          {:ok, number()} | {:error, binary()}
+  def number_between(value, min, max) do
+    cond do
+      is_number(value) and value >= min and value <= max -> {:ok, value}
+      true -> {:error, "expected a number between #{min} and #{max}, got: #{inspect(value)}"}
+    end
+  end
+
+  @doc false
+  @spec tooltip(value :: term()) :: {:ok, boolean() | keyword()} | {:error, binary()}
   def tooltip(value) do
     cond do
       is_boolean(value) ->
