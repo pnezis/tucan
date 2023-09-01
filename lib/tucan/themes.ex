@@ -1,5 +1,6 @@
 defmodule Tucan.Themes do
-  @themes Tucan.Themes.Helpers.load_themes()
+  @themes_dir Path.expand("../../themes", __DIR__)
+  @themes Tucan.Themes.Helpers.load_themes(@themes_dir)
 
   @theme_example """
   scatter =

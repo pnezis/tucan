@@ -3,12 +3,10 @@ defmodule Tucan.Themes.Helpers do
 
   # helper functions for loading themes from the themes top level folder
 
-  @themes_dir Path.expand("../../../themes", __DIR__)
-
   @doc false
-  @spec load_themes() :: keyword()
-  def load_themes do
-    themes_pattern = Path.join(@themes_dir, "*.exs")
+  @spec load_themes(path :: Path.t()) :: keyword()
+  def load_themes(path) do
+    themes_pattern = Path.join(path, "*.exs")
 
     Path.wildcard(themes_pattern)
     |> Enum.map(&load_theme/1)
@@ -34,15 +32,29 @@ defmodule Tucan.Themes.Helpers do
     _e -> {:error, "failed to load theme from #{path}"}
   end
 
-  defp validate_theme(theme) do
-    case Keyword.validate(theme, [:theme, :name, :doc, :source]) do
-      {:ok, theme} ->
-        {:ok, theme}
+  @doc false
+  @spec validate_theme(theme :: keyword()) :: {:ok, keyword()} | {:error, binary()}
+  def validate_theme(theme) do
+    cond do
+      not Keyword.keyword?(theme) ->
+        {:error, "theme definition must be a keyword"}
 
-      {:error, invalid} ->
-        {:error, "the following theme attributes are not supported: #{inspect(invalid)}"}
+      not has_required_keys?(theme) ->
+        {:error, "theme definition must contain a :name and a :theme"}
+
+      true ->
+        case Keyword.validate(theme, [:theme, :name, :doc, :source]) do
+          {:ok, theme} ->
+            {:ok, theme}
+
+          {:error, invalid} ->
+            {:error, "the following theme attributes are not supported: #{inspect(invalid)}"}
+        end
     end
   end
+
+  defp has_required_keys?(theme),
+    do: Keyword.has_key?(theme, :theme) and Keyword.has_key?(theme, :name)
 
   @doc false
   @spec docs(themes :: keyword(), example :: binary()) :: binary()
