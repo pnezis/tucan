@@ -127,6 +127,31 @@ defmodule Tucan.OptionsTest do
   end
 
   describe "custom validation functions" do
+    test "number_between/3" do
+      schema = [x: [type: {:custom, Tucan.Options, :number_between, [1, 5]}]]
+
+      assert_valid_option([x: 3], schema, :x, 3)
+      assert_valid_option([x: 3.6], schema, :x, 3.6)
+
+      assert_invalid_option(
+        [x: 0],
+        schema,
+        "expected a number between 1 and 5, got: 0"
+      )
+
+      assert_invalid_option(
+        [x: 10],
+        schema,
+        "expected a number between 1 and 5, got: 10"
+      )
+
+      assert_invalid_option(
+        [x: :an_atom],
+        schema,
+        "expected a number between 1 and 5, got: :an_atom"
+      )
+    end
+
     test "tooltip/1" do
       schema =
         opts_schema(
