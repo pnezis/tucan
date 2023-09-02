@@ -55,6 +55,48 @@ defmodule Tucan.AxesTest do
     end
   end
 
+  describe "set_domain" do
+    test "raises if encoding does not exist" do
+      vl = Vl.new()
+
+      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+        Tucan.Axes.set_x_domain(vl, 1, 5)
+      end
+
+      assert_raise ArgumentError, "encoding for channel :y not found in the spec", fn ->
+        Tucan.Axes.set_y_domain(vl, 1, 5)
+      end
+    end
+
+    test "raises if min >= max" do
+      vl = Vl.new()
+
+      assert_raise ArgumentError,
+                   "a domain min value cannot be greater than the max value, got [10, 5]",
+                   fn ->
+                     Tucan.Axes.set_x_domain(vl, 10, 5)
+                   end
+
+      assert_raise ArgumentError,
+                   "a domain min value cannot be greater than the max value, got [5, 5]",
+                   fn ->
+                     Tucan.Axes.set_y_domain(vl, 5, 5)
+                   end
+    end
+
+    test "sets the domains" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Tucan.Axes.set_x_domain(1, 10)
+        |> Tucan.Axes.set_y_domain(-1.12, 2.33)
+
+      assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
+      assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [-1.12, 2.33]
+    end
+  end
+
   describe "put_axis_options/3" do
     test "raises if encoding does not exist" do
       vl = Vl.new()
