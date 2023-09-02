@@ -932,7 +932,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_values(data)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative)
 
       assert Tucan.bar(data, "x", "y") == expected
@@ -943,7 +943,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:y, "x", type: :nominal)
+        |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "y", type: :quantitative)
 
       assert Tucan.bar(@dataset, "x", "y", orient: :vertical) == expected
@@ -954,7 +954,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "group")
 
@@ -967,7 +967,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:x_offset, "group")
@@ -985,7 +985,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "x", type: :nominal)
+        |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean, stack: :normalize)
         |> Vl.encode_field(:color, "group")
 
@@ -1012,7 +1012,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_values(data)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "type", type: :nominal)
+        |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
 
       assert Tucan.countplot(data, "type") == expected
@@ -1023,7 +1023,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:y, "type", type: :nominal)
+        |> Vl.encode_field(:y, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
 
       assert Tucan.countplot(@dataset, "type", orient: :vertical) == expected
@@ -1034,7 +1034,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "type", type: :nominal)
+        |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
 
@@ -1046,7 +1046,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:x, "type", type: :nominal)
+        |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:x_offset, "group")
@@ -1059,7 +1059,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_url(@dataset)
         |> Vl.mark(:bar, fill_opacity: 0.5)
-        |> Vl.encode_field(:y, "type", type: :nominal)
+        |> Vl.encode_field(:y, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:y_offset, "group")

@@ -1215,7 +1215,7 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.mark(:bar, mark_opts)
-    |> encode_field(:x, field, opts, type: :nominal)
+    |> encode_field(:x, field, opts, type: :nominal, axis: [label_angle: 0])
     |> encode_field(:y, value, opts, y_opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_x_offset(opts[:color_by], opts[:mode] == :grouped, opts)
