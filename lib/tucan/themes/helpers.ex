@@ -62,10 +62,10 @@ defmodule Tucan.Themes.Helpers do
     do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts, example) end)
 
   defp theme_docs(opts, example) do
-    theme_name =
+    theme_link =
       case opts[:source] do
-        nil -> inspect(opts[:name])
-        source -> "[#{opts[:name]}](#{source})"
+        nil -> ""
+        source -> " [[source](#{source})]"
       end
 
     {%VegaLite{} = vl, _} = Code.eval_string(example, [], __ENV__)
@@ -79,7 +79,11 @@ defmodule Tucan.Themes.Helpers do
       |> Jason.encode!()
 
     """
-    * #{theme_name} - #{opts[:doc]}
+    ### `:#{opts[:name]}`
+
+    #{opts[:doc]}#{theme_link}
+
+    **Example:**
 
     ```vega-lite
     #{spec}

@@ -94,8 +94,8 @@ defmodule Tucan.Themes.HelpersTest do
 
     docs = Helpers.docs(themes, example)
 
-    assert docs =~ "* [foo](http://hexdocs.pm/tucan) - some docs"
-    assert docs =~ "* :bar -"
+    assert docs =~ "some docs [[source](http://hexdocs.pm/tucan)]"
+    assert docs =~ "### `:bar`"
     assert docs =~ ~s'"color":"red"'
     assert docs =~ ~s'"color":"black"'
   end
