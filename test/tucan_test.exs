@@ -122,7 +122,7 @@ defmodule TucanTest do
           aggregate: [[op: :count, as: "count_Horsepower"]],
           groupby: ["bin_Horsepower", "bin_Horsepower_end"]
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
@@ -147,7 +147,7 @@ defmodule TucanTest do
           calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
           as: "percent_Horsepower"
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "percent_Horsepower",
@@ -173,7 +173,7 @@ defmodule TucanTest do
           aggregate: [[op: :count, as: "count_Horsepower"]],
           groupby: ["bin_Horsepower", "bin_Horsepower_end"]
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
@@ -191,7 +191,7 @@ defmodule TucanTest do
           aggregate: [[op: :count, as: "count_Horsepower"]],
           groupby: ["bin_Horsepower", "bin_Horsepower_end"]
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:y2, "bin_Horsepower_end")
         |> Vl.encode_field(:x, "count_Horsepower", stack: nil, type: :quantitative)
@@ -216,7 +216,7 @@ defmodule TucanTest do
           calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
           as: "percent_Horsepower"
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "percent_Horsepower",
@@ -248,7 +248,7 @@ defmodule TucanTest do
           calculate: "datum.count_Horsepower/datum.total_count_Horsepower",
           as: "percent_Horsepower"
         )
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "bin_Horsepower", bin: [binned: true], title: "Horsepower")
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "percent_Horsepower",
@@ -273,7 +273,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:point, fill_opacity: 0.5)
+        |> Vl.mark(:point, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
 
@@ -284,7 +284,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:point, fill_opacity: 0.5)
+        |> Vl.mark(:point, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species", type: :nominal)
@@ -304,7 +304,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.mark(:line, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
 
@@ -315,7 +315,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.mark(:line, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")
@@ -327,7 +327,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5)
+        |> Vl.mark(:line, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:detail, "symbol", type: :nominal)
@@ -339,7 +339,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, point: true)
+        |> Vl.mark(:line, fill_opacity: 1.0, point: true)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")
@@ -352,7 +352,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, point: [filled: false, fill: "white"])
+        |> Vl.mark(:line, fill_opacity: 1.0, point: [filled: false, fill: "white"])
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")
@@ -369,7 +369,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, point: true, interpolate: "step")
+        |> Vl.mark(:line, fill_opacity: 1.0, point: true, interpolate: "step")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")
@@ -388,7 +388,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step")
+        |> Vl.mark(:line, fill_opacity: 1.0, interpolate: "step")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
 
@@ -399,7 +399,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step-before")
+        |> Vl.mark(:line, fill_opacity: 1.0, interpolate: "step-before")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
 
@@ -410,7 +410,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 0.5, interpolate: "step")
+        |> Vl.mark(:line, fill_opacity: 1.0, interpolate: "step")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
 
@@ -423,7 +423,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
 
@@ -434,7 +434,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: true, point: true)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: true, point: true)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
 
@@ -445,7 +445,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: true)
         |> Vl.encode_field(:color, "symbol")
@@ -468,7 +468,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :normalize)
         |> Vl.encode_field(:color, "symbol")
@@ -485,7 +485,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :center)
         |> Vl.encode_field(:color, "symbol")
@@ -502,7 +502,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: false)
         |> Vl.encode_field(:color, "symbol")
@@ -521,7 +521,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 0.5, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: :center)
         |> Vl.encode_field(:color, "symbol")
@@ -637,7 +637,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: 1.5)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
 
       assert Tucan.boxplot(@iris_dataset, "petal_width") == expected
@@ -647,7 +647,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.2)
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: 1.2)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
 
       assert Tucan.boxplot(@iris_dataset, "petal_width", k: 1.2) == expected
@@ -657,7 +657,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: "min-max")
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: "min-max")
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
 
       assert Tucan.boxplot(@iris_dataset, "petal_width", mode: :min_max) == expected
@@ -667,7 +667,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: 1.5)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "species", type: :nominal)
 
@@ -678,7 +678,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: 1.5)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "species", type: :nominal)
         |> Vl.encode_field(:color, "species")
@@ -690,7 +690,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:boxplot, fill_opacity: 0.5, extent: 1.5)
+        |> Vl.mark(:boxplot, fill_opacity: 1.0, extent: 1.5)
         |> Vl.encode_field(:y, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:x, "species", type: :nominal)
         |> Vl.encode_field(:color, "species")
@@ -712,7 +712,7 @@ defmodule TucanTest do
           maxsteps: 200,
           minsteps: 25
         )
-        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.mark(:area, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
 
@@ -733,7 +733,7 @@ defmodule TucanTest do
           maxsteps: 30,
           minsteps: 5
         )
-        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.mark(:area, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
 
@@ -760,7 +760,7 @@ defmodule TucanTest do
           minsteps: 25,
           groupby: ["species"]
         )
-        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.mark(:area, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species")
@@ -781,7 +781,7 @@ defmodule TucanTest do
           minsteps: 25,
           groupby: ["other"]
         )
-        |> Vl.mark(:area, fill_opacity: 0.5)
+        |> Vl.mark(:area, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species")
@@ -796,7 +796,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "day", type: :nominal)
         |> Vl.encode_field(:y, "sex", type: :nominal)
         |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean)
@@ -809,7 +809,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "day", type: :nominal)
         |> Vl.encode_field(:y, "sex", type: :nominal)
         |> Vl.encode(:color, type: :quantitative, aggregate: :count)
@@ -822,7 +822,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "day", type: :nominal)
         |> Vl.encode_field(:y, "sex", type: :nominal)
         |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :max)
@@ -837,7 +837,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, bin: true)
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, bin: true)
         |> Vl.encode(:color, type: :quantitative, aggregate: :count)
@@ -850,7 +850,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
-        |> Vl.mark(:rect, fill_opacity: 0.5)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, bin: true)
         |> Vl.encode_field(:y, "petal_length", type: :quantitative, bin: true)
         |> Vl.encode_field(:color, "sepal_width", type: :quantitative, aggregate: :max)
@@ -874,7 +874,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_values(@pie_data)
-        |> Vl.mark(:arc, fill_opacity: 0.5)
+        |> Vl.mark(:arc, fill_opacity: 1.0)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
@@ -899,7 +899,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:arc, inner_radius: 50, fill_opacity: 0.5)
+        |> Vl.mark(:arc, inner_radius: 50, fill_opacity: 1.0)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
@@ -910,7 +910,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:arc, inner_radius: 20, fill_opacity: 0.5)
+        |> Vl.mark(:arc, inner_radius: 20, fill_opacity: 1.0)
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
@@ -931,7 +931,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_values(data)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative)
 
@@ -942,7 +942,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "y", type: :quantitative)
 
@@ -953,7 +953,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "group")
@@ -966,7 +966,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "group")
@@ -984,7 +984,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean, stack: :normalize)
         |> Vl.encode_field(:color, "group")
@@ -1011,7 +1011,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_values(data)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
 
@@ -1022,7 +1022,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
 
@@ -1033,7 +1033,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
@@ -1045,7 +1045,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")
@@ -1058,7 +1058,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
-        |> Vl.mark(:bar, fill_opacity: 0.5)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
         |> Vl.encode_field(:y, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
         |> Vl.encode_field(:color, "group")

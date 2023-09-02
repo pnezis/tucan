@@ -279,11 +279,11 @@ defmodule Tucan do
 
   ```tucan
   histograms =
-    Tucan.histogram(:cars, "Horsepower", color_by: "Origin")
+    Tucan.histogram(:cars, "Horsepower", color_by: "Origin", tooltip: true)
     |> Tucan.facet_by(:column, "Origin")
 
   relative_histograms =
-    Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin", fill_opacity: 0.5, tooltip: true)
+    Tucan.histogram(:cars, "Horsepower", relative: true, color_by: "Origin", tooltip: true)
     |> Tucan.facet_by(:column, "Origin")
 
   Tucan.vconcat([histograms, relative_histograms])
@@ -494,8 +494,8 @@ defmodule Tucan do
   > Alternatively you should use the `:groupby` option in order to group the density
   > transform by the `Species` field and then apply the `color_by/3` function:
   >
-  > ```tucan
-  > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
+  > ```elixir
+  > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"], fill_opacity: 0.2)
   > |> Tucan.color_by("Species")
   > ```
 
@@ -516,7 +516,7 @@ defmodule Tucan do
   annotation to make the comparison possible.
 
   ```tucan
-  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species")
+  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.5)
   ```
 
   You can also combine it with `facet_by/4` in order to draw a different plot for each value
@@ -533,7 +533,7 @@ defmodule Tucan do
   automatically calculated by vega lite):
 
   ```tucan
-  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", bandwidth: 20.0)
+  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", bandwidth: 20.0, fill_opacity: 0.5)
   ```
 
   You can plot a cumulative density distribution by setting the `:cumulative` option to `true`:
@@ -925,7 +925,7 @@ defmodule Tucan do
     %{"x" => "C", "y" => "M", "value" => 1.5},
   ]
 
-  Tucan.heatmap(data, "x", "y", "value", width: 200, height: 200, fill_opacity: 1.0)
+  Tucan.heatmap(data, "x", "y", "value", width: 200, height: 200)
   ```
 
   You can change the color scheme:
@@ -933,7 +933,6 @@ defmodule Tucan do
   ```tucan
   Tucan.heatmap(:glue, "Task", "Model", "Score",
     color: [scale: [scheme: "redgrey", reverse: true]],
-    fill_opacity: 1.0,
     tooltip: true
   )
   ```
@@ -950,7 +949,6 @@ defmodule Tucan do
       title: "Avg Max Temp",
       scale: [scheme: "redyellowblue", reverse: true]
     ],
-    fill_opacity: 1.0,
     tooltip: true,
     x: [type: :ordinal, time_unit: :date],
     y: [type: :ordinal, time_unit: :month]
@@ -1788,8 +1786,7 @@ defmodule Tucan do
     y: [aggregate: :sum],
     color: [scale: [scheme: "category20b"]],
     width: 300,
-    height: 200,
-    fill_opacity: 1.0
+    height: 200
   )
   ```
 
@@ -1824,7 +1821,8 @@ defmodule Tucan do
     color_by: "symbol",
     mode: :no_stack,
     x: [type: :temporal],
-    width: 400
+    width: 400,
+    fill_opacity: 0.4
   )
   |> Tucan.Axes.set_y_scale(:log)
   ```

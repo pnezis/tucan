@@ -27,7 +27,7 @@ defmodule Tucan.Themes do
   donut = Tucan.donut(:barley, "yield", "site", aggregate: :sum, tooltip: true)
 
   heatmap =
-    Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)", fill_opacity: 1.0)
+    Tucan.density_heatmap(:penguins, "Beak Length (mm)", "Beak Depth (mm)")
 
   Tucan.vconcat(
     [

@@ -156,7 +156,7 @@ defmodule Tucan.Options do
     ],
     fill_opacity: [
       type: {:custom, Tucan.Options, :number_between, [0, 1]},
-      default: 0.5,
+      default: 1,
       doc: """
       The fill opacity of the plotted elements.
       """,
