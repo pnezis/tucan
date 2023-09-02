@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  TUCAN_DEV: true
+
 jobs:
   build:
 
@@ -37,5 +40,11 @@ jobs:
       run: mix deps.get
     - name: Format
       run: mix format --check-formatted
+    - name: Credo
+      run: mix credo --strict
+    - name: Doctor
+      run: mix doctor --failed
     - name: Run tests
-      run: mix test
+      run: mix test --cover
+    - name: Dialyzer
+      run: mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns --missing_return
