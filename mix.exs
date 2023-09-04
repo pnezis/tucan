@@ -78,6 +78,7 @@ defmodule Tucan.MixProject do
         Styling: [
           Tucan.Axes,
           Tucan.Grid,
+          Tucan.Legend,
           Tucan.Themes
         ],
         Datasets: [
