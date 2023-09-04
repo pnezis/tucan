@@ -1,17 +1,21 @@
 defmodule Tucan.Options do
   @moduledoc false
 
-  # TODO: cleanup sections ordering & descriptions
+  # in the sections options the various doc sections are configured. The order is
+  # important since it affects the order with which these options will be displayed.
+  #
+  # Additionally the following options can be set per option:
+  # `:header` - the options header
+  # `:doc` - an extra markdown text to be rendered before the actual options definition
+  #
+  # All options without a set section will be grouped under `unknown` which by
+  # default is ordered first.
   @sections [
-    unknown: [
-      order: -1
-    ],
+    unknown: [],
     grouping: [
-      order: 3,
       header: "Data Grouping Options"
     ],
     encodings: [
-      order: 5,
       header: "Encodings Custom Options",
       doc: """
       All Tucan plots are building a `VegaLite` specification based on some sane
@@ -26,11 +30,9 @@ defmodule Tucan.Options do
       """
     ],
     interactivity: [
-      order: 7,
       header: "Interactivity Options"
     ],
     style: [
-      order: 10,
       header: "Styling Options"
     ]
   ]
@@ -315,7 +317,6 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  # TODO remove this clause
   @spec docs(keyword(), keyword()) :: binary()
   def docs(opts, section_opts \\ @sections) when is_list(opts) do
     opts
@@ -328,8 +329,9 @@ defmodule Tucan.Options do
 
   defp section_order(section, section_opts) do
     section_opts
+    |> Keyword.keys()
+    |> Enum.with_index()
     |> Keyword.fetch!(section)
-    |> Keyword.fetch!(:order)
   end
 
   defp section_opts_docs(section, opts, section_opts) do

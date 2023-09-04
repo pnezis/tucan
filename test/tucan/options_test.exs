@@ -64,14 +64,12 @@ defmodule Tucan.OptionsTest do
       # renders properly the docs if the sections are valid
 
       section_opts = [
-        unknown: [order: -1],
+        unknown: [],
         section1: [
-          header: "Awesome Options",
-          order: 100
+          header: "Awesome Options"
         ],
         other: [
           header: "Another Section",
-          order: 5,
           doc: "with some extra docs"
         ]
       ]
@@ -79,30 +77,28 @@ defmodule Tucan.OptionsTest do
       expected = """
       * `:baz` (`t:String.t/0`) - Required. a baz option
 
+      ### Awesome Options
+
+      * `:bar` (`t:integer/0`) - another option The default value is `1`.
+      * `:foo` (`t:String.t/0`) - an option The default value is `"a"`.
+
       ### Another Section
 
       with some extra docs
 
-      * `:xyz` (`t:String.t/0`) - an extra option
-
-      ### Awesome Options
-
-      * `:bar` (`t:integer/0`) - another option The default value is `1`.
-      * `:foo` (`t:String.t/0`) - an option The default value is `"a"`.\
+      * `:xyz` (`t:String.t/0`) - an extra option\
       """
 
       assert Tucan.Options.docs(opts, section_opts) == expected
 
       # sections order affects the output
       section_opts = [
-        unknown: [order: -1],
         section1: [
-          header: "Awesome Options",
-          order: -100
+          header: "Awesome Options"
         ],
+        unknown: [],
         other: [
           header: "Another Section",
-          order: 5,
           doc: "with some extra docs"
         ]
       ]
