@@ -2,6 +2,17 @@
 
 ## [UNRELEASED]
 
+- Add `jointplot/4` composite plot.
+
+```tucan
+  Tucan.jointplot(
+    :penguins, "Beak Length (mm)", "Beak Depth (mm)",
+    marginal: :density,
+    color_by: "Species",
+    marginal_opts: [fill_opacity: 0.5]
+  )
+```
+
 - Add `heatmap/5` plot.
 
 ```tucan
