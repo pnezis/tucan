@@ -712,7 +712,7 @@ defmodule TucanTest do
           maxsteps: 200,
           minsteps: 25
         )
-        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
 
@@ -731,7 +731,7 @@ defmodule TucanTest do
           maxsteps: 200,
           minsteps: 25
         )
-        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :horizontal)
         |> Vl.encode_field(:x, "density", type: :quantitative)
         |> Vl.encode_field(:y, "value", type: :quantitative, scale: [zero: false])
 
@@ -752,7 +752,7 @@ defmodule TucanTest do
           maxsteps: 30,
           minsteps: 5
         )
-        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
 
@@ -779,7 +779,7 @@ defmodule TucanTest do
           minsteps: 25,
           groupby: ["species"]
         )
-        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species")
@@ -800,7 +800,7 @@ defmodule TucanTest do
           minsteps: 25,
           groupby: ["other"]
         )
-        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
         |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:color, "species")
@@ -1088,6 +1088,126 @@ defmodule TucanTest do
                mode: :grouped,
                orient: :vertical
              ) == expected
+    end
+  end
+
+  describe "jointplot/4" do
+    test "with default options" do
+      marginal_x = Tucan.histogram(Vl.new(height: 90), "petal_width", x: [axis: nil])
+
+      marginal_y =
+        Tucan.histogram(Vl.new(width: 90), "petal_length", orient: :vertical, x: [axis: nil])
+
+      joint = Tucan.scatter(Vl.new(width: 200, height: 200), "petal_width", "petal_length")
+
+      expected =
+        Vl.new(bounds: :flush, spacing: 15)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Tucan.vconcat([
+          marginal_x,
+          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
+        ])
+
+      assert(Tucan.jointplot(:iris, "petal_width", "petal_length") == expected)
+    end
+
+    test "with color_by set, width and ratio" do
+      marginal_x =
+        Tucan.histogram(Vl.new(height: 120), "petal_width", color_by: "species", x: [axis: nil])
+
+      marginal_y =
+        Tucan.histogram(Vl.new(width: 120), "petal_length",
+          orient: :vertical,
+          color_by: "species",
+          x: [axis: nil]
+        )
+
+      joint =
+        Tucan.scatter(Vl.new(width: 300, height: 300), "petal_width", "petal_length",
+          color_by: "species"
+        )
+
+      expected =
+        Vl.new(bounds: :flush, spacing: 15)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Tucan.vconcat([
+          marginal_x,
+          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
+        ])
+
+      assert(
+        Tucan.jointplot(:iris, "petal_width", "petal_length",
+          ratio: 0.4,
+          width: 300,
+          color_by: "species"
+        ) == expected
+      )
+    end
+
+    test "raises if color_by is set with density_heatmap" do
+      assert_raise ArgumentError,
+                   "combining a density_heatmap with the :color_by option is not supported",
+                   fn ->
+                     Tucan.jointplot(:iris, "x", "y", joint: :density_heatmap, color_by: "z")
+                   end
+    end
+
+    test "with density_heatmap and density" do
+      marginal_x = Tucan.density(Vl.new(height: 90), "petal_width", x: [axis: nil])
+
+      marginal_y =
+        Tucan.density(Vl.new(width: 90), "petal_length", orient: :vertical, x: [axis: nil])
+
+      joint =
+        Tucan.density_heatmap(Vl.new(width: 200, height: 200), "petal_width", "petal_length")
+
+      expected =
+        Vl.new(bounds: :flush, spacing: 15)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Tucan.vconcat([
+          marginal_x,
+          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
+        ])
+
+      assert(
+        Tucan.jointplot(:iris, "petal_width", "petal_length",
+          joint: :density_heatmap,
+          marginal: :density
+        ) == expected
+      )
+    end
+
+    test "with custom marginal and joint opts" do
+      marginal_x =
+        Tucan.histogram(Vl.new(height: 90), "petal_width", x: [axis: nil, foo: 1], tooltip: true)
+
+      marginal_y =
+        Tucan.histogram(Vl.new(width: 90), "petal_length",
+          orient: :vertical,
+          x: [axis: nil, foo: 1],
+          tooltip: true
+        )
+
+      joint =
+        Tucan.scatter(Vl.new(width: 200, height: 200), "petal_width", "petal_length",
+          x: [foo: 2],
+          tooltip: false
+        )
+
+      expected =
+        Vl.new(bounds: :flush, spacing: 15)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Tucan.vconcat([
+          marginal_x,
+          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
+        ])
+
+      assert(
+        Tucan.jointplot(:iris, "petal_width", "petal_length",
+          joint_opts: [tooltip: false, x: [foo: 2]],
+          marginal_opts: [tooltip: true, x: [foo: 1]]
+        ) == expected
+      )
     end
   end
 
@@ -1543,6 +1663,35 @@ defmodule TucanTest do
         |> Vl.config(Tucan.Themes.theme(:latimes))
 
       assert Tucan.set_theme(Vl.new(), :latimes) == expected
+    end
+  end
+
+  describe "flip_axes/2" do
+    test "flips the axes" do
+      vl =
+        Vl.new()
+        |> Vl.mark(:area, orient: :horizontal)
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:x2, "x2")
+        |> Vl.encode_field(:x_offset, "x_offset")
+        |> Vl.encode_field(:y, "y")
+        |> Vl.encode_field(:y2, "y2")
+        |> Vl.encode_field(:y_offset, "y_offset")
+
+      expected =
+        Vl.new()
+        |> Vl.mark(:area, orient: :vertical)
+        |> Vl.encode_field(:y, "x")
+        |> Vl.encode_field(:y2, "x2")
+        |> Vl.encode_field(:y_offset, "x_offset")
+        |> Vl.encode_field(:x, "y")
+        |> Vl.encode_field(:x2, "y2")
+        |> Vl.encode_field(:x_offset, "y_offset")
+
+      assert Tucan.flip_axes(vl) == expected
+
+      # Calling it twice returns the original specification
+      assert vl |> Tucan.flip_axes() |> Tucan.flip_axes() == vl
     end
   end
 
