@@ -720,6 +720,25 @@ defmodule TucanTest do
                expected
     end
 
+    test "with orient set to vertical" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25
+        )
+        |> Vl.mark(:area, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "value", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.density(@iris_dataset, "petal_width", orient: :vertical) ==
+               expected
+    end
+
     test "with density values set" do
       expected =
         Vl.new()
