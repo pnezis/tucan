@@ -11,6 +11,7 @@ hconcat
 heatmaps
 hline
 joinaggregate
+jointplot
 interquartile
 latimes
 lineplot

@@ -556,7 +556,10 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
     spec_opts = take_options(opts, @histogram_opts, :spec)
-    mark_opts = take_options(opts, @histogram_opts, :mark)
+
+    mark_opts =
+      take_options(opts, @histogram_opts, :mark)
+      |> Keyword.merge(orient: :vertical)
 
     transform_opts =
       take_options(opts, @density_opts, :density_transform)
@@ -2199,6 +2202,178 @@ defmodule Tucan do
     end
   end
 
+  jointplot_opts = [
+    width: [
+      type: :integer,
+      default: 200,
+      doc: """
+      The dimension of the central (joint) plot. The same value is used for
+      both the width and height of the plot.
+      """
+    ],
+    ratio: [
+      type: :float,
+      default: 0.45,
+      doc: """
+      The ratio of the marginal plots secondary dimension with respect to
+      the joint plot dimension.
+      """
+    ],
+    joint: [
+      type: {:in, [:scatter, :density_heatmap]},
+      default: :scatter,
+      doc: """
+      The plot type to be used for the main (joint) plot. Can be one of
+      `:scatter` and `:density_heatmap`.
+      """
+    ],
+    joint_opts: [
+      type: :keyword_list,
+      default: [],
+      doc: """
+      Arbitrary options list for the joint plot. The supported options
+      depend on the selected `:joint` type. 
+      """
+    ],
+    marginal: [
+      type: {:in, [:histogram, :density]},
+      default: :histogram,
+      doc: """
+      The plot type to be used for the marginal plots. Can be one of
+      `:histogram` and `:density`.
+      """
+    ],
+    marginal_opts: [
+      type: :keyword_list,
+      default: [],
+      doc: """
+      Arbitrary options list for the marginal plots. The supported options
+      depend on the selected `:marginal` type. 
+      """
+    ]
+  ]
+
+  # TODO: add option for spacing
+
+  @jointplot_opts Tucan.Options.take!([:width, :title, :color_by, :fill_opacity], jointplot_opts)
+  @jointplot_schema Tucan.Options.to_nimble_schema!(@jointplot_opts)
+
+  @doc """
+  Returns the specification of a jointplot.
+
+  A jointplot is a plot of two numerical variables along with marginal univariate
+  graphs. If no options are set the joint is a scatter plot and the marginal are
+  the histograms of the two variables.
+
+  > #### Marginal plots dimensions {: .info}
+  >
+  > By default a jointplot will have a square shape, e.g. it will have the same
+  > width and height. The `:width` option affects the width of the central (joint)
+  > plot.
+  >
+  > For the marginal distributions you can the `:ratio` option which specifies
+  > the ratio of joint axes height to marginal axes height.
+
+  ## Options
+
+  #{Tucan.Options.docs(@jointplot_opts)}
+
+  ## Examples
+
+  A simple joint plot between two variables.
+
+  ```tucan
+  Tucan.jointplot(:iris, "petal_width", "petal_length", width: 200)
+  ```
+
+  You can also pass `:color_by` to apply a semantic grouping. If set it will be
+  applied both to the joint and the marginal plots.
+
+  ```tucan
+  Tucan.jointplot(
+    :iris, "petal_width", "petal_length",
+    color_by: "species",
+    fill_opacity: 0.5,
+    width: 200
+  )
+  ```
+
+  You can change the type of the join plot and the marginal distributions:
+
+  ```tucan
+  Tucan.jointplot(
+    :penguins, "Beak Length (mm)", "Beak Depth (mm)",
+    joint: :density_heatmap,
+    marginal: :density,
+    ratio: 0.3
+  )
+  ```
+  """
+  @doc section: :composite
+  @spec jointplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
+          VegaLite.t()
+  def jointplot(plotdata, x, y, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @jointplot_schema)
+
+    # TODO: maybe enable this in the future (we need to properly set the legends for this)
+    if opts[:joint] == :density_heatmap and opts[:color_by] do
+      raise ArgumentError,
+            "combining a density_heatmap with the :color_by option is not supported"
+    end
+
+    joint_opts =
+      opts
+      |> Keyword.take([:color_by, :fill_opacity])
+      |> Keyword.merge(opts[:joint_opts])
+
+    joint_plot = Vl.new(width: opts[:width], height: opts[:width])
+
+    joint_plot =
+      case opts[:joint] do
+        :scatter ->
+          scatter(joint_plot, x, y, joint_opts)
+
+        :density_heatmap ->
+          joint_opts = Keyword.drop(joint_opts, [:color_by])
+          density_heatmap(joint_plot, x, y, joint_opts)
+      end
+
+    marginal_dimension = ceil(opts[:ratio] * opts[:width])
+
+    marginal_opts =
+      Keyword.take(opts, [:color_by, :fill_opacity])
+      |> Tucan.Keyword.deep_merge(x: [axis: nil])
+      |> Tucan.Keyword.deep_merge(opts[:marginal_opts])
+
+    {marginal_x, marginal_y} =
+      marginal_plots(x, y, marginal_dimension, opts[:marginal], marginal_opts)
+
+    plotdata
+    |> new(spacing: 15, bounds: "flush")
+    |> Vl.concat(
+      [
+        marginal_x,
+        Vl.concat(Vl.new(spacing: 15, bounds: "flush"), [joint_plot, marginal_y], :horizontal)
+      ],
+      :vertical
+    )
+  end
+
+  defp marginal_plots(x, y, dimension, type, opts) do
+    marginal_x =
+      Vl.new(height: dimension)
+      |> marginal_plot(x, type, opts)
+
+    marginal_y =
+      Vl.new(width: dimension)
+      |> marginal_plot(y, type, opts ++ [orient: :vertical])
+
+    {marginal_x, marginal_y}
+  end
+
+  defp marginal_plot(vl, x, :histogram, opts), do: histogram(vl, x, opts)
+  defp marginal_plot(vl, x, :density, opts), do: density(vl, x, opts)
+
   ## Grouping functions
 
   @doc """
@@ -2518,7 +2693,23 @@ defmodule Tucan do
       |> copy_encoding(left, right, vl)
       |> copy_encoding(right, left, vl)
     end)
+    |> maybe_flip_mark_orient()
   end
+
+  defp maybe_flip_mark_orient(%VegaLite{spec: %{"mark" => %{"orient" => orient}}} = vl),
+    do:
+      update_in(vl.spec, fn spec ->
+        new_orient =
+          case orient do
+            "vertical" -> "horizontal"
+            "horizontal" -> "vertical"
+          end
+
+        mark_opts = Map.merge(spec["mark"], %{"orient" => new_orient})
+        Map.put(spec, "mark", mark_opts)
+      end)
+
+  defp maybe_flip_mark_orient(vl), do: vl
 
   # copies to left channel, the right channel options from the vl_origin specification
   defp copy_encoding(vl, left, right, vl_origin) do
