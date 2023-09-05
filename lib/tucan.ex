@@ -456,6 +456,7 @@ defmodule Tucan do
                     :color_by,
                     :x,
                     :y,
+                    :orient,
                     :color
                   ],
                   density_opts
@@ -571,6 +572,7 @@ defmodule Tucan do
     |> encode_field(:x, "value", opts, type: :quantitative, scale: [zero: false])
     |> encode_field(:y, "density", opts, type: :quantitative)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
   stripplot_opts = [
