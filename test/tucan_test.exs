@@ -714,7 +714,11 @@ defmodule TucanTest do
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
-        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
 
       assert Tucan.density(@iris_dataset, "petal_width") ==
                expected
@@ -733,7 +737,11 @@ defmodule TucanTest do
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :horizontal)
         |> Vl.encode_field(:x, "density", type: :quantitative)
-        |> Vl.encode_field(:y, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
 
       assert Tucan.density(@iris_dataset, "petal_width", orient: :vertical) ==
                expected
@@ -754,7 +762,11 @@ defmodule TucanTest do
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
-        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
 
       assert Tucan.density(@iris_dataset, "petal_width",
                counts: true,
@@ -781,7 +793,11 @@ defmodule TucanTest do
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
-        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
         |> Vl.encode_field(:color, "species")
 
       assert Tucan.density(@iris_dataset, "petal_width", color_by: "species") ==
@@ -802,7 +818,11 @@ defmodule TucanTest do
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
         |> Vl.encode_field(:y, "density", type: :quantitative)
-        |> Vl.encode_field(:x, "value", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
         |> Vl.encode_field(:color, "species")
 
       assert Tucan.density(@iris_dataset, "petal_width", groupby: ["other"], color_by: "species") ==

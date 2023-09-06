@@ -578,7 +578,11 @@ defmodule Tucan do
     |> new(spec_opts)
     |> Vl.transform(transform_opts)
     |> Vl.mark(:area, mark_opts)
-    |> encode_field(:x, "value", opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:x, "value", opts,
+      type: :quantitative,
+      scale: [zero: false],
+      axis: [title: field]
+    )
     |> encode_field(:y, "density", opts, type: :quantitative)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(opts[:orient] == :vertical)
