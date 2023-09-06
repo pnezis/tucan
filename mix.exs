@@ -64,6 +64,7 @@ defmodule Tucan.MixProject do
       main: "readme",
       canonical: "http://hexdocs.pm/tucan",
       extras: ["README.md", "CHANGELOG.md", "LICENSE"],
+      source_url_pattern: "#{@scm_url}/blob/v#{@version}/%{path}#L%{line}",
       groups_for_docs: [
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
