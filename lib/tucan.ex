@@ -2429,13 +2429,15 @@ defmodule Tucan do
   @doc """
   Adds a `size` encoding for the given field.
 
-  `opts` can be an arbitrary keyword list with vega-lite supported options.
+  By default the type of the `field` is set to `:quantitative`. You can ovverrid it in the
+  `opts` which can be an arbitrary keyword list with vega-lite supported options.
 
   If `:recursive` is set the encoding is applied in all subplots of the given plot.
   """
   @doc section: :grouping
   @spec size_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
-  def size_by(vl, field, opts \\ []), do: group_by(vl, :size, field, opts)
+  def size_by(vl, field, opts \\ []),
+    do: group_by(vl, :size, field, [type: :quantitative] ++ opts)
 
   defp group_by(vl, encoding, field, opts) do
     {recursive, opts} = Keyword.pop(opts, :recursive)

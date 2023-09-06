@@ -1419,13 +1419,21 @@ defmodule TucanTest do
     test "applies encoding on single view plot" do
       expected =
         Vl.new()
-        |> Vl.encode_field(:size, "field", foo: 1, bar: "a")
+        |> Vl.encode_field(:size, "field", type: :quantitative)
 
-      assert Tucan.size_by(Vl.new(), "field", foo: 1, bar: "a") == expected
+      assert Tucan.size_by(Vl.new(), "field") == expected
+    end
+
+    test "type can be overriden by options" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:size, "field", type: :ordinal)
+
+      assert Tucan.size_by(Vl.new(), "field", type: :ordinal) == expected
     end
 
     test "applies encoding recursively" do
-      test_plots = concatenated_test_plots(:size)
+      test_plots = concatenated_test_plots(:size, type: :quantitative)
 
       for {vl, expected} <- test_plots do
         assert Tucan.size_by(vl, "field", recursive: true) == expected
@@ -1694,8 +1702,8 @@ defmodule TucanTest do
     end
   end
 
-  defp concatenated_test_plots(encoding) do
-    vl_encoded = Vl.encode_field(Vl.new(), encoding, "field")
+  defp concatenated_test_plots(encoding, opts \\ []) do
+    vl_encoded = Vl.encode_field(Vl.new(), encoding, "field", opts)
 
     horizontal_concat = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
     horizontal_concat_expected = Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :horizontal)
