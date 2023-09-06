@@ -2726,6 +2726,22 @@ defmodule Tucan do
   ## Styling functions
 
   @doc """
+  Sets the plot size.
+
+  This sets both width and height at once.
+  """
+  @doc section: :styling
+  @spec set_size(vl :: VegaLite.t(), width :: pos_integer(), height :: pos_integer()) ::
+          VegaLite.t()
+  def set_size(vl, width, height)
+      when is_struct(vl, VegaLite) and is_integer(width) and width > 0 and is_integer(height) and
+             height > 0 do
+    vl
+    |> set_width(width)
+    |> set_height(height)
+  end
+
+  @doc """
   Sets the width of the plot (in pixels).
   """
   @doc section: :styling

@@ -1601,25 +1601,21 @@ defmodule TucanTest do
     end
   end
 
-  describe "set_width/2" do
-    test "sets the width" do
+  describe "plot size" do
+    test "set_size/3" do
+      vl = Tucan.set_size(Vl.new(), 100, 120)
+
+      assert vl.spec["width"] == 100
+      assert vl.spec["height"] == 120
+    end
+
+    test "sets_width/2" do
       vl = Tucan.set_width(Vl.new(), 100)
 
       assert vl.spec["width"] == 100
     end
 
-    test "can be called multiple times" do
-      vl =
-        Vl.new()
-        |> Tucan.set_width(100)
-        |> Tucan.set_width(300)
-
-      assert vl.spec["width"] == 300
-    end
-  end
-
-  describe "set_height/2" do
-    test "sets the height" do
+    test "set_height/2" do
       vl = Tucan.set_height(Vl.new(), 100)
 
       assert vl.spec["height"] == 100
@@ -1628,10 +1624,13 @@ defmodule TucanTest do
     test "can be called multiple times" do
       vl =
         Vl.new()
+        |> Tucan.set_width(100)
+        |> Tucan.set_width(300)
         |> Tucan.set_height(100)
-        |> Tucan.set_height(300)
+        |> Tucan.set_height(200)
 
-      assert vl.spec["height"] == 300
+      assert vl.spec["width"] == 300
+      assert vl.spec["height"] == 200
     end
   end
 
