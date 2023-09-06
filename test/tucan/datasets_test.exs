@@ -1,6 +1,8 @@
 defmodule Tucan.DatasetsTest do
   use ExUnit.Case
 
+  alias Tucan.Datasets.Docs, as: DatasetsDocs
+
   @valid_datasets [
     :barley,
     :cars,
@@ -29,5 +31,19 @@ defmodule Tucan.DatasetsTest do
       "not supported dataset :invalid, valid datasets: #{inspect(@valid_datasets)}"
 
     assert_raise ArgumentError, expected_message, fn -> Tucan.Datasets.dataset(:invalid) end
+  end
+
+  test "renders the docs properly" do
+    expected = """
+    #### foo
+
+    a dataset [[Data]](http://foo.bar).
+
+    **Columns: ** `hello`, `bar`
+    """
+
+    assert DatasetsDocs.docs(
+             foo: [url: "http://foo.bar", doc: "a dataset", columns: ~w[hello bar]]
+           ) == expected
   end
 end

@@ -1,6 +1,9 @@
 {
     // Enable your dictionary by adding it to the list of `dictionaries`
     "dictionaries": ["tucan"],
+    "ignorePaths": [
+        "lib/tucan/datasets.ex"
+    ],
 
     // Tell CSpell about your dictionary
     "dictionaryDefinitions": [
