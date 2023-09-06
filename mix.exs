@@ -65,6 +65,7 @@ defmodule Tucan.MixProject do
       canonical: "http://hexdocs.pm/tucan",
       extras: ["README.md", "CHANGELOG.md", "LICENSE"],
       source_url_pattern: "#{@scm_url}/blob/v#{@version}/%{path}#L%{line}",
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       groups_for_docs: [
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
