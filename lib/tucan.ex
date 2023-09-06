@@ -1306,6 +1306,7 @@ defmodule Tucan do
   @scatter_opts Tucan.Options.take!([
                   @global_opts,
                   @global_mark_opts,
+                  :filled,
                   :color_by,
                   :shape_by,
                   :size_by,

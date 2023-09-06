@@ -183,6 +183,12 @@ defmodule Tucan.Options do
       section: :style,
       dest: :mark
     ],
+    filled: [
+      type: :boolean,
+      doc: "Whether the mark will be filled or not",
+      section: :style,
+      dest: :mark
+    ],
     fill_opacity: [
       type: {:custom, Tucan.Options, :number_between, [0, 1]},
       default: 1,
