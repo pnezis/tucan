@@ -10,6 +10,7 @@ groupby
 hconcat
 heatmaps
 hline
+imdb
 joinaggregate
 jointplot
 interquartile

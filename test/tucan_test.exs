@@ -1495,6 +1495,15 @@ defmodule TucanTest do
 
       assert Tucan.facet_by(Vl.new(), :row, "field") == expected
     end
+
+    test "wrapped faceting" do
+      expected =
+        Tucan.scatter(:iris, "petal_width", "petal_length")
+        |> Vl.encode_field(:facet, "species", columns: 2)
+
+      assert Tucan.scatter(:iris, "petal_width", "petal_length")
+             |> Tucan.facet_by(:wrapped, "species", columns: 2) == expected
+    end
   end
 
   describe "concat and friends" do

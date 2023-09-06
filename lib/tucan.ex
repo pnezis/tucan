@@ -2434,7 +2434,7 @@ defmodule Tucan do
   @doc """
   Adds a `size` encoding for the given field.
 
-  By default the type of the `field` is set to `:quantitative`. You can ovverrid it in the
+  By default the type of the `field` is set to `:quantitative`. You can override it in the
   `opts` which can be an arbitrary keyword list with vega-lite supported options.
 
   If `:recursive` is set the encoding is applied in all subplots of the given plot.
@@ -2461,9 +2461,13 @@ defmodule Tucan do
   @doc """
   Apply facetting on the input plot `vl` by the given `field`.
 
-  This will create multiple plots either horizontally (`:column` faceting mode) or
-  vertically (`:row` faceting mode), one for each distinct value of the given
-  `field`, which must be a categorical variable.
+  This will create multiple plots either horizontally (`:column` faceting mode),
+  vertically (`:row` faceting mode) or arbitrarily (`:wrapped` mode). One plot will
+  be created for each distinct value of the given `field`, which must be a
+  categorical variable.
+
+  In the case of `:wrapped` a `:columns` option should also be provided which
+  will determine the number of columns of the composite plot.
 
   `opts` is an arbitrary keyword list that will be passed to the `:row` or `:column`
   encoding.
@@ -2481,6 +2485,15 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "species")
   |> Tucan.color_by("species")
   ```
+
+  With `:wrapped` mode and custom sorting:
+
+  ```tucan
+  Tucan.density(:movies, "IMDB Rating", color_by: "Major Genre")
+  |> Tucan.facet_by(:wrapped, "Major Genre", columns: 4, sort: [op: :mean, field: "IMDB Rating"])
+  |> Tucan.VegaLiteUtils.put_encoding_options(:color, legend: nil)
+  |> Tucan.set_title("Density of IMDB rating by Genre", offset: 20)
+  ```
   """
   @doc section: :grouping
   @spec facet_by(
@@ -2497,6 +2510,10 @@ defmodule Tucan do
 
   def facet_by(vl, :column, field, opts) do
     Vl.encode_field(vl, :column, field, opts)
+  end
+
+  def facet_by(vl, :wrapped, field, opts) do
+    Vl.encode_field(vl, :facet, field, opts)
   end
 
   defp apply_recursively(%VegaLite{} = vl, fun) do
