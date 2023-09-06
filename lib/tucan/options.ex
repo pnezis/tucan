@@ -15,6 +15,9 @@ defmodule Tucan.Options do
     grouping: [
       header: "Data Grouping Options"
     ],
+    style: [
+      header: "Styling Options"
+    ],
     encodings: [
       header: "Encodings Custom Options",
       doc: """
@@ -31,9 +34,6 @@ defmodule Tucan.Options do
     ],
     interactivity: [
       header: "Interactivity Options"
-    ],
-    style: [
-      header: "Styling Options"
     ]
   ]
 
@@ -56,6 +56,32 @@ defmodule Tucan.Options do
       doc: "The title of the graph",
       section: :style,
       dest: :spec
+    ],
+
+    # Grouping options
+    color_by: [
+      type: :string,
+      doc: """
+      If set a data field that will be used for coloring the data. It is considered
+      `:nominal` by default.
+      """,
+      section: :grouping
+    ],
+    shape_by: [
+      type: :string,
+      doc: """
+      If set a data field that will be used for setting the shape of the data points.
+      It is considered `:nominal` by default.
+      """,
+      section: :grouping
+    ],
+    size_by: [
+      type: :string,
+      doc: """
+      If set a data field that will be used for controlling the size of the data points.
+      It is considered `:quantitative` by default.
+      """,
+      section: :grouping
     ],
 
     # Encoding opts
@@ -132,7 +158,7 @@ defmodule Tucan.Options do
       section: :encodings
     ],
 
-    # Mark general properties
+    # Interactivity options
     tooltip: [
       type: {:custom, Tucan.Options, :tooltip, []},
       doc: """
@@ -148,12 +174,13 @@ defmodule Tucan.Options do
       dest: :mark
     ],
 
-    # Other
+    # Style options
     clip: [
       type: :boolean,
       doc: """
       Whether a mark will be clipped to the enclosing group’s width and height.
       """,
+      section: :style,
       dest: :mark
     ],
     fill_opacity: [
@@ -173,6 +200,16 @@ defmodule Tucan.Options do
       section: :style,
       dest: :mark
     ],
+    orient: [
+      type: {:in, [:horizontal, :vertical]},
+      doc: """
+      The plot's orientation, can be either `:horizontal` or `:vertical`.
+      """,
+      section: :style,
+      default: :horizontal
+    ],
+
+    ## Other options
     stacked: [
       type: :boolean,
       default: true,
@@ -180,37 +217,6 @@ defmodule Tucan.Options do
       Whether the bars will be stacked or not. Applied only if a grouping
       has been defined.
       """
-    ],
-    color_by: [
-      type: :string,
-      doc: """
-      If set a data field that will be used for coloring the data. It is considered
-      `:nominal` by default.
-      """,
-      section: :grouping
-    ],
-    shape_by: [
-      type: :string,
-      doc: """
-      If set a data field that will be used for setting the shape of the data points.
-      It is considered `:nominal` by default.
-      """,
-      section: :grouping
-    ],
-    size_by: [
-      type: :string,
-      doc: """
-      If set a data field that will be used for controlling the size of the data points.
-      It is considered `:quantitative` by default.
-      """,
-      section: :grouping
-    ],
-    orient: [
-      type: {:in, [:horizontal, :vertical]},
-      doc: """
-      The plot's orientation, can be either `:horizontal` or `:vertical`.
-      """,
-      default: :horizontal
     ],
     interpolate: [
       type:
