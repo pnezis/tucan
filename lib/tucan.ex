@@ -124,6 +124,12 @@ defmodule Tucan do
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
 
+  ## Custom guards
+
+  defguardp is_pos_integer(term) when is_integer(term) and term > 0
+
+  ## Plots
+
   @doc """
   Creates if needed a `VegaLite` plot and adds data to it.
 
@@ -2734,8 +2740,7 @@ defmodule Tucan do
   @spec set_size(vl :: VegaLite.t(), width :: pos_integer(), height :: pos_integer()) ::
           VegaLite.t()
   def set_size(vl, width, height)
-      when is_struct(vl, VegaLite) and is_integer(width) and width > 0 and is_integer(height) and
-             height > 0 do
+      when is_struct(vl, VegaLite) and is_pos_integer(width) and is_pos_integer(height) do
     vl
     |> set_width(width)
     |> set_height(height)
@@ -2746,7 +2751,7 @@ defmodule Tucan do
   """
   @doc section: :styling
   @spec set_width(vl :: VegaLite.t(), width :: pos_integer()) :: VegaLite.t()
-  def set_width(vl, width) when is_struct(vl, VegaLite) and is_integer(width) and width > 0 do
+  def set_width(vl, width) when is_struct(vl, VegaLite) and is_pos_integer(width) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
   end
 
@@ -2755,7 +2760,7 @@ defmodule Tucan do
   """
   @doc section: :styling
   @spec set_height(vl :: VegaLite.t(), height :: pos_integer()) :: VegaLite.t()
-  def set_height(vl, height) when is_struct(vl, VegaLite) and is_integer(height) and height > 0 do
+  def set_height(vl, height) when is_struct(vl, VegaLite) and is_pos_integer(height) do
     update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
   end
 
