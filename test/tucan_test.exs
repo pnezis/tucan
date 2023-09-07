@@ -871,6 +871,47 @@ defmodule TucanTest do
     end
   end
 
+  describe "punchcard/5" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:circle, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :mean)
+
+      assert Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill") ==
+               expected
+    end
+
+    test "with nil size option" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:circle, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode(:size, type: :quantitative, aggregate: :count)
+
+      assert Tucan.punchcard(@tips_dataset, "day", "sex", nil) ==
+               expected
+    end
+
+    test "with different aggregation" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:circle, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :max)
+
+      assert Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill", aggregate: :max) ==
+               expected
+    end
+  end
+
   describe "density_heatmap/4" do
     test "with default values" do
       expected =

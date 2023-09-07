@@ -21,11 +21,13 @@ matplotlib
 maxbins
 maxsteps
 minsteps
+monthdate
 nezis
 pairplot
 panagiotis
 pclass
 plotdata
+punchcard
 redgrey
 redyellowblue
 scatterplot

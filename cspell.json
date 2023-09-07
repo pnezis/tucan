@@ -2,6 +2,7 @@
     // Enable your dictionary by adding it to the list of `dictionaries`
     "dictionaries": ["tucan"],
     "ignorePaths": [
+        "lib/tucan/color.ex",
         "lib/tucan/datasets.ex"
     ],
 

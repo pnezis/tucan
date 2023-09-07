@@ -986,17 +986,89 @@ defmodule Tucan do
           VegaLite.t()
   def heatmap(plotdata, x, y, color, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @heatmap_schema)
+    heatmap_specification(plotdata, x, y, color, :color, :rect, opts, @heatmap_opts)
+  end
 
-    spec_opts = take_options(opts, @heatmap_opts, :spec)
-    mark_opts = take_options(opts, @heatmap_opts, :mark)
+  @punchcard_opts Tucan.Options.take!(
+                    [
+                      @global_opts,
+                      @global_mark_opts,
+                      :x,
+                      :y,
+                      :size
+                    ],
+                    heatmap_opts
+                  )
+  @punchcard_schema Tucan.Options.to_nimble_schema!(@punchcard_opts)
 
-    color_fn = fn vl ->
-      case color do
+  @doc """
+  Returns the specification of a punch card plot.
+
+  A punch card plot is similar to a heatmap but instead of color the third
+  dimension is encoded by the size of bubbles.
+
+  See also `heatmap/5`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@punchcard_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.punchcard(:weather, "date", "date", "temp_max",
+    tooltip: true,
+    x: [type: :ordinal, time_unit: :date],
+    y: [type: :ordinal, time_unit: :month]
+  )
+  |> Tucan.Axes.set_x_title("Day")
+  |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.set_title("Punch card of Avg Max Temperatures in Seattle (2012-2015)")
+  ```
+
+  You can add a fourth dimension by coloring the plot by a fourth variable. Notice how
+  we use `Tucan.Color.set_scheme/3` to apply a semantically reasonable coloring and
+  `Tucan.Legend.set_orientation/3` to change the default position of the two legends.
+
+  ```tucan
+  Tucan.punchcard(:weather, "date", "date", "precipitation",
+    tooltip: true,
+    x: [type: :ordinal, time_unit: :date],
+    y: [type: :ordinal, time_unit: :month]
+  )
+  |> Tucan.color_by("temp_max", aggregate: :mean)
+  |> Tucan.Color.set_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Axes.set_x_title("Day")
+  |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.Legend.set_orientation(:color, "bottom")
+  |> Tucan.Legend.set_orientation(:size, "bottom")
+  ```
+  """
+  @doc section: :plots
+  @spec punchcard(
+          plotdata :: plotdata(),
+          x :: binary(),
+          y :: binary(),
+          size :: nil | binary(),
+          opts :: keyword()
+        ) ::
+          VegaLite.t()
+  def punchcard(plotdata, x, y, size, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @punchcard_schema)
+    heatmap_specification(plotdata, x, y, size, :size, :circle, opts, @punchcard_opts)
+  end
+
+  defp heatmap_specification(plotdata, x, y, z, z_encoding, mark, opts, plot_opts) do
+    spec_opts = take_options(opts, plot_opts, :spec)
+    mark_opts = take_options(opts, plot_opts, :mark)
+
+    z_fn = fn vl ->
+      case z do
         nil ->
-          encode(vl, :color, opts, type: :quantitative, aggregate: :count)
+          encode(vl, z_encoding, opts, type: :quantitative, aggregate: :count)
 
         field ->
-          encode_field(vl, :color, field, opts,
+          encode_field(vl, z_encoding, field, opts,
             aggregate: opts[:aggregate] || :mean,
             type: :quantitative
           )
@@ -1005,10 +1077,10 @@ defmodule Tucan do
 
     plotdata
     |> new(spec_opts)
-    |> Vl.mark(:rect, mark_opts)
+    |> Vl.mark(mark, mark_opts)
     |> encode_field(:x, x, opts, type: :nominal)
     |> encode_field(:y, y, opts, type: :nominal)
-    |> color_fn.()
+    |> z_fn.()
   end
 
   density_heatmap_opts = [
