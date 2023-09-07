@@ -79,6 +79,7 @@ defmodule Tucan.MixProject do
         ],
         Styling: [
           Tucan.Axes,
+          Tucan.Color,
           Tucan.Grid,
           Tucan.Legend,
           Tucan.Themes
