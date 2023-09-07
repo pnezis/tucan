@@ -889,6 +889,15 @@ defmodule Tucan do
 
       Ignored if `:color` is set to `nil`.
       """
+    ],
+    color_scheme: [
+      type: :atom,
+      doc: """
+      The colorscheme to use, for supported colorschemes check `Tucan.Color`. Notice that
+      this is just a helper option for easily setting color schemes. If you need to set
+      specific colors or customize the scheme, use `Tucan.Color.set_scheme/3`. 
+      """,
+      section: :style
     ]
   ]
 
@@ -946,10 +955,7 @@ defmodule Tucan do
   You can change the color scheme:
 
   ```tucan
-  Tucan.heatmap(:glue, "Task", "Model", "Score",
-    color: [scale: [scheme: "redgrey", reverse: true]],
-    tooltip: true
-  )
+  Tucan.heatmap(:glue, "Task", "Model", "Score", color_scheme: :redyellowgreen, tooltip: true)
   ```
 
   Heatmaps are also useful for visualizing temporal data. Let's use a heatmap to examine
@@ -960,21 +966,18 @@ defmodule Tucan do
 
   ```tucan
   Tucan.heatmap(:weather, "date", "date", "temp_max",
-    color: [
-      title: "Avg Max Temp",
-      scale: [scheme: "redyellowblue", reverse: true]
-    ],
-    tooltip: true,
     x: [type: :ordinal, time_unit: :date],
-    y: [type: :ordinal, time_unit: :month]
+    y: [type: :ordinal, time_unit: :month],
+    tooltip: true
   )
+  |> Tucan.Color.set_scheme(:redyellowblue, reverse: true)
   |> Tucan.Axes.set_x_title("Day")
   |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.Legend.set_title(:color, "Avg Max Temp")
   |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
   ```
   """
   # TODO: support text layer
-  # TODO: expose color scheme
   @doc section: :plots
   @spec heatmap(
           plotdata :: plotdata(),
@@ -1061,6 +1064,15 @@ defmodule Tucan do
   defp heatmap_specification(plotdata, x, y, z, z_encoding, mark, opts, plot_opts) do
     spec_opts = take_options(opts, plot_opts, :spec)
     mark_opts = take_options(opts, plot_opts, :mark)
+
+    opts =
+      if opts[:color_scheme] do
+        Keyword.update!(opts, :color, fn color_opts ->
+          Tucan.Keyword.deep_merge([scale: [scheme: opts[:color_scheme]]], color_opts)
+        end)
+      else
+        opts
+      end
 
     z_fn = fn vl ->
       case z do

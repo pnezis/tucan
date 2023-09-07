@@ -844,6 +844,26 @@ defmodule TucanTest do
                expected
     end
 
+    test "with color scheme set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:rect, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "day", type: :nominal)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:color, "total_bill",
+          type: :quantitative,
+          aggregate: :mean,
+          scale: [scheme: :redyellowblue, reverse: true]
+        )
+
+      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+               color_scheme: :redyellowblue,
+               color: [scale: [reverse: true]]
+             ) ==
+               expected
+    end
+
     test "with nil color option" do
       expected =
         Vl.new()
