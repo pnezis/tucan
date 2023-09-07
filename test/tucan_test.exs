@@ -1189,18 +1189,19 @@ defmodule TucanTest do
         )
 
       expected =
-        Vl.new(bounds: :flush, spacing: 15)
+        Vl.new(bounds: :flush, spacing: 10)
         |> Vl.data_from_url(@iris_dataset)
         |> Tucan.vconcat([
           marginal_x,
-          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
+          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 10), [joint, marginal_y])
         ])
 
       assert(
         Tucan.jointplot(:iris, "petal_width", "petal_length",
           ratio: 0.4,
           width: 300,
-          color_by: "species"
+          color_by: "species",
+          spacing: 10
         ) == expected
       )
     end

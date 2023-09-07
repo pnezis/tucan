@@ -2333,10 +2333,14 @@ defmodule Tucan do
       Arbitrary options list for the marginal plots. The supported options
       depend on the selected `:marginal` type. 
       """
+    ],
+    spacing: [
+      type: :pos_integer,
+      doc: "The spacing between the marginals and the joint plot.",
+      default: 15,
+      section: :style
     ]
   ]
-
-  # TODO: add option for spacing
 
   @jointplot_opts Tucan.Options.take!([:width, :title, :color_by, :fill_opacity], jointplot_opts)
   @jointplot_schema Tucan.Options.to_nimble_schema!(@jointplot_opts)
@@ -2432,11 +2436,15 @@ defmodule Tucan do
       marginal_plots(x, y, marginal_dimension, opts[:marginal], marginal_opts)
 
     plotdata
-    |> new(spacing: 15, bounds: "flush")
+    |> new(spacing: opts[:spacing], bounds: "flush")
     |> Vl.concat(
       [
         marginal_x,
-        Vl.concat(Vl.new(spacing: 15, bounds: "flush"), [joint_plot, marginal_y], :horizontal)
+        Vl.concat(
+          Vl.new(spacing: opts[:spacing], bounds: "flush"),
+          [joint_plot, marginal_y],
+          :horizontal
+        )
       ],
       :vertical
     )
