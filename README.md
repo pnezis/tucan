@@ -50,7 +50,7 @@ Tucan.bubble(:gapminder, "income", "health", "population",
 |> Tucan.set_width(400)
 |> Tucan.Axes.set_x_title("Gdp per Capita")
 |> Tucan.Axes.set_y_title("Life expectancy")
-|> Tucan.Axes.set_x_scale(:log)
+|> Tucan.Scale.set_x_scale(:log)
 
 # Some composite plots are also supported
 fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
