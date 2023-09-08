@@ -104,7 +104,7 @@ defmodule Tucan.ScaleTest do
       end
     end
 
-    test "raises if min >= max" do
+    test "raises if min >= max for x,y domain helpers" do
       vl = Vl.new()
 
       assert_raise ArgumentError,
@@ -130,6 +130,26 @@ defmodule Tucan.ScaleTest do
 
       assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
       assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [-1.12, 2.33]
+    end
+
+    test "set_domain can set arbitrary domains" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :temporal)
+        |> Vl.encode_field(:color, "color", type: :nominal)
+        |> Tucan.Scale.set_domain(:x, [1, 10])
+        |> Tucan.Scale.set_domain(:y, [%{hours: 0}, %{hours: 24}])
+        |> Tucan.Scale.set_domain(:color, ["a", "b", "c"])
+
+      assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
+
+      assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [
+               %{"hours" => 0},
+               %{"hours" => 24}
+             ]
+
+      assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == ["a", "b", "c"]
     end
   end
 

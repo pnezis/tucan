@@ -297,25 +297,45 @@ defmodule Tucan.Scale do
   end
 
   @doc """
-  Sets the x axis domain.
+  Sets the _x-axis_ domain.
+
+  This is a helper wrapper around `set_domain/3` for setting the domain of continuous
+  scales.
   """
   @spec set_x_domain(vl :: VegaLite.t(), min :: number(), max :: number()) :: VegaLite.t()
-  def set_x_domain(vl, min, max), do: set_domain(vl, :x, min, max)
+  def set_x_domain(vl, min, max), do: set_continuous_domain(vl, :x, min, max)
 
   @doc """
-  Sets the y axis domain.
+  Sets the _y-axis_ domain.
+
+  This is a helper wrapper around `set_domain/3` for setting the domain of continuous
+  scales.
   """
   @spec set_y_domain(vl :: VegaLite.t(), min :: number(), max :: number()) :: VegaLite.t()
-  def set_y_domain(vl, min, max), do: set_domain(vl, :y, min, max)
+  def set_y_domain(vl, min, max), do: set_continuous_domain(vl, :y, min, max)
 
-  defp set_domain(vl, axis, min, max)
+  defp set_continuous_domain(vl, axis, min, max)
        when is_struct(vl, VegaLite) and is_number(min) and is_number(max) do
     if min >= max do
       raise ArgumentError,
             "a domain min value cannot be greater than the max value, got [#{min}, #{max}]"
     end
 
-    put_options(vl, axis, domain: [min, max])
+    set_domain(vl, axis, [min, max])
+  end
+
+  @doc """
+  Sets the domain for the given encoding channel.
+
+  `domain` can be anything Vega-Lite supports and the validity of it depends on the type
+  of the encoding's data.
+
+  Notice that no validation is performed.
+  """
+  # TODO: support domain validation
+  @spec set_domain(vl :: VegaLite.t(), channel :: atom(), domain :: term()) :: VegaLite.t()
+  def set_domain(vl, channel, domain) do
+    put_options(vl, channel, domain: domain)
   end
 
   @doc """
