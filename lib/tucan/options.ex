@@ -161,6 +161,7 @@ defmodule Tucan.Options do
     # Interactivity options
     tooltip: [
       type: {:custom, Tucan.Options, :tooltip, []},
+      type_doc: "`boolean() | :data | :encoding`",
       doc: """
       The tooltip text string to show upon mouse hover or an object defining which fields
       should the tooltip be derived from. Can be one of the following:
@@ -191,6 +192,7 @@ defmodule Tucan.Options do
     ],
     fill_opacity: [
       type: {:custom, Tucan.Options, :number_between, [0, 1]},
+      type_doc: "`t:number/0`",
       default: 1,
       doc: """
       The fill opacity of the plotted elements.
@@ -200,6 +202,7 @@ defmodule Tucan.Options do
     ],
     opacity: [
       type: {:custom, Tucan.Options, :number_between, [0, 1]},
+      type_doc: "`t:number/0`",
       doc: """
       The overall opacity of the mark
       """,
@@ -208,6 +211,7 @@ defmodule Tucan.Options do
     ],
     orient: [
       type: {:in, [:horizontal, :vertical]},
+      type_doc: "`t:atom/0`",
       doc: """
       The plot's orientation, can be either `:horizontal` or `:vertical`.
       """,
@@ -242,6 +246,7 @@ defmodule Tucan.Options do
            "bundle",
            "monotone"
          ]},
+      type_doc: "`t:binary/0`",
       doc: """
       The line interpolation method to use for line and area marks. One of the following:
 
@@ -264,6 +269,7 @@ defmodule Tucan.Options do
     ],
     tension: [
       type: {:or, [:integer, :float]},
+      type_doc: "`t:number/0`",
       doc: "Depending on the interpolation type, sets the tension parameter",
       dest: :mark
     ]
