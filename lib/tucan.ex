@@ -612,7 +612,16 @@ defmodule Tucan do
   ]
 
   @stripplot_opts Tucan.Options.take!(
-                    [@global_opts, @global_mark_opts, :orient, :x, :y, :y_offset],
+                    [
+                      @global_opts,
+                      @global_mark_opts,
+                      :orient,
+                      :x,
+                      :y,
+                      :y_offset,
+                      :color_by,
+                      :color
+                    ],
                     stripplot_opts
                   )
   @stripplot_schema Tucan.Options.to_nimble_schema!(@stripplot_opts)
@@ -736,6 +745,7 @@ defmodule Tucan do
     |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
     |> encode_field(:x, field, opts, type: :quantitative)
     |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], opts, type: :nominal)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_add_jitter(opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end

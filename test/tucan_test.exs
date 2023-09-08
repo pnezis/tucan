@@ -630,6 +630,19 @@ defmodule TucanTest do
              ) ==
                expected
     end
+
+    test "with grouping and coloring" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.mark(:tick)
+        |> Vl.encode_field(:x, "total_bill", type: :quantitative)
+        |> Vl.encode_field(:y, "sex", type: :nominal)
+        |> Vl.encode_field(:color, "sex")
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill", group: "sex", color_by: "sex") ==
+               expected
+    end
   end
 
   describe "boxplot/3" do
