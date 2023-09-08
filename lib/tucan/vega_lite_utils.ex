@@ -4,6 +4,18 @@ defmodule Tucan.VegaLiteUtils do
   """
 
   @doc """
+  Gets the encoding options for the given channel.
+
+  Raises an `ArgumentError` if the channel does not exist.
+  """
+  @spec encoding_options!(vl :: VegaLite.t(), channel :: atom()) :: map()
+  def encoding_options!(vl, channel) do
+    validate_channel!(vl.spec, channel)
+
+    encoding_options(vl, channel)
+  end
+
+  @doc """
   Gets the configured encoding options for the given `channel` or `nil` if not set.
 
   Raises in case of a non single view.
@@ -68,7 +80,6 @@ defmodule Tucan.VegaLiteUtils do
 
   def put_encoding_options(%{} = spec, channel, opts) when is_atom(channel) and is_list(opts) do
     validate_single_view!(spec, "put_encoding_options/3")
-    validate_channel!(spec, channel)
     validate_channel!(spec, channel)
 
     update_in(spec, ["encoding", to_vl_key(channel)], fn encoding_opts ->

@@ -26,6 +26,12 @@ defmodule Tucan.VegaLiteUtilsTest do
                "foo" => 1
              }
     end
+
+    test "! version raises if the encoding does not exist" do
+      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+        VegaLiteUtils.encoding_options!(Vl.new(), :x)
+      end
+    end
   end
 
   describe "has_encoding?/2" do
