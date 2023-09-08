@@ -272,13 +272,11 @@ defmodule Tucan.Scale do
             "invalid scheme #{inspect(scheme)}, check the Tucan.Scale docs for supported color schemes"
     end
 
-    Tucan.VegaLiteUtils.put_encoding_options(vl, :color,
-      scale: [scheme: scheme, reverse: opts[:reverse]]
-    )
+    put_options(vl, :color, scheme: scheme, reverse: opts[:reverse])
   end
 
   defp set_color_scheme_or_range(vl, range, _opts) when is_list(range) do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, :color, scale: [range: range])
+    put_options(vl, :color, range: range)
   end
 
   @doc """
@@ -287,7 +285,7 @@ defmodule Tucan.Scale do
   # TODO validate the scale based on the encoding type
   @spec set_x_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
   def set_x_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    VegaLiteUtils.put_encoding_options(vl, :x, scale: [type: scale])
+    put_options(vl, :x, type: scale)
   end
 
   @doc """
@@ -295,7 +293,7 @@ defmodule Tucan.Scale do
   """
   @spec set_y_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
   def set_y_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    VegaLiteUtils.put_encoding_options(vl, :y, scale: [type: scale])
+    put_options(vl, :y, type: scale)
   end
 
   @doc """
@@ -317,6 +315,20 @@ defmodule Tucan.Scale do
             "a domain min value cannot be greater than the max value, got [#{min}, #{max}]"
     end
 
-    VegaLiteUtils.put_encoding_options(vl, axis, scale: [domain: [min, max]])
+    put_options(vl, axis, domain: [min, max])
+  end
+
+  @doc """
+  Sets an arbitrary set of options to the given `encoding`'s scake object.
+
+  Notice that no validation is performed, any option set will be merged with
+  the existing `scale` options of the given `encoding`.
+
+  An `ArgumentError` is raised if the given encoding channel is not defined.
+  """
+  @spec put_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
+          VegaLite.t()
+  def put_options(vl, encoding, options) do
+    VegaLiteUtils.put_encoding_options(vl, encoding, scale: options)
   end
 end

@@ -36,7 +36,7 @@ defmodule Tucan.Axes do
   Notice that no validation is performed, any option set will be merged with
   the existing `axis` options of the given `encoding`.
 
-  An `ArgumentError` is raised if the `x` encoding channel is not defined.
+  An `ArgumentError` is raised if the given encoding channel is not defined.
   """
   @spec put_axis_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
           VegaLite.t()

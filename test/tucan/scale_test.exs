@@ -132,4 +132,42 @@ defmodule Tucan.ScaleTest do
       assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [-1.12, 2.33]
     end
   end
+
+  describe "put_options/3" do
+    test "raises if encoding does not exist" do
+      vl = Vl.new()
+
+      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+        Tucan.Scale.put_options(vl, :x, domain: [1, 5])
+      end
+    end
+
+    test "puts the given options if no scale is set" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Tucan.Scale.put_options(:x, domain: [1, 5], foo: "bar", bar: 1)
+
+      assert get_in(vl.spec, ["encoding", "x", "scale"]) == %{
+               "domain" => [1, 5],
+               "foo" => "bar",
+               "bar" => 1
+             }
+    end
+
+    test "deep merges the existing options with the new ones" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Tucan.Scale.put_options(:x, domain: [1, 5], foo: "bar", bar: [a: 1, b: 2])
+        |> Tucan.Scale.put_options(:x, domain: [5, 10], test: 2, bar: [a: 3, c: 2])
+
+      assert get_in(vl.spec, ["encoding", "x", "scale"]) == %{
+               "bar" => %{"a" => 3, "b" => 2, "c" => 2},
+               "foo" => "bar",
+               "test" => 2,
+               "domain" => [5, 10]
+             }
+    end
+  end
 end
