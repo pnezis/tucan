@@ -119,8 +119,6 @@ defmodule Tucan do
   alias Tucan.VegaLiteUtils
   alias VegaLite, as: Vl
 
-  Module.register_attribute(__MODULE__, :schemas, accumulate: true)
-
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: binary()
 
@@ -224,13 +222,11 @@ defmodule Tucan do
     ]
   ]
 
-  # TODO: maybe refactor with a macro
   @histogram_opts Tucan.Options.take!(
                     [@global_opts, @global_mark_opts, :x, :x2, :y, :color],
                     histogram_opts
                   )
   @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
-  Module.put_attribute(__MODULE__, :schemas, {:histogram, @histogram_opts})
 
   @doc """
   Plots a histogram.
@@ -1668,7 +1664,6 @@ defmodule Tucan do
                    lineplot_opts
                  )
   @lineplot_schema Tucan.Options.to_nimble_schema!(@lineplot_opts)
-  Module.put_attribute(__MODULE__, :schemas, {:lineplot, @lineplot_opts})
 
   @doc """
   Draw a line plot between `x` and `y`
@@ -2970,8 +2965,4 @@ defmodule Tucan do
 
     Vl.encode(vl, encoding, encoding_opts)
   end
-
-  @doc false
-  @spec __schema__(plot :: atom()) :: keyword()
-  def __schema__(plot), do: Keyword.fetch!(@schemas, plot)
 end

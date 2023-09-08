@@ -63,11 +63,6 @@ defmodule TucanTest do
                "tooltip not set for #{inspect(name)}"
       end
     end
-
-    test "__schema__" do
-      # TODO: check for all functions
-      assert is_list(Tucan.__schema__(:histogram))
-    end
   end
 
   describe "new/2" do
