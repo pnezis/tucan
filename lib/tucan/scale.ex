@@ -227,7 +227,7 @@ defmodule Tucan.Scale do
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
-  |> Tucan.Scale.set_scheme(["yellow", "black", "#f234c1"])
+  |> Tucan.Scale.set_color_scheme(["yellow", "black", "#f234c1"])
   ```
 
   You can set any of the predefined color schemes to any plot with a color
@@ -241,7 +241,7 @@ defmodule Tucan.Scale do
     color: [aggregate: :mean, type: :quantitative],
     width: 400
   )
-  |> Tucan.Scale.set_scheme(:redyellowblue)
+  |> Tucan.Scale.set_color_scheme(:redyellowblue)
 
   ```
 
@@ -255,18 +255,18 @@ defmodule Tucan.Scale do
     color: [aggregate: :mean, type: :quantitative],
     width: 400
   )
-  |> Tucan.Scale.set_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
 
   ```
   """
-  @spec set_scheme(vl :: VegaLite.t(), scheme :: color_scheme(), opts :: keyword()) ::
+  @spec set_color_scheme(vl :: VegaLite.t(), scheme :: color_scheme(), opts :: keyword()) ::
           VegaLite.t()
-  def set_scheme(vl, scheme, opts \\ []) do
+  def set_color_scheme(vl, scheme, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @scheme_schema)
-    set_scheme_or_range(vl, scheme, opts)
+    set_color_scheme_or_range(vl, scheme, opts)
   end
 
-  defp set_scheme_or_range(vl, scheme, opts) when is_atom(scheme) do
+  defp set_color_scheme_or_range(vl, scheme, opts) when is_atom(scheme) do
     if scheme not in @valid_schemes do
       raise ArgumentError,
             "invalid scheme #{inspect(scheme)}, check the Tucan.Scale docs for supported color schemes"
@@ -277,7 +277,7 @@ defmodule Tucan.Scale do
     )
   end
 
-  defp set_scheme_or_range(vl, range, _opts) when is_list(range) do
+  defp set_color_scheme_or_range(vl, range, _opts) when is_list(range) do
     Tucan.VegaLiteUtils.put_encoding_options(vl, :color, scale: [range: range])
   end
 

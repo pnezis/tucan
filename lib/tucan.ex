@@ -895,7 +895,7 @@ defmodule Tucan do
       doc: """
       The colorscheme to use, for supported colorschemes check `Tucan.Scale`. Notice that
       this is just a helper option for easily setting color schemes. If you need to set
-      specific colors or customize the scheme, use `Tucan.Scale.set_scheme/3`. 
+      specific colors or customize the scheme, use `Tucan.Scale.set_color_scheme/3`. 
       """,
       section: :style
     ]
@@ -970,7 +970,7 @@ defmodule Tucan do
     y: [type: :ordinal, time_unit: :month],
     tooltip: true
   )
-  |> Tucan.Scale.set_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
   |> Tucan.Axes.set_x_title("Day")
   |> Tucan.Axes.set_y_title("Month")
   |> Tucan.Legend.set_title(:color, "Avg Max Temp")
@@ -1030,7 +1030,7 @@ defmodule Tucan do
   ```
 
   You can add a fourth dimension by coloring the plot by a fourth variable. Notice how
-  we use `Tucan.Scale.set_scheme/3` to apply a semantically reasonable coloring and
+  we use `Tucan.Scale.set_color_scheme/3` to apply a semantically reasonable coloring and
   `Tucan.Legend.set_orientation/3` to change the default position of the two legends.
 
   ```tucan
@@ -1040,7 +1040,7 @@ defmodule Tucan do
     y: [type: :ordinal, time_unit: :month]
   )
   |> Tucan.color_by("temp_max", aggregate: :mean)
-  |> Tucan.Scale.set_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
   |> Tucan.Axes.set_x_title("Day")
   |> Tucan.Axes.set_y_title("Month")
   |> Tucan.Legend.set_orientation(:color, "bottom")

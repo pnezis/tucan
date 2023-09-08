@@ -4,12 +4,12 @@ defmodule Tucan.ScaleTest do
   alias Tucan.Scale.Utils, as: ScaleUtils
   alias VegaLite, as: Vl
 
-  describe "set_scheme/3" do
+  describe "set_color_scheme/3" do
     test "sets a color range" do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Scale.set_scheme(["red", "yellow", "blue"])
+        |> Tucan.Scale.set_color_scheme(["red", "yellow", "blue"])
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "range" => ["red", "yellow", "blue"]
@@ -20,7 +20,7 @@ defmodule Tucan.ScaleTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Scale.set_scheme(:blues)
+        |> Tucan.Scale.set_color_scheme(:blues)
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "reverse" => false,
@@ -32,7 +32,7 @@ defmodule Tucan.ScaleTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Scale.set_scheme(:blues, reverse: true)
+        |> Tucan.Scale.set_color_scheme(:blues, reverse: true)
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "reverse" => true,
@@ -46,13 +46,13 @@ defmodule Tucan.ScaleTest do
                    fn ->
                      Vl.new()
                      |> Vl.encode_field(:color, "color")
-                     |> Tucan.Scale.set_scheme(:other)
+                     |> Tucan.Scale.set_color_scheme(:other)
                    end
     end
 
     test "raises if no color encoding" do
       assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Scale.set_scheme(Vl.new(), :blues)
+        Tucan.Scale.set_color_scheme(Vl.new(), :blues)
       end
     end
   end
