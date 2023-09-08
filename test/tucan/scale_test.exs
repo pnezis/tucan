@@ -1,7 +1,7 @@
-defmodule Tucan.ColorTest do
+defmodule Tucan.ScaleTest do
   use ExUnit.Case
 
-  alias Tucan.Color.Utils, as: ColorUtils
+  alias Tucan.Scale.Utils, as: ScaleUtils
   alias VegaLite, as: Vl
 
   describe "set_scheme/3" do
@@ -9,7 +9,7 @@ defmodule Tucan.ColorTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Color.set_scheme(["red", "yellow", "blue"])
+        |> Tucan.Scale.set_scheme(["red", "yellow", "blue"])
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "range" => ["red", "yellow", "blue"]
@@ -20,7 +20,7 @@ defmodule Tucan.ColorTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Color.set_scheme(:blues)
+        |> Tucan.Scale.set_scheme(:blues)
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "reverse" => false,
@@ -32,7 +32,7 @@ defmodule Tucan.ColorTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:color, "color")
-        |> Tucan.Color.set_scheme(:blues, reverse: true)
+        |> Tucan.Scale.set_scheme(:blues, reverse: true)
 
       assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
                "reverse" => true,
@@ -42,23 +42,23 @@ defmodule Tucan.ColorTest do
 
     test "raises if invalid scheme" do
       assert_raise ArgumentError,
-                   "invalid scheme :other, check the Tucan.Color docs for supported color schemes",
+                   "invalid scheme :other, check the Tucan.Scale docs for supported color schemes",
                    fn ->
                      Vl.new()
                      |> Vl.encode_field(:color, "color")
-                     |> Tucan.Color.set_scheme(:other)
+                     |> Tucan.Scale.set_scheme(:other)
                    end
     end
 
     test "raises if no color encoding" do
       assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Color.set_scheme(Vl.new(), :blues)
+        Tucan.Scale.set_scheme(Vl.new(), :blues)
       end
     end
   end
 
   test "schemes docs" do
-    docs = ColorUtils.schemes_doc([:foo, :bar, :baz])
+    docs = ScaleUtils.schemes_doc([:foo, :bar, :baz])
 
     assert docs =~ ":foo"
     assert docs =~ ":bar"

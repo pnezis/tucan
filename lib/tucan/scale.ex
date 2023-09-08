@@ -1,4 +1,4 @@
-defmodule Tucan.Color.Utils do
+defmodule Tucan.Scale.Utils do
   @moduledoc false
 
   alias VegaLite, as: Vl
@@ -47,9 +47,15 @@ defmodule Tucan.Color.Utils do
   end
 end
 
-defmodule Tucan.Color do
+defmodule Tucan.Scale do
   @moduledoc """
-  Helper color utilities.
+  Utilities for working with Vega-Lite scales.
+
+  Scales are functions that transform a domain of data values (numbers, dates, strings, etc.)
+  to a range of visual values (pixels, colors, sizes).
+
+  This module exposes various helper functions for setting various scale options like
+  the color scheme, the domain or the scale type.
   """
 
   @type color_scheme :: atom() | [binary()]
@@ -168,14 +174,14 @@ defmodule Tucan.Color do
   Categorical color schemes can be used to encode discrete data values, each representing
   a distinct category.
 
-  #{Tucan.Color.Utils.schemes_doc(@categorical_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@categorical_schemes)}
 
   ### Sequential Single-Hue Schemes
 
   Sequential color schemes can be used to encode quantitative values. These
   color ramps are designed to encode increasing numeric values.
 
-  #{Tucan.Color.Utils.schemes_doc(@sequential_single_hue_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@sequential_single_hue_schemes)}
 
   ### Sequential Multi-Hue Schemes
 
@@ -184,15 +190,15 @@ defmodule Tucan.Color do
   hues for more color discrimination, which may be useful for visualizations
   such as heatmaps.
 
-  #{Tucan.Color.Utils.schemes_doc(@sequential_multi_hue_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@sequential_multi_hue_schemes)}
 
   ### Schemes for Dark Backgrounds
 
-  #{Tucan.Color.Utils.schemes_doc(@dark_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@dark_schemes)}
 
   ### Schemes for Light Backgrounds
 
-  #{Tucan.Color.Utils.schemes_doc(@light_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@light_schemes)}
 
   ### Diverging Schemes
 
@@ -201,7 +207,7 @@ defmodule Tucan.Color do
   diverge with increasing saturation to highlight the values below and above the
   mid-point.
 
-  #{Tucan.Color.Utils.schemes_doc(@diverging_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@diverging_schemes)}
 
   ### Cyclical Schemes
 
@@ -209,7 +215,7 @@ defmodule Tucan.Color do
   data. However, these schemes are not well suited to accurately convey value
   differences.
 
-  #{Tucan.Color.Utils.schemes_doc(@cyclical_schemes)}
+  #{Tucan.Scale.Utils.schemes_doc(@cyclical_schemes)}
 
   ## Examples
 
@@ -217,7 +223,7 @@ defmodule Tucan.Color do
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
-  |> Tucan.Color.set_scheme(["yellow", "black", "#f234c1"])
+  |> Tucan.Scale.set_scheme(["yellow", "black", "#f234c1"])
   ```
 
   You can set any of the predefined color schemes to any plot with a color
@@ -231,7 +237,7 @@ defmodule Tucan.Color do
     color: [aggregate: :mean, type: :quantitative],
     width: 400
   )
-  |> Tucan.Color.set_scheme(:redyellowblue)
+  |> Tucan.Scale.set_scheme(:redyellowblue)
 
   ```
 
@@ -245,7 +251,7 @@ defmodule Tucan.Color do
     color: [aggregate: :mean, type: :quantitative],
     width: 400
   )
-  |> Tucan.Color.set_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Scale.set_scheme(:redyellowblue, reverse: true)
 
   ```
   """
@@ -259,7 +265,7 @@ defmodule Tucan.Color do
   defp set_scheme_or_range(vl, scheme, opts) when is_atom(scheme) do
     if scheme not in @valid_schemes do
       raise ArgumentError,
-            "invalid scheme #{inspect(scheme)}, check the Tucan.Color docs for supported color schemes"
+            "invalid scheme #{inspect(scheme)}, check the Tucan.Scale docs for supported color schemes"
     end
 
     Tucan.VegaLiteUtils.put_encoding_options(vl, :color,
