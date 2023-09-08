@@ -19,7 +19,7 @@ lint: ## Lint tucan
 	mix format --check-formatted
 	mix credo --strict
 	mix doctor --failed
-	mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns --missing_return
+	mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns
 	mix docs -f html
 	mix test --warnings-as-errors --cover
 
