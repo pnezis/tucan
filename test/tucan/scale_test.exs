@@ -78,6 +78,68 @@ defmodule Tucan.ScaleTest do
       end
     end
 
+    test "raises if not supported encoding type" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :nominal)
+
+      message =
+        "a scale can be applied only on a quantitative or temporal encoding , :x is defined as :nominal"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_x_scale(vl, :log)
+      end
+    end
+
+    test "raises if invalid scale" do
+      message =
+        "scale can be one of [:linear, :pow, :sqrt, :symlog, :log, :time, :utc], got: :logg"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_x_scale(Vl.new(), :logg)
+      end
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_y_scale(Vl.new(), :logg)
+      end
+    end
+
+    test "raises if invalid scale for temporal encoding" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :temporal)
+        |> Vl.encode_field(:y, "y", type: :temporal)
+
+      message = ":sqrt cannot be applied on a temporal encoding, valid scales: [:time, :utc]"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_x_scale(vl, :sqrt)
+      end
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_y_scale(vl, :sqrt)
+      end
+    end
+
+    test "raises if invalid scale for quantitative encoding" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+
+      message =
+        ":time cannot be applied on a quantitative encoding, valid scales: [:linear, " <>
+          ":pow, :sqrt, :symlog, :log]"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_x_scale(vl, :time)
+      end
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_y_scale(vl, :time)
+      end
+    end
+
     test "sets the scales" do
       vl =
         Vl.new()

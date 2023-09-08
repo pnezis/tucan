@@ -62,8 +62,6 @@ defmodule Tucan.Scale do
 
   @type color_scheme :: atom() | [binary()]
 
-  @type scale :: :linear | :log | :symlog | :pow | :sqrt
-
   @categorical_schemes [
     :accent,
     :category10,
@@ -279,21 +277,62 @@ defmodule Tucan.Scale do
     put_options(vl, :color, range: range)
   end
 
+  @continuous_scales [:linear, :pow, :sqrt, :symlog, :log]
+  @time_scales [:time, :utc]
+
+  @valid_scales List.flatten([@continuous_scales, @time_scales])
+
   @doc """
   Sets the x axis scale.
+
+  Notice that only continuous scales are supported.
   """
-  # TODO validate the scale based on the encoding type
-  @spec set_x_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
+  @spec set_x_scale(vl :: VegaLite.t(), scale :: atom()) :: VegaLite.t()
   def set_x_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    put_options(vl, :x, type: scale)
+    set_scale(vl, :x, scale)
   end
 
   @doc """
   Sets the y axis scale.
+
+  Notice that only continuous scales are supported.
   """
-  @spec set_y_scale(vl :: VegaLite.t(), scale :: scale()) :: VegaLite.t()
+  @spec set_y_scale(vl :: VegaLite.t(), scale :: atom()) :: VegaLite.t()
   def set_y_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    put_options(vl, :y, type: scale)
+    set_scale(vl, :y, scale)
+  end
+
+  defp set_scale(vl, channel, scale) do
+    unless scale in @valid_scales do
+      raise ArgumentError,
+            "scale can be one of #{inspect(@valid_scales)}, got: #{inspect(scale)}"
+    end
+
+    channel_type =
+      vl
+      |> VegaLiteUtils.encoding_options!(channel)
+      |> Map.get("type")
+      |> String.to_atom()
+
+    cond do
+      channel_type not in [:quantitative, :temporal] ->
+        raise ArgumentError,
+              "a scale can be applied only on a quantitative or temporal encoding " <>
+                ", #{inspect(channel)} is defined as #{inspect(channel_type)}"
+
+      channel_type == :temporal and scale not in @time_scales ->
+        raise ArgumentError,
+              "#{inspect(scale)} cannot be applied on a temporal encoding, " <>
+                "valid scales: #{inspect(@time_scales)}"
+
+      channel_type == :quantitative and scale not in @continuous_scales ->
+        raise ArgumentError,
+              "#{inspect(scale)} cannot be applied on a quantitative encoding, " <>
+                "valid scales: #{inspect(@continuous_scales)}"
+
+      true ->
+        put_options(vl, channel, type: scale)
+    end
   end
 
   @doc """
