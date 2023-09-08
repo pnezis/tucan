@@ -29,12 +29,12 @@ defmodule Tucan.AxesTest do
     end
   end
 
-  describe "put_axis_options/3" do
+  describe "put_options/3" do
     test "raises if encoding does not exist" do
       vl = Vl.new()
 
       assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
-        Tucan.Axes.put_axis_options(vl, :x, title: "hello")
+        Tucan.Axes.put_options(vl, :x, title: "hello")
       end
     end
 
@@ -42,7 +42,7 @@ defmodule Tucan.AxesTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x", type: :quantitative)
-        |> Tucan.Axes.put_axis_options(:x, title: "A title", foo: "bar", bar: 1)
+        |> Tucan.Axes.put_options(:x, title: "A title", foo: "bar", bar: 1)
 
       assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{
                "bar" => 1,
@@ -55,8 +55,8 @@ defmodule Tucan.AxesTest do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x", type: :quantitative)
-        |> Tucan.Axes.put_axis_options(:x, title: "A title", foo: "bar", bar: [a: 1, b: 2])
-        |> Tucan.Axes.put_axis_options(:x, title: "A new title", test: 2, bar: [a: 3, c: 2])
+        |> Tucan.Axes.put_options(:x, title: "A title", foo: "bar", bar: [a: 1, b: 2])
+        |> Tucan.Axes.put_options(:x, title: "A new title", test: 2, bar: [a: 3, c: 2])
 
       assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{
                "bar" => %{"a" => 3, "b" => 2, "c" => 2},

@@ -27,7 +27,7 @@ defmodule Tucan.Axes do
   """
   @spec set_title(vl :: VegaLite.t(), axis :: axis(), title :: binary()) :: VegaLite.t()
   def set_title(vl, axis, title) do
-    put_axis_options(vl, axis, title: title)
+    put_options(vl, axis, title: title)
   end
 
   @doc """
@@ -38,9 +38,9 @@ defmodule Tucan.Axes do
 
   An `ArgumentError` is raised if the given encoding channel is not defined.
   """
-  @spec put_axis_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
+  @spec put_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
           VegaLite.t()
-  def put_axis_options(vl, encoding, options) do
+  def put_options(vl, encoding, options) do
     VegaLiteUtils.put_encoding_options(vl, encoding, axis: options)
   end
 end

@@ -2213,7 +2213,7 @@ defmodule Tucan do
         row_index == 2 and col_index == 2 ->
           Tucan.stripplot(vl, row_field, group: "species", style: :tick)
           |> Tucan.color_by("species") 
-          |> Tucan.Axes.put_axis_options(:y, labels: false)  
+          |> Tucan.Axes.put_options(:y, labels: false)  
 
         # For the other diagonal plots we plot a histogram colored_by the species
         row_index == col_index ->
@@ -2256,17 +2256,17 @@ defmodule Tucan do
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
     x_axis_title = fn vl, row_index ->
       if row_index == fields_count - 1 do
-        Tucan.Axes.put_axis_options(vl, :x, title: col_field)
+        Tucan.Axes.put_options(vl, :x, title: col_field)
       else
-        Tucan.Axes.put_axis_options(vl, :x, title: nil)
+        Tucan.Axes.put_options(vl, :x, title: nil)
       end
     end
 
     y_axis_title = fn vl, col_index ->
       if col_index == 0 do
-        Tucan.Axes.put_axis_options(vl, :y, title: row_field)
+        Tucan.Axes.put_options(vl, :y, title: row_field)
       else
-        Tucan.Axes.put_axis_options(vl, :y, title: nil)
+        Tucan.Axes.put_options(vl, :y, title: nil)
       end
     end
 
