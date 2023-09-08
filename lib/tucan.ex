@@ -85,7 +85,7 @@ defmodule Tucan do
   )
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
-  |> Tucan.Axes.set_x_scale(:log)
+  |> Tucan.Scale.set_x_scale(:log)
   |> Tucan.Grid.set_color(:x, "red")
   ```
 
@@ -1600,7 +1600,7 @@ defmodule Tucan do
   Tucan.bubble(:gapminder, "income", "health", "population", color_by: "region", width: 400, tooltip: :data)
   |> Tucan.Axes.set_x_title("Gdp per Capita")
   |> Tucan.Axes.set_y_title("Life expectancy")
-  |> Tucan.Axes.set_x_scale(:log)
+  |> Tucan.Scale.set_x_scale(:log)
   ```
   """
   @doc section: :plots
@@ -1792,7 +1792,7 @@ defmodule Tucan do
 
   ```tucan
   Tucan.step(:stocks, "date", "price", color_by: "symbol", width: 300, x: [type: :temporal])
-  |> Tucan.Axes.set_y_scale(:log)
+  |> Tucan.Scale.set_y_scale(:log)
   ```
   """
   @doc section: :plots
@@ -1924,7 +1924,7 @@ defmodule Tucan do
     width: 400,
     fill_opacity: 0.4
   )
-  |> Tucan.Axes.set_y_scale(:log)
+  |> Tucan.Scale.set_y_scale(:log)
   ```
   """
   @doc section: :plots
