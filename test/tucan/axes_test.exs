@@ -27,6 +27,17 @@ defmodule Tucan.AxesTest do
       assert get_in(vl.spec, ["encoding", "x", "axis", "title"]) == "x title"
       assert get_in(vl.spec, ["encoding", "y", "axis", "title"]) == "y title"
     end
+
+    test "set_xy_titles" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+        |> Tucan.Axes.set_xy_titles("x title", "y title")
+
+      assert get_in(vl.spec, ["encoding", "x", "axis", "title"]) == "x title"
+      assert get_in(vl.spec, ["encoding", "y", "axis", "title"]) == "y title"
+    end
   end
 
   describe "put_options/3" do
