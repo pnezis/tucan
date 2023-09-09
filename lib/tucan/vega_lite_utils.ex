@@ -273,7 +273,13 @@ defmodule Tucan.VegaLiteUtils do
     layer_spec = Map.take(spec, layer_fields)
 
     spec
-    |> Map.put("layer", [layer_spec])
+    |> then(fn spec ->
+      if layer_spec == %{} do
+        spec
+      else
+        Map.put(spec, "layer", [layer_spec])
+      end
+    end)
     |> Map.drop(layer_fields)
   end
 

@@ -260,6 +260,35 @@ defmodule Tucan.VegaLiteUtilsTest do
                    end
     end
 
+    test "adds the layers into an empty view" do
+      vl = Vl.data_from_url(Vl.new(), "a_dataset")
+
+      # with a list of layers
+
+      layers = [
+        Vl.new()
+        |> Vl.mark(:rect)
+        |> Vl.encode_field(:x, "x"),
+        Vl.new()
+        |> Vl.mark(:area)
+        |> Vl.encode_field(:y, "y")
+      ]
+
+      expected_append =
+        Vl.new()
+        |> Vl.data_from_url("a_dataset")
+        |> Vl.layers(layers)
+
+      assert VegaLiteUtils.append_layers(vl, layers) == expected_append
+
+      expected_prepend =
+        Vl.new()
+        |> Vl.data_from_url("a_dataset")
+        |> Vl.layers(layers)
+
+      assert VegaLiteUtils.prepend_layers(vl, layers) == expected_prepend
+    end
+
     test "adds the layers with a single view" do
       input_layer =
         Vl.new()
