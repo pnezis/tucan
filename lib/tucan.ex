@@ -1397,19 +1397,54 @@ defmodule Tucan do
   defp maybe_x_offset(vl, _field, false, _opts), do: vl
   defp maybe_x_offset(vl, field, true, opts), do: encode_field(vl, :x_offset, field, opts)
 
-  @scatter_opts Tucan.Options.take!([
-                  @global_opts,
-                  @global_mark_opts,
-                  :filled,
-                  :color_by,
-                  :shape_by,
-                  :size_by,
-                  :x,
-                  :y,
-                  :color,
-                  :shape,
-                  :size
-                ])
+  scatter_opts = [
+    point_color: [
+      type: :string,
+      doc: "The color of the points",
+      section: :style
+    ],
+    point_shape: [
+      type:
+        {:in,
+         [
+           "circle",
+           "square",
+           "cross",
+           "diamond",
+           "triangle-up",
+           "triangle-down",
+           "triangle-right",
+           "triangle-left"
+         ]},
+      doc: "Shape of the point marks. Circle by default.",
+      section: :style
+    ],
+    point_size: [
+      type: :pos_integer,
+      doc: """
+      The pixel area of the marks. Note that this value sets the area of the symbol;
+      the side lengths will increase with the square root of this value.
+      """,
+      section: :style
+    ]
+  ]
+
+  @scatter_opts Tucan.Options.take!(
+                  [
+                    @global_opts,
+                    @global_mark_opts,
+                    :filled,
+                    :color_by,
+                    :shape_by,
+                    :size_by,
+                    :x,
+                    :y,
+                    :color,
+                    :shape,
+                    :size
+                  ],
+                  scatter_opts
+                )
   @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
 
   @doc """
@@ -1470,7 +1505,18 @@ defmodule Tucan do
   Tucan.scatter(:tips, "total_bill", "tip")
   ```
 
-  You can combine it with `color_by/3` to color code the points:
+  You can modify the look of the plot by setting various styling options:
+
+  ```tucan
+  Tucan.scatter(:tips, "total_bill", "tip",
+    point_color: "red",
+    point_shape: "triangle-up",
+    point_size: 10
+  )
+  ```
+
+  You can combine it with `color_by/3` to color code the points with respect to
+  another variable:
 
   ```tucan
   Tucan.scatter(:tips, "total_bill", "tip")
@@ -1541,7 +1587,12 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @scatter_schema)
 
     spec_opts = take_options(opts, @scatter_opts, :spec)
-    mark_opts = take_options(opts, @scatter_opts, :mark)
+
+    mark_opts =
+      take_options(opts, @scatter_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+      |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
 
     plotdata
     |> new(spec_opts)

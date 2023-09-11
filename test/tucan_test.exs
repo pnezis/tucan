@@ -275,6 +275,21 @@ defmodule TucanTest do
       assert Tucan.scatter(@iris_dataset, "petal_width", "petal_length") == expected
     end
 
+    test "with custom point settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.mark(:point, fill_opacity: 1.0, color: "red", size: 10, shape: "square")
+        |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "petal_length", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.scatter(@iris_dataset, "petal_width", "petal_length",
+               point_color: "red",
+               point_size: 10,
+               point_shape: "square"
+             ) == expected
+    end
+
     test "with color shape and size groupings" do
       expected =
         Vl.new()
