@@ -697,7 +697,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:x, "petal_width", type: :quantitative, scale: [zero: false])
         |> Vl.encode_field(:y, "species", type: :nominal)
 
-      assert Tucan.boxplot(@iris_dataset, "petal_width", group: "species") == expected
+      assert Tucan.boxplot(@iris_dataset, "petal_width", group_by: "species") == expected
     end
 
     test "with color_by set" do

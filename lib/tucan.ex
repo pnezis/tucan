@@ -772,7 +772,7 @@ defmodule Tucan do
   end
 
   boxplot_opts = [
-    group: [
+    group_by: [
       type: :string,
       doc: """
       A field to be used for grouping the boxplot. It is used for adding a second dimension to
@@ -874,7 +874,7 @@ defmodule Tucan do
       take_options(opts, @boxplot_opts, :mark)
       |> Keyword.merge(extent: extent)
 
-    group_field = opts[:group] || opts[:color_by]
+    group_field = opts[:group_by] || opts[:color_by]
 
     plotdata
     |> new(spec_opts)
