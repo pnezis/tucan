@@ -2647,7 +2647,7 @@ defmodule Tucan do
   ```tucan
   Tucan.density(:movies, "IMDB Rating", color_by: "Major Genre")
   |> Tucan.facet_by(:wrapped, "Major Genre", columns: 4, sort: [op: :mean, field: "IMDB Rating"])
-  |> Tucan.VegaLiteUtils.put_encoding_options(:color, legend: nil)
+  |> Tucan.Legend.set_enabled(:color, false)
   |> Tucan.set_title("Density of IMDB rating by Genre", offset: 20)
   ```
   """

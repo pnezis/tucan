@@ -62,6 +62,18 @@ defmodule Tucan.Legend do
   end
 
   @doc """
+  Enables or disables the legend of the given encoding channel.
+  """
+  @spec set_enabled(vl :: VegaLite.t(), channel :: atom(), enabled :: boolean()) :: VegaLite.t()
+  def set_enabled(vl, channel, enabled) do
+    if enabled do
+      vl
+    else
+      VegaLiteUtils.put_encoding_options(vl, channel, legend: nil)
+    end
+  end
+
+  @doc """
   Set arbitrary options to the legend of the given channel.
 
   The options are deep merged with existing options.

@@ -37,6 +37,22 @@ defmodule Tucan.LegendTest do
     end
   end
 
+  describe "set_enabled/3" do
+    test "disables the legend" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:color, "x")
+        |> Vl.encode_field(:shape, "x")
+        |> Tucan.Legend.set_enabled(:color, false)
+        |> Tucan.Legend.set_enabled(:shape, true)
+
+      assert Map.has_key?(vl.spec["encoding"]["color"], "legend")
+      assert get_in(vl.spec, ["encoding", "color", "legend"]) == nil
+
+      refute Map.has_key?(vl.spec["encoding"]["shape"], "legend")
+    end
+  end
+
   describe "set_orientation/4" do
     test "raises if the encoding does not exist or is invalid" do
       vl =
