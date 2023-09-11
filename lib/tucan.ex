@@ -2809,6 +2809,18 @@ defmodule Tucan do
   end
 
   @doc """
+  Creates a layered plot.
+
+  This is a simple wrapper around `VegaLite.layers/2` which by default adds
+  the layers under an empty plot.
+  """
+  @doc section: :utilities
+  @spec layers(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
+  def layers(vl \\ Vl.new(), plots) do
+    VegaLite.layers(vl, plots)
+  end
+
+  @doc """
   Flips the axes of the provided chart.
 
   This works for both one dimensional and two dimensional charts. All positional channels

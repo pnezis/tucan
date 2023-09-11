@@ -1601,6 +1601,24 @@ defmodule TucanTest do
     end
   end
 
+  describe "layers" do
+    test "with no input plot" do
+      plot1 = Tucan.scatter(@dataset, "x", "y")
+      plot2 = Tucan.scatter(@dataset, "x2", "y2")
+
+      assert Tucan.layers([plot1, plot2]) == Vl.layers(Vl.new(), [plot1, plot2])
+    end
+
+    test "with input plot" do
+      vl = VegaLite.new(width: 400, height: 300)
+
+      plot1 = Tucan.scatter(@dataset, "x", "y")
+      plot2 = Tucan.scatter(@dataset, "x2", "y2")
+
+      assert Tucan.layers(vl, [plot1, plot2]) == Vl.layers(vl, [plot1, plot2])
+    end
+  end
+
   describe "line, hline, vline" do
     test "adds a line to the given numerical position" do
       base_plot =
