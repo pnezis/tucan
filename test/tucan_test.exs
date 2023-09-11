@@ -318,16 +318,19 @@ defmodule TucanTest do
       assert Tucan.lineplot(@stocks_dataset, "date", "price", color_by: "symbol") == expected
     end
 
-    test "with group_by set" do
+    test "with group_by and custom color set" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 1.0)
+        |> Vl.mark(:line, fill_opacity: 1.0, color: "red")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:detail, "symbol", type: :nominal)
 
-      assert Tucan.lineplot(@stocks_dataset, "date", "price", group_by: "symbol") == expected
+      assert Tucan.lineplot(@stocks_dataset, "date", "price",
+               group_by: "symbol",
+               line_color: "red"
+             ) == expected
     end
 
     test "with points overlaid" do

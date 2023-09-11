@@ -24,6 +24,11 @@ defmodule Tucan.Keyword do
   end
 
   @doc false
+  @spec put_not_nil(keywords :: keyword(), key :: atom(), value :: term()) :: keyword()
+  def put_not_nil(keywords, _key, nil), do: keywords
+  def put_not_nil(keywords, key, value), do: Keyword.put(keywords, key, value)
+
+  @doc false
   @spec deep_merge(config1 :: keyword(), config2 :: keyword()) :: keyword()
   def deep_merge(config1, config2) when is_list(config1) and is_list(config2) do
     Keyword.merge(config1, config2, fn _, value1, value2 ->

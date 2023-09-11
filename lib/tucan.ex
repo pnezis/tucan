@@ -1636,17 +1636,25 @@ defmodule Tucan do
   lineplot_opts = [
     group_by: [
       type: :string,
-      doc: "A field to group by the lines without affecting the style of it."
+      doc: "A field to group by the lines without affecting the style of it.",
+      section: :grouping
     ],
     points: [
       type: :boolean,
       doc: "Whether points will be included in the chart.",
-      default: false
+      default: false,
+      section: :style
     ],
     filled: [
       type: :boolean,
       doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
-      default: true
+      default: true,
+      section: :style
+    ],
+    line_color: [
+      type: :string,
+      doc: "The color of the line",
+      section: :style
     ]
   ]
 
@@ -1742,7 +1750,6 @@ defmodule Tucan do
   |> Tucan.concat(plots)
   ```
   """
-  # TODO: maybe support passing a list of y fields and repeat layer
   @doc section: :plots
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
           VegaLite.t()
@@ -1754,6 +1761,7 @@ defmodule Tucan do
     mark_opts =
       take_options(opts, @lineplot_opts, :mark)
       |> maybe_add_point_opts(opts[:points], opts)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
 
     plotdata
     |> new(spec_opts)
