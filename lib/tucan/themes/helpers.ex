@@ -58,8 +58,11 @@ defmodule Tucan.Themes.Helpers do
 
   @doc false
   @spec docs(themes :: keyword(), example :: binary()) :: binary()
-  def docs(themes, example),
-    do: Enum.map_join(themes, "\n\n", fn {_name, opts} -> theme_docs(opts, example) end)
+  def docs(themes, example) do
+    themes
+    |> Enum.sort()
+    |> Enum.map_join("\n\n", fn {_name, opts} -> theme_docs(opts, example) end)
+  end
 
   defp theme_docs(opts, example) do
     theme_link =

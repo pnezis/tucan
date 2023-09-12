@@ -1,7 +1,18 @@
 defmodule Tucan.ThemesTest do
   use ExUnit.Case
 
-  @valid_themes [:excel, :ggplot2, :latimes]
+  @valid_themes [
+    :dark,
+    :excel,
+    :five_thirty_eight,
+    :ggplot2,
+    :google_charts,
+    :latimes,
+    :power_bi,
+    :quartz,
+    :urban_institute,
+    :vox
+  ]
 
   describe "theme/1" do
     test "all valid themes are loaded" do
