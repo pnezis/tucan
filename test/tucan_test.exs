@@ -1837,6 +1837,9 @@ defmodule TucanTest do
   defp concatenated_test_plots(encoding, opts \\ []) do
     vl_encoded = Vl.encode_field(Vl.new(), encoding, "field", opts)
 
+    layered = Vl.layers(Vl.new(), [Vl.new(), Vl.new()])
+    layered_expected = Vl.layers(Vl.new(), [vl_encoded, vl_encoded])
+
     horizontal_concat = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
     horizontal_concat_expected = Vl.concat(Vl.new(), [vl_encoded, vl_encoded], :horizontal)
 
@@ -1867,6 +1870,7 @@ defmodule TucanTest do
       )
 
     [
+      {layered, layered_expected},
       {horizontal_concat, horizontal_concat_expected},
       {vertical_concat, vertical_concat_expected},
       {wrappable_concat, wrappable_concat_expected},

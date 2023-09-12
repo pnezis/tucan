@@ -104,13 +104,16 @@ defmodule Tucan.VegaLiteUtils do
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
   # validates that the specification corresponds to a single view plot
-  defp validate_single_view!(vl, caller, allowed \\ @multi_view_only_keys)
+  @doc false
+  @spec validate_single_view!(vl :: VegaLite.t(), caller :: String.t(), forbidden :: [atom()]) ::
+          :ok
+  def validate_single_view!(vl, caller, forbidden \\ @multi_view_only_keys)
 
-  defp validate_single_view!(%VegaLite{spec: spec}, caller, allowed),
-    do: validate_single_view!(spec, caller, allowed)
+  def validate_single_view!(%VegaLite{spec: spec}, caller, forbidden),
+    do: validate_single_view!(spec, caller, forbidden)
 
-  defp validate_single_view!(%{} = spec, caller, allowed) do
-    for key <- allowed, Map.has_key?(spec, to_vl_key(key)) do
+  def validate_single_view!(%{} = spec, caller, forbidden) do
+    for key <- forbidden, Map.has_key?(spec, to_vl_key(key)) do
       raise ArgumentError,
             "#{caller} expects a single view spec, multi view detected: #{inspect(key)} key is defined"
     end

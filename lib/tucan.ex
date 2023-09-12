@@ -2610,6 +2610,13 @@ defmodule Tucan do
         end)
 
       _ ->
+        VegaLiteUtils.validate_single_view!(vl, "#{encoding}_by", [
+          :layers,
+          :concat,
+          :vconcat,
+          :hconcat
+        ])
+
         Vl.encode_field(vl, encoding, field, opts)
     end
   end
@@ -2674,6 +2681,11 @@ defmodule Tucan do
 
   defp apply_recursively(%VegaLite{} = vl, fun) do
     put_in(vl.spec, do_apply_recursively(vl.spec, fun))
+  end
+
+  defp do_apply_recursively(%{"layer" => layers} = spec, fun) do
+    layers = do_apply_recursively(layers, fun)
+    Map.put(spec, "layer", layers)
   end
 
   defp do_apply_recursively(%{"vconcat" => vconcat} = spec, fun) do
