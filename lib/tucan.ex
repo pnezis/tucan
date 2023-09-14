@@ -2543,12 +2543,29 @@ defmodule Tucan do
 
   ## Grouping functions
 
+  grouping_options = [
+    recursive: [
+      type: :boolean,
+      default: false,
+      doc: """
+      If set the grouping function will be applied recursively in all valid sub plots. This
+      includes both layers and concatenated plots.
+      """
+    ]
+  ]
+
+  @grouping_opts Keyword.keys(grouping_options)
+  @grouping_schema NimbleOptions.new!(grouping_options)
+
   @doc """
   Adds a `color` encoding for the given field.
 
-  `opts` can be an arbitrary keyword list with vega-lite supported options.
+  ## Options
 
-  If `:recursive` is set the encoding is applied in all subplots of the given plot.
+  #{NimbleOptions.docs(@grouping_schema)}
+
+  `opts` can also contain an arbitrary set of vega-lite supported options that
+  will be passed to the underlying encoding.
   """
   @doc section: :grouping
   @spec color_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
@@ -2557,9 +2574,12 @@ defmodule Tucan do
   @doc """
   Adds a `shape` encoding for the given field.
 
-  `opts` can be an arbitrary keyword list with vega-lite supported options.
+  ## Options
 
-  If `:recursive` is set the encoding is applied in all subplots of the given plot.
+  #{NimbleOptions.docs(@grouping_schema)}
+
+  `opts` can also contain an arbitrary set of vega-lite supported options that
+  will be passed to the underlying encoding.
   """
   @doc section: :grouping
   @spec shape_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
@@ -2568,9 +2588,12 @@ defmodule Tucan do
   @doc """
   Adds a `stroke_dash` encoding for the given field.
 
-  `opts` can be an arbitrary keyword list with vega-lite supported options.
+  ## Options
 
-  If `:recursive` is set the encoding is applied in all subplots of the given plot.
+  #{NimbleOptions.docs(@grouping_schema)}
+
+  `opts` can also contain an arbitrary set of vega-lite supported options that
+  will be passed to the underlying encoding.
   """
   @doc section: :grouping
   @spec stroke_dash_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
@@ -2579,9 +2602,12 @@ defmodule Tucan do
   @doc """
   Adds a `fill` encoding for the given field.
 
-  `opts` can be an arbitrary keyword list with vega-lite supported options.
+  ## Options
 
-  If `:recursive` is set the encoding is applied in all subplots of the given plot.
+  #{NimbleOptions.docs(@grouping_schema)}
+
+  `opts` can also contain an arbitrary set of vega-lite supported options that
+  will be passed to the underlying encoding.
   """
   @doc section: :grouping
   @spec fill_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
@@ -2591,9 +2617,14 @@ defmodule Tucan do
   Adds a `size` encoding for the given field.
 
   By default the type of the `field` is set to `:quantitative`. You can override it in the
-  `opts` which can be an arbitrary keyword list with vega-lite supported options.
+  `opts` by setting another `:type`.
 
-  If `:recursive` is set the encoding is applied in all subplots of the given plot.
+  ## Options
+
+  #{NimbleOptions.docs(@grouping_schema)}
+
+  `opts` can also contain an arbitrary set of vega-lite supported options that
+  will be passed to the underlying encoding.
   """
   @doc section: :grouping
   @spec size_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
@@ -2601,9 +2632,11 @@ defmodule Tucan do
     do: group_by(vl, :size, field, [type: :quantitative] ++ opts)
 
   defp group_by(vl, encoding, field, opts) do
-    {recursive, opts} = Keyword.pop(opts, :recursive)
+    {group_opts, opts} = Keyword.split(opts, @grouping_opts)
 
-    case recursive do
+    group_opts = NimbleOptions.validate!(group_opts, @grouping_schema)
+
+    case group_opts[:recursive] do
       true ->
         apply_recursively(vl, fn spec ->
           VegaLiteUtils.encode_field_raw(spec, encoding, field, opts)
