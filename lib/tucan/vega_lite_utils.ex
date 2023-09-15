@@ -93,7 +93,7 @@ defmodule Tucan.VegaLiteUtils do
   This is a destructive operation, any existing value for the provided `key` will be
   replaced by `opts`.
   """
-  @spec put_in_spec(vl :: VegaLite.t(), key :: atom(), opts :: term()) :: VegaLite.t()
+  @spec put_in_spec(vl :: VegaLite.t(), key :: atom() | binary(), opts :: term()) :: VegaLite.t()
   def put_in_spec(%VegaLite{spec: spec} = vl, key, opts) do
     key = to_vl_key(key)
     opts = to_vl(opts)

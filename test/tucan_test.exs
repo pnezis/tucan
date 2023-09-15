@@ -105,6 +105,11 @@ defmodule TucanTest do
 
       assert Tucan.new(:iris, width: 100, height: 100, foo: 2) == expected
     end
+
+    test "with :tucan options set" do
+      vl = Tucan.new(:iris, width: 100, height: 100, foo: 2, tucan: [plot: true])
+      assert get_in(vl.spec, ["__tucan__"]) == %{"plot" => true}
+    end
   end
 
   describe "histogram/3" do

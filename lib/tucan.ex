@@ -152,13 +152,24 @@ defmodule Tucan do
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
   defp to_vega_plot(dataset, opts) when is_binary(dataset) do
-    Vl.new(opts)
+    opts
+    |> new_tucan_plot()
     |> Vl.data_from_url(dataset)
   end
 
   defp to_vega_plot(data, opts) do
-    Vl.new(opts)
+    opts
+    |> new_tucan_plot()
     |> Vl.data_from_values(data)
+  end
+
+  defp new_tucan_plot(opts) do
+    {tucan_opts, opts} = Keyword.pop(opts, :tucan)
+
+    case tucan_opts do
+      nil -> Vl.new(opts)
+      tucan_opts -> Vl.new(opts) |> VegaLiteUtils.put_in_spec("__tucan__", tucan_opts)
+    end
   end
 
   ## Plots
