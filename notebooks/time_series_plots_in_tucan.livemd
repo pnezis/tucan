@@ -1,0 +1,339 @@
+# Time Series Plots in Tucan
+
+```elixir
+Mix.install([
+  {:tucan, path: Path.expand("..", __DIR__)},
+  {:kino_vega_lite, "~> 0.1.9"}
+])
+
+alias VegaLite, as: Vl
+```
+
+## Introduction
+
+_This tutorial is an adaptation to Tucan of [Basic Time Series Plots in Vega-Lite](https://observablehq.com/@jonfroehlich/basic-time-series-plots-in-vega-lite?collection=@jonfroehlich/intro-to-vega-lite) by Jon E. Froehlich_
+
+We will explore creating visualizations of **Seattle's daily maximum temperature** showing how to use position, color, and size to create multi-dimensional plots. We will create temporal scatter plots, dot/strip plots, heatmaps, and bubble plots.
+
+We will then show how to use Tucan's functionalities to calculate and plot average monthly weather data.
+
+## Our first visualization - scatter
+
+> Throughout this notebook we will use the `:weather` dataset that comes with `Tucan`.
+
+We can start by using `Tucan.scatter/4 ` to plot all dataset points. Let's encode time on the _x-axis_ and `temp_max` on the _y-axis_. By default `scatter` expects two quantitative variables. We have to specify that the _x-axis_ encodes time by explicitely setting the `type` to `temporal` through the `:x` option.
+
+We set the `filled` option to `true` in order to have filled points and enable the `tooltip` in order to add some interactivity.
+
+```elixir
+max_temp_scatter =
+  Tucan.scatter(:weather, "date", "temp_max", filled: true, x: [type: :temporal], tooltip: true)
+  |> Tucan.set_size(700, 400)
+  |> Tucan.set_title("Daily Max Temperatures in Seattle 2012 - 2015")
+  |> Tucan.Axes.set_y_title("Max Temperature")
+```
+
+### Semantic grouping by color
+
+We can also add **weather** as an additional encoding channel using color. To control the color palette, we set the color scale.
+
+Since we want to control the visual values, we specify a range. We carefully choose a palette that has semantic meaning: yellow for sun, gray for fog, blue for rain, etc.
+
+You can either pipe the previous plot through `Tucan.color_by/3` or set directly the `color_by` option to the `Tucan.scatter/4` call.
+
+```elixir
+color_palette = ["#aec7e8", "#c7c7c7", "#1f77b4", "#9467bd", "#e7ba52"]
+
+Tucan.color_by(max_temp_scatter, "weather")
+|> Tucan.Scale.set_color_scheme(color_palette)
+```
+
+### Semantic grouping by size
+
+We can also control the size of the points by a fourth variable. Let's use `precipitation` for this. Notice that we also set the range of the `size` encoding in order to ensure that all points are included in the graph.
+
+Notice how the tooltip content changes with respect to the encoded parameters.
+
+```elixir
+max_temp_scatter
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.size_by("precipitation", scale: [range: [5, 350]])
+```
+
+### Aggregating around month
+
+To track seasonal patterns, let's aggregate the temporal dimension around the `monthdate` time unit, which is sensitive to month and date but not year—and can be useful for binning time values to look at seasonal patterns.
+
+Let's also specifically format the _x-axis_ date format to print out the abbreviated month name. See [Vega-Lite's text format documentation](https://vega.github.io/vega-lite/docs/format.html) for more details. We will use the `Tucan.put_axis_options/3` helper which can set any option on the given axis.
+
+Also notice that the `:y` option (like all encoding options) can be used to set any arbitrary option to the `y` encoding channel.
+
+```elixir
+aggregated_scatter =
+  Tucan.scatter(:weather, "date", "temp_max",
+    x: [type: :temporal, time_unit: :monthdate],
+    y: [aggregate: :mean],
+    width: 700,
+    height: 400
+  )
+  |> Tucan.color_by("weather", scale: [range: color_palette])
+  |> Tucan.size_by("precipitation", type: :quantitative, scale: [range: [5, 350]])
+  |> Tucan.set_title("Daily Max Temperatures in Seattle 2012 - 2015")
+  |> Tucan.Axes.set_y_title("Max Temperature")
+  |> Tucan.Axes.set_x_title("Aggregated Months (2012-2015)")
+  |> Tucan.Axes.put_options(:x, format: "%b")
+```
+
+### Faceting the plot
+
+We can use the `Tucan.facet_by/4` function to split the plot into small multiples. Let's split the above graph by `weather` in order to highlight weather-based temporal trends.
+
+You can use various helper methods to modify things like the legend position or reset the dimensions of a plot or the axes titles.
+
+```elixir
+aggregated_scatter
+|> Tucan.facet_by(:column, "weather")
+|> Tucan.set_size(130, 140)
+|> Tucan.Axes.set_x_title("Month")
+|> Tucan.Legend.set_orientation(:color, "bottom")
+|> Tucan.Legend.set_orientation(:size, "bottom")
+```
+
+### Combining two plots using concatenation
+
+We can use `Tucan`'s concat methods to combine plots vertically or horizontally. This is a form of view composition. We can combine plots horizontally with `Tucan.hconcat/2`, vertically with `Tucan.vconcat/2`, or via a general wrappable `Tucan.concat/2`.
+
+Let's combine both a bar-based frequency plot with this temporal plot.
+
+```elixir
+frequencies =
+  Tucan.countplot(:weather, "weather", orient: :vertical, width: 700)
+  |> Tucan.color_by("weather", scale: [range: color_palette])
+  |> Tucan.Axes.set_x_title("Num of Days with Weather (2012-2015)")
+
+Tucan.vconcat([aggregated_scatter, frequencies])
+```
+
+## Stripplot
+
+A strip plot is another way to explore variations in weather over time. In this case, let's encode the **date by month** along the _x-axis_, the **date by year** on the _y-axis_, and **weather** via color.
+
+```elixir
+strip =
+  Tucan.stripplot(:weather, "date",
+    group: "date",
+    x: [time_unit: :monthdate, type: :temporal],
+    y: [time_unit: :year, type: :ordinal],
+    width: 700,
+    fill_opacity: 1
+  )
+  |> Tucan.color_by("weather", scale: [range: color_palette])
+  |> Tucan.Axes.set_y_title("Year")
+  |> Tucan.Axes.set_x_title("Month")
+  |> Tucan.Axes.put_options(:x, format: "%b")
+```
+
+We could add in a fourth dimension by encoding the **tick size** as a function of the **max_temp** field that day.
+
+```elixir
+strip
+|> Tucan.size_by("temp_max")
+|> Tucan.set_height(140)
+```
+
+You could also change the `:mode` to `:jitter` to plot jittered points instead of ticks.
+
+```elixir
+Tucan.stripplot(:weather, "date",
+  group: "date",
+  style: :jitter,
+  x: [time_unit: :monthdate, type: :temporal],
+  y: [time_unit: :year, type: :ordinal],
+  fill_opacity: 1
+)
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.Axes.set_y_title("Year")
+|> Tucan.Axes.set_x_title("Month")
+|> Tucan.Axes.put_options(:x, format: "%b")
+|> Tucan.set_size(700, 300)
+```
+
+### Strip plot split by weather
+
+Rather than encoding **year** on the `y-axis`, let's encode the **weather**.
+
+```elixir
+Tucan.stripplot(:weather, "date",
+  group: "weather",
+  x: [time_unit: :monthdate, type: :temporal],
+  width: 700,
+  fill_opacity: 1
+)
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.Axes.set_y_title("Weather")
+|> Tucan.Axes.set_x_title("Month")
+|> Tucan.Axes.put_options(:x, format: "%b")
+```
+
+## Weather heatmaps
+
+A heatmap uses color to encode the magnitude of a value.
+
+Let's use a heatmap to examine how Seattle's max temperature changes over the year. For this, we will encode the **date by day** along the _x-axis_, the **date by month** along the _y-axis_, and the **average temp_max** as _color_.
+
+```elixir
+heatmap =
+  Tucan.heatmap(:weather, "date", "date", "temp_max",
+    x: [time_unit: :date],
+    y: [time_unit: :month],
+    color: [aggregate: :mean]
+  )
+  |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
+  |> Tucan.Axes.set_x_title("Day")
+  |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.Legend.set_title(:color, "Avg Max Temp")
+```
+
+### Changing the heatmap color scheme
+
+Let's change the color scheme to something more semantic with **high** temperature values mapped to **red** and **low** temperature values mapped to **blue**. See the [Vega-Lite color scheme documentation](https://vega.github.io/vega/docs/schemes/) for more details on available schemes.
+
+The only change to the previous plot is that we will change the `:color` encoding scheme. We can use the `Tucan.Scale.set_color_scheme/3` helper to easily set or change the color scheme of an existing plot. We  use the `reverse: true` option in order to make the **low** temperatures blue and the **high** temperatures red.
+
+```elixir
+Tucan.Scale.set_color_scheme(heatmap, :redyellowblue, reverse: true)
+```
+
+### Adding in heatmap cells the labels
+
+_Feature not supported yet_
+
+```elixir
+Tucan.heatmap(:weather, "date", "date", "temp_max",
+  annotate: true,
+  x: [time_unit: :date],
+  y: [time_unit: :month],
+  color: [aggregate: :mean],
+  text: [format: ".1f"]
+)
+|> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
+|> Tucan.Axes.set_x_title("Day")
+|> Tucan.Axes.set_y_title("Month")
+|> Tucan.Legend.set_title(:color, "Avg Max Temp")
+|> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
+|> Tucan.set_width(800)
+```
+
+## Punchcard Plots
+
+Similar to the `heatmap` example, we can also make a `punchcard` to explore temporal Seattle weather patterns.
+
+We'll use roughly the same encodings as before but this time map the average **temp_max** to circle **size**.
+
+```elixir
+Tucan.punchcard(:weather, "date", "date", "temp_max",
+  x: [time_unit: :date],
+  y: [time_unit: :month],
+  size: [aggregate: :mean]
+)
+|> Tucan.Axes.set_x_title("Day")
+|> Tucan.Axes.set_y_title("Month")
+|> Tucan.Legend.set_title(:size, "Avg Max Temp")
+```
+
+### Add dual encoding of temp max
+
+We could also set a dual encoding where both **color** and **size** encode the average **temp_max** field.
+
+```elixir
+Tucan.punchcard(:weather, "date", "date", "temp_max",
+  x: [time_unit: :date],
+  y: [time_unit: :month],
+  size: [aggregate: :mean]
+)
+|> Tucan.color_by("temp_max", aggregate: :mean)
+|> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
+|> Tucan.Axes.set_x_title("Day")
+|> Tucan.Axes.set_y_title("Month")
+|> Tucan.Legend.set_title(:size, "Avg Max Temp")
+```
+
+### Encode precipitation as mark size
+
+Alternatively, we could encode **precipitation** as mark **size**.
+
+```elixir
+Tucan.punchcard(:weather, "date", "date", "precipitation",
+  x: [time_unit: :date],
+  y: [time_unit: :month],
+  size: [aggregate: :mean]
+)
+|> Tucan.Axes.set_x_title("Day")
+|> Tucan.Axes.set_y_title("Month")
+```
+
+### Encode both temperature and precipitation
+
+You can encode add both **temperature** and **precipitation** to the same punchcard plot by using both **color** and **size** encodings.
+
+We are also using `Tucan.Legend.set_orientation/3` helper to change the position of the two legends.
+
+```elixir
+Tucan.punchcard(:weather, "date", "date", "precipitation",
+  x: [time_unit: :date],
+  y: [time_unit: :month],
+  size: [aggregate: :mean]
+)
+|> Tucan.color_by("temp_max", aggregate: :mean, type: :quantitative)
+|> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
+|> Tucan.Axes.set_x_title("Day")
+|> Tucan.Axes.set_y_title("Month")
+|> Tucan.Legend.set_orientation(:color, "top")
+|> Tucan.Legend.set_orientation(:size, "top")
+```
+
+## Lineplots - Plotting average monthly temperatures
+
+While useful to graph the raw data above, aggregating our data along higher-order temporal dimensions like month or year might help highlight additional trends. Let's try graphing the average maximum temperature in Seattle by month from 2012-2015.
+
+We can do this by combining Vega-Lite's `:time_unit` and `:aggregate` properties. We will specify that we want the _x-axis_ in **months** and to aggregate using the **mean**.
+
+We will use `Tucan.lineplot/4` to plot the seasonal trend. By setting `points: true` we include the points to the line plot.
+
+```elixir
+avg_temperature =
+  Tucan.lineplot(:weather, "date", "temp_max",
+    x: [time_unit: :month, type: :temporal],
+    y: [aggregate: :mean],
+    points: true,
+    tooltip: true,
+    width: 700
+  )
+  |> Tucan.set_title("Average Daily Max Temperatures in Seattle (2012-2015) by Month")
+```
+
+### Adding annotations for daily max average
+
+We can add in an average line using `Tucan.hline/3`. We can add a line either on a specific _y-axis_ point or on a calculated point.
+
+```elixir
+Tucan.hline(avg_temperature, "temp_max", line_color: "red")
+```
+
+### Lines by weather type
+
+Similarly to all other plots we can use `color_by` to plot multiple lines for each **weather type**. Additionally we will use `stroke_dash_by` to make the plot more accessible.
+
+```elixir
+Tucan.lineplot(:weather, "date", "temp_max",
+  x: [time_unit: :month, type: :temporal],
+  y: [aggregate: :mean],
+  points: true,
+  tooltip: true
+)
+|> Tucan.color_by("weather")
+|> Tucan.Scale.set_color_scheme(color_palette)
+|> Tucan.stroke_dash_by("weather")
+|> Tucan.set_title("Average Daily Max Temperatures in Seattle (2012-2015) by Month & Weather")
+|> Tucan.set_size(700, 350)
+```
