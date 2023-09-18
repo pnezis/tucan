@@ -49,9 +49,13 @@ defmodule Tucan.VegaLiteUtils do
       iex> Tucan.VegaLiteUtils.has_encoding?(VegaLite.encode_field(VegaLite.new(), :x, "x"), :x)
       true
   """
-  @spec has_encoding?(vl :: VegaLite.t(), channel :: atom()) :: boolean()
-  def has_encoding?(%VegaLite{spec: spec} = vl, channel) when is_atom(channel) do
-    validate_single_view!(vl, "has_encoding?/2")
+  @spec has_encoding?(vl :: VegaLite.t() | map(), channel :: atom()) :: boolean()
+  def has_encoding?(%VegaLite{spec: spec}, channel) when is_atom(channel) do
+    has_encoding?(spec, channel)
+  end
+
+  def has_encoding?(%{} = spec, channel) when is_atom(channel) do
+    validate_single_view!(spec, "has_encoding?/2")
 
     spec
     |> Map.get("encoding", %{})
@@ -64,11 +68,14 @@ defmodule Tucan.VegaLiteUtils do
   The input can either by a `VegaLite` struct or the spec map. The options will be
   deep merged with the existing ones.
 
-  The input vega lite representation must be a single view.
+  The input vega lite representation must be a single view or a multi-layer tucan plot.
+
+  If the input is a multi-layer tucan plot then the options will be applied to all
+  layers containing the given containing channel.
 
   It will raise an `ArgumentError` if:
 
-  * The input `vl` is not a single view.
+  * The input `vl` is not a single view or a multi-layer tucan plot.
   * The encoding does not exist in the specification an `ArgumentError` will be raised.
   """
   @spec put_encoding_options(vl :: VegaLite.t() | map(), encoding :: atom(), opts :: keyword()) ::
@@ -79,12 +86,39 @@ defmodule Tucan.VegaLiteUtils do
   end
 
   def put_encoding_options(%{} = spec, channel, opts) when is_atom(channel) and is_list(opts) do
-    validate_single_view!(spec, "put_encoding_options/3")
-    validate_channel!(spec, channel)
+    if tucan_multi_layer_plot?(spec) do
+      # TODO: validate layered view
+      layers = spec["layer"]
 
-    update_in(spec, ["encoding", to_vl_key(channel)], fn encoding_opts ->
-      deep_merge(encoding_opts, opts_to_vl_props(opts))
-    end)
+      layers =
+        for layer <- layers do
+          case has_encoding?(layer, channel) do
+            true ->
+              update_in(layer, ["encoding", to_vl_key(channel)], fn encoding_opts ->
+                deep_merge(encoding_opts, opts_to_vl_props(opts))
+              end)
+
+            false ->
+              layer
+          end
+        end
+
+      Map.put(spec, "layer", layers)
+    else
+      validate_single_view!(spec, "put_encoding_options/3")
+      validate_channel!(spec, channel)
+
+      update_in(spec, ["encoding", to_vl_key(channel)], fn encoding_opts ->
+        deep_merge(encoding_opts, opts_to_vl_props(opts))
+      end)
+    end
+  end
+
+  defp tucan_multi_layer_plot?(spec) do
+    case get_in(spec, ["__tucan__", "multilayer"]) do
+      true -> true
+      _other -> false
+    end
   end
 
   @doc """
@@ -105,7 +139,11 @@ defmodule Tucan.VegaLiteUtils do
 
   # validates that the specification corresponds to a single view plot
   @doc false
-  @spec validate_single_view!(vl :: VegaLite.t(), caller :: String.t(), forbidden :: [atom()]) ::
+  @spec validate_single_view!(
+          vl :: VegaLite.t() | map(),
+          caller :: String.t(),
+          forbidden :: [atom()]
+        ) ::
           :ok
   def validate_single_view!(vl, caller, forbidden \\ @multi_view_only_keys)
 

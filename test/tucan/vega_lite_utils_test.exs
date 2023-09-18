@@ -125,6 +125,31 @@ defmodule Tucan.VegaLiteUtilsTest do
                "type" => "nominal"
              }
     end
+
+    test "is applied recursively in all valid layers if multi-layer tucan plot" do
+      vl =
+        Vl.new()
+        |> Vl.layers([
+          Vl.new() |> Vl.encode_field(:x, "x"),
+          Vl.new() |> Vl.encode_field(:x, "x2"),
+          Vl.new() |> Vl.encode_field(:y, "y")
+        ])
+
+      assert_raise ArgumentError, fn -> VegaLiteUtils.put_encoding_options(vl, :x, foo: 1) end
+
+      vl_multi_layer = VegaLiteUtils.put_in_spec(vl, "__tucan__", multilayer: true)
+
+      expected =
+        Vl.new()
+        |> Vl.layers([
+          Vl.new() |> Vl.encode_field(:x, "x", foo: 1),
+          Vl.new() |> Vl.encode_field(:x, "x2", foo: 1),
+          Vl.new() |> Vl.encode_field(:y, "y")
+        ])
+        |> VegaLiteUtils.put_in_spec("__tucan__", multilayer: true)
+
+      assert VegaLiteUtils.put_encoding_options(vl_multi_layer, :x, foo: 1) == expected
+    end
   end
 
   describe "drop_encoding_channels/2" do
