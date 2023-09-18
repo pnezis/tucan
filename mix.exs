@@ -63,7 +63,6 @@ defmodule Tucan.MixProject do
     [
       main: "readme",
       canonical: "http://hexdocs.pm/tucan",
-      extras: ["README.md", "CHANGELOG.md", "LICENSE"],
       source_url_pattern: "#{@scm_url}/blob/v#{@version}/%{path}#L%{line}",
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       groups_for_docs: [
@@ -89,6 +88,17 @@ defmodule Tucan.MixProject do
         ],
         Utilities: [
           Tucan.VegaLiteUtils
+        ]
+      ],
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+        "notebooks/time_series_plots_in_tucan.livemd"
+      ],
+      groups_for_extras: [
+        Guides: [
+          "notebooks/time_series_plots_in_tucan.livemd"
         ]
       ],
       markdown_processor:
