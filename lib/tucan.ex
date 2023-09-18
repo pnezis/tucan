@@ -311,7 +311,7 @@ defmodule Tucan do
     mark_opts = take_options(opts, @histogram_opts, :mark)
 
     plotdata
-    |> new(spec_opts)
+    |> new(spec_opts ++ [tucan: [plot: :histogram]])
     |> Vl.mark(:bar, mark_opts)
     |> bin_count_transform(field, opts)
     |> maybe_add_relative_frequency_transform(field, opts)
@@ -915,6 +915,13 @@ defmodule Tucan do
       specific colors or customize the scheme, use `Tucan.Scale.set_color_scheme/3`. 
       """,
       section: :style
+    ],
+    annotate: [
+      type: :boolean,
+      default: false,
+      doc: """
+      If set to `true` then the values of each cell will be included in the plot.
+      """
     ]
   ]
 
@@ -924,7 +931,8 @@ defmodule Tucan do
                     @global_mark_opts,
                     :x,
                     :y,
-                    :color
+                    :color,
+                    :text
                   ],
                   heatmap_opts
                 )
@@ -986,6 +994,24 @@ defmodule Tucan do
     x: [type: :ordinal, time_unit: :date],
     y: [type: :ordinal, time_unit: :month],
     tooltip: true
+  )
+  |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
+  |> Tucan.Axes.set_x_title("Day")
+  |> Tucan.Axes.set_y_title("Month")
+  |> Tucan.Legend.set_title(:color, "Avg Max Temp")
+  |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
+  ```
+
+  You can enable annotations by setting the `:annotate` flag:
+
+  ```tucan
+  Tucan.heatmap(:weather, "date", "date", "temp_max",
+    annotate: true,
+    x: [type: :ordinal, time_unit: :date],
+    y: [type: :ordinal, time_unit: :month],
+    text: [format: ".1f"],
+    tooltip: true,
+    width: 800
   )
   |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
   |> Tucan.Axes.set_x_title("Day")
@@ -1091,25 +1117,44 @@ defmodule Tucan do
         opts
       end
 
-    z_fn = fn vl ->
+    z_fn = fn vl, encoding ->
       case z do
         nil ->
-          encode(vl, z_encoding, opts, type: :quantitative, aggregate: :count)
+          encode(vl, encoding, opts, type: :quantitative, aggregate: :count)
 
         field ->
-          encode_field(vl, z_encoding, field, opts,
+          encode_field(vl, encoding, field, opts,
             aggregate: opts[:aggregate] || :mean,
             type: :quantitative
           )
       end
     end
 
+    base_layer =
+      [
+        Vl.new()
+        |> Vl.mark(mark, mark_opts)
+        |> encode_field(:x, x, opts, type: :nominal)
+        |> encode_field(:y, y, opts, type: :nominal)
+        |> z_fn.(z_encoding)
+      ]
+
+    text_layer =
+      if opts[:annotate] do
+        [
+          Vl.new()
+          |> Vl.mark(:text)
+          |> encode_field(:x, x, opts, type: :nominal)
+          |> encode_field(:y, y, opts, type: :nominal)
+          |> z_fn.(:text)
+        ]
+      else
+        []
+      end
+
     plotdata
-    |> new(spec_opts)
-    |> Vl.mark(mark, mark_opts)
-    |> encode_field(:x, x, opts, type: :nominal)
-    |> encode_field(:y, y, opts, type: :nominal)
-    |> z_fn.()
+    |> new(spec_opts ++ [tucan: [multilayer: true]])
+    |> layers(base_layer ++ text_layer)
   end
 
   density_heatmap_opts = [

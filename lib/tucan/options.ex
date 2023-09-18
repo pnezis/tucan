@@ -157,6 +157,14 @@ defmodule Tucan.Options do
       default: [],
       section: :encodings
     ],
+    text: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:text` encoding.
+      """,
+      default: [],
+      section: :encodings
+    ],
 
     # Interactivity options
     tooltip: [

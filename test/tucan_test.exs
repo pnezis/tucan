@@ -59,8 +59,15 @@ defmodule TucanTest do
       for {name, plot_function} <- context.plot_functions do
         vl = plot_function.(tooltip: true)
 
-        assert get_in(vl.spec, ["mark", "tooltip"]) == true,
-               "tooltip not set for #{inspect(name)}"
+        if Map.has_key?(vl.spec, "layer") do
+          for layer <- vl.spec["layer"] do
+            assert get_in(layer, ["mark", "tooltip"]) == true,
+                   "tooltip not set for layer of #{inspect(name)}"
+          end
+        else
+          assert get_in(vl.spec, ["mark", "tooltip"]) == true,
+                 "tooltip not set for #{inspect(name)}"
+        end
       end
     end
   end
@@ -127,7 +134,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower") == expected
+      assert_plot(Tucan.histogram(@cars_dataset, "Horsepower"), expected)
     end
 
     test "with relative set to true" do
@@ -157,7 +164,7 @@ defmodule TucanTest do
           axis: [format: ".1~%"]
         )
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower", relative: true) == expected
+      assert_plot(Tucan.histogram(@cars_dataset, "Horsepower", relative: true), expected)
     end
 
     test "with custom bin options" do
@@ -178,8 +185,10 @@ defmodule TucanTest do
         |> Vl.encode_field(:x2, "bin_Horsepower_end")
         |> Vl.encode_field(:y, "count_Horsepower", stack: nil, type: :quantitative)
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower", extent: [10, 100], maxbins: 30) ==
-               expected
+      assert_plot(
+        Tucan.histogram(@cars_dataset, "Horsepower", extent: [10, 100], maxbins: 30),
+        expected
+      )
     end
 
     test "with orient set to :vertical" do
@@ -196,7 +205,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y2, "bin_Horsepower_end")
         |> Vl.encode_field(:x, "count_Horsepower", stack: nil, type: :quantitative)
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower", orient: :vertical) == expected
+      assert_plot(Tucan.histogram(@cars_dataset, "Horsepower", orient: :vertical), expected)
     end
 
     test "with groupby and relative" do
@@ -227,8 +236,10 @@ defmodule TucanTest do
         )
         |> Vl.encode_field(:color, "Origin")
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower", relative: true, color_by: "Origin") ==
-               expected
+      assert_plot(
+        Tucan.histogram(@cars_dataset, "Horsepower", relative: true, color_by: "Origin"),
+        expected
+      )
     end
 
     test "with stacked set to true" do
@@ -259,12 +270,14 @@ defmodule TucanTest do
         )
         |> Vl.encode_field(:color, "Origin")
 
-      assert Tucan.histogram(@cars_dataset, "Horsepower",
-               relative: true,
-               color_by: "Origin",
-               stacked: true
-             ) ==
-               expected
+      assert_plot(
+        Tucan.histogram(@cars_dataset, "Horsepower",
+          relative: true,
+          color_by: "Origin",
+          stacked: true
+        ),
+        expected
+      )
     end
   end
 
@@ -866,59 +879,106 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean)
+        ])
 
-      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill") ==
-               expected
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill"),
+        expected
+      )
     end
 
     test "with color scheme set" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode_field(:color, "total_bill",
-          type: :quantitative,
-          aggregate: :mean,
-          scale: [scheme: :redyellowblue, reverse: true]
-        )
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill",
+            type: :quantitative,
+            aggregate: :mean,
+            scale: [scheme: :redyellowblue, reverse: true]
+          )
+        ])
 
-      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
-               color_scheme: :redyellowblue,
-               color: [scale: [reverse: true]]
-             ) ==
-               expected
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+          color_scheme: :redyellowblue,
+          color: [scale: [reverse: true]]
+        ),
+        expected
+      )
     end
 
     test "with nil color option" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode(:color, type: :quantitative, aggregate: :count)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode(:color, type: :quantitative, aggregate: :count)
+        ])
 
-      assert Tucan.heatmap(@tips_dataset, "day", "sex", nil) ==
-               expected
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", nil),
+        expected
+      )
     end
 
     test "with different aggregation" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:rect, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :max)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :max)
+        ])
 
-      assert Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill", aggregate: :max) ==
-               expected
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill", aggregate: :max),
+        expected
+      )
+    end
+
+    test "with annotate set" do
+      expected =
+        Vl.new(width: 400)
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean),
+          Vl.new()
+          |> Vl.mark(:text)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:text, "total_bill", type: :quantitative, aggregate: :mean, foo: 1)
+        ])
+
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+          annotate: true,
+          width: 400,
+          text: [foo: 1]
+        ),
+        expected
+      )
     end
   end
 
@@ -927,39 +987,54 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:circle, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :mean)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:circle, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :mean)
+        ])
 
-      assert Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill") ==
-               expected
+      assert_plot(
+        Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill"),
+        expected
+      )
     end
 
     test "with nil size option" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:circle, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode(:size, type: :quantitative, aggregate: :count)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:circle, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode(:size, type: :quantitative, aggregate: :count)
+        ])
 
-      assert Tucan.punchcard(@tips_dataset, "day", "sex", nil) ==
-               expected
+      assert_plot(
+        Tucan.punchcard(@tips_dataset, "day", "sex", nil),
+        expected
+      )
     end
 
     test "with different aggregation" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@tips_dataset)
-        |> Vl.mark(:circle, fill_opacity: 1.0)
-        |> Vl.encode_field(:x, "day", type: :nominal)
-        |> Vl.encode_field(:y, "sex", type: :nominal)
-        |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :max)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:circle, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:size, "total_bill", type: :quantitative, aggregate: :max)
+        ])
 
-      assert Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill", aggregate: :max) ==
-               expected
+      assert_plot(
+        Tucan.punchcard(@tips_dataset, "day", "sex", "total_bill", aggregate: :max),
+        expected
+      )
     end
   end
 
@@ -1881,5 +1956,11 @@ defmodule TucanTest do
       {wrappable_concat, wrappable_concat_expected},
       {nested_concat, nested_concat_expected}
     ]
+  end
+
+  defp assert_plot(plot, expected) do
+    {_, plot} = pop_in(plot.spec["__tucan__"])
+
+    assert plot == expected
   end
 end
