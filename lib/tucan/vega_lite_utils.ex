@@ -1,7 +1,5 @@
 defmodule Tucan.VegaLiteUtils do
-  @moduledoc """
-  Helper low level utilities for interacting with a `VegaLite` struct
-  """
+  @moduledoc false
 
   @doc """
   Gets the encoding options for the given channel.

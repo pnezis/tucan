@@ -85,9 +85,6 @@ defmodule Tucan.MixProject do
         ],
         Datasets: [
           Tucan.Datasets
-        ],
-        Utilities: [
-          Tucan.VegaLiteUtils
         ]
       ],
       extras: [
