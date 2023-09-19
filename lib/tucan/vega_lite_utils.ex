@@ -85,7 +85,7 @@ defmodule Tucan.VegaLiteUtils do
 
   def put_encoding_options(%{} = spec, channel, opts) when is_atom(channel) and is_list(opts) do
     if tucan_multi_layer_plot?(spec) do
-      # TODO: validate layered view
+      validate_layered_view!(spec, "")
       layers = spec["layer"]
 
       layers =
@@ -159,6 +159,25 @@ defmodule Tucan.VegaLiteUtils do
 
   defp validate_single_or_layered_view!(%VegaLite{} = vl, caller) do
     validate_single_view!(vl, caller, @multi_view_only_keys -- [:layer])
+  end
+
+  @doc false
+  @spec validate_layered_view!(vl :: VegaLite.t() | map(), caller :: String.t()) :: :ok
+  def validate_layered_view!(%VegaLite{} = vl, caller) do
+    validate_layered_view!(vl.spec, caller)
+  end
+
+  def validate_layered_view!(spec, caller) do
+    prefix =
+      case caller do
+        "" -> ""
+        caller -> caller <> " "
+      end
+
+    case Map.has_key?(spec, "layer") do
+      true -> :ok
+      false -> raise ArgumentError, "#{prefix}expected a layered view"
+    end
   end
 
   # validates that the channel exists in the encoding options

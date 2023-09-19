@@ -1020,7 +1020,6 @@ defmodule Tucan do
   |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
   ```
   """
-  # TODO: support text layer
   @doc section: :plots
   @spec heatmap(
           plotdata :: plotdata(),

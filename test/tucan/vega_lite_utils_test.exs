@@ -432,4 +432,22 @@ defmodule Tucan.VegaLiteUtilsTest do
       assert VegaLiteUtils.prepend_layers(vl, single_layer) == expected_prepend
     end
   end
+
+  describe "validate_layered_view/2" do
+    test "raises with a non layered plot" do
+      assert_raise ArgumentError, "expected a layered view", fn ->
+        VegaLiteUtils.validate_layered_view!(Vl.new(), "")
+      end
+
+      assert_raise ArgumentError, "caller/2 expected a layered view", fn ->
+        VegaLiteUtils.validate_layered_view!(Vl.new(), "caller/2")
+      end
+    end
+
+    test "with a layered view" do
+      vl = Vl.layers(Vl.new(), [])
+
+      assert VegaLiteUtils.validate_layered_view!(vl, "") == :ok
+    end
+  end
 end
