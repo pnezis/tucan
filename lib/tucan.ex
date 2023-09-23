@@ -1081,7 +1081,8 @@ defmodule Tucan do
     x: [type: :ordinal, time_unit: :date],
     y: [type: :ordinal, time_unit: :month]
   )
-  |> Tucan.color_by("temp_max", aggregate: :mean)
+  # we need to set recursive to true since this is a layered plot
+  |> Tucan.color_by("temp_max", aggregate: :mean, recursive: true)
   |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
   |> Tucan.Axes.set_x_title("Day")
   |> Tucan.Axes.set_y_title("Month")
