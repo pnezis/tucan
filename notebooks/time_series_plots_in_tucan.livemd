@@ -64,7 +64,7 @@ max_temp_scatter
 
 To track seasonal patterns, let's aggregate the temporal dimension around the `monthdate` time unit, which is sensitive to month and date but not year—and can be useful for binning time values to look at seasonal patterns.
 
-Let's also specifically format the _x-axis_ date format to print out the abbreviated month name. See [Vega-Lite's text format documentation](https://vega.github.io/vega-lite/docs/format.html) for more details. We will use the `Tucan.put_axis_options/3` helper which can set any option on the given axis.
+Let's also specifically format the _x-axis_ date format to print out the abbreviated month name. See [Vega-Lite's text format documentation](https://vega.github.io/vega-lite/docs/format.html) for more details. We will use the `Tucan.Axes.put_options/3` helper which can set any option on the given axis.
 
 Also notice that the `:y` option (like all encoding options) can be used to set any arbitrary option to the `y` encoding channel.
 
@@ -314,10 +314,10 @@ avg_temperature =
 
 ### Adding annotations for daily max average
 
-We can add in an average line using `Tucan.hline/3`. We can add a line either on a specific _y-axis_ point or on a calculated point.
+We can add in an average line using `Tucan.hruler/3`. We can add a line either on a specific _y-axis_ point or on a calculated point.
 
 ```elixir
-Tucan.hline(avg_temperature, "temp_max", line_color: "red")
+Tucan.hruler(avg_temperature, "temp_max", line_color: "red")
 ```
 
 ### Lines by weather type

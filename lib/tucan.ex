@@ -2826,7 +2826,7 @@ defmodule Tucan do
   @line_schema Tucan.Options.to_nimble_schema!(@line_opts)
 
   @doc """
-  Adds a vertical or horizontal line at the given position.
+  Adds a vertical or horizontal ruler at the given position.
 
   `position` can either be a number representing a coordinate of the _x/y-axis_ or a
   binary representing a field. In the latter case an aggregation can also
@@ -2836,7 +2836,7 @@ defmodule Tucan do
   `axis` specifies the orientation of the line. Use `:x` for a vertical
   line and `:y` for a horizontal one.
 
-  See also `vline/3`, `hline/3`.
+  See also `vruler/3`, `hruler/3`.
 
   ## Options
 
@@ -2844,12 +2844,12 @@ defmodule Tucan do
 
   ## Examples
 
-  You can add a vertical line to any _x-axis_ point:
+  You can add a vertical ruler to any _x-axis_ point:
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
-  |> Tucan.line(:x, 1.1, stroke_width: 3, line_color: "blue")
-  |> Tucan.line(:x, 1.4, line_color: "green")
+  |> Tucan.ruler(:x, 1.1, stroke_width: 3, line_color: "blue")
+  |> Tucan.ruler(:x, 1.4, line_color: "green")
   ```
 
   Additionally you can can add a vertical line to an aggregated value of
@@ -2857,7 +2857,7 @@ defmodule Tucan do
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
-  |> Tucan.line(:x, "petal_width", line_color: "red")
+  |> Tucan.ruler(:x, "petal_width", line_color: "red")
   ```
 
   You can add multiple lines for each group of the data if you pass the
@@ -2866,28 +2866,28 @@ defmodule Tucan do
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
-  |> Tucan.line(:x, "petal_width", color_by: "species", stroke_width: 3)
-  |> Tucan.line(:y, "petal_length", color_by: "species")
+  |> Tucan.ruler(:x, "petal_width", color_by: "species", stroke_width: 3)
+  |> Tucan.ruler(:y, "petal_length", color_by: "species")
   ```
   """
   @doc section: :utilities
-  @spec line(
+  @spec ruler(
           vl :: VegaLite.t(),
           axis :: :x | :y,
           position :: number() | binary(),
           opts :: keyword()
         ) :: VegaLite.t()
-  def line(vl, axis, position, opts) when axis in [:x, :y] do
+  def ruler(vl, axis, position, opts) when axis in [:x, :y] do
     opts = NimbleOptions.validate!(opts, @line_schema)
 
     mark_opts =
       take_options(opts, @line_opts, :mark)
       |> Keyword.merge(color: opts[:line_color])
 
-    line =
+    ruler =
       Vl.new()
       |> Vl.mark(:rule, mark_opts)
-      |> encode_line(axis, position, opts)
+      |> encode_ruler(axis, position, opts)
       |> maybe_encode_field(
         :color,
         fn -> opts[:color_by] != nil and is_binary(position) end,
@@ -2896,7 +2896,7 @@ defmodule Tucan do
         []
       )
 
-    VegaLiteUtils.append_layers(vl, line)
+    VegaLiteUtils.append_layers(vl, ruler)
   end
 
   @doc """
@@ -2905,10 +2905,10 @@ defmodule Tucan do
   For supported options check `line/4`.
   """
   @doc section: :utilities
-  @spec vline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+  @spec vruler(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
           VegaLite.t()
-  def vline(vl, x, opts \\ []) do
-    line(vl, :x, x, opts)
+  def vruler(vl, x, opts \\ []) do
+    ruler(vl, :x, x, opts)
   end
 
   @doc """
@@ -2917,16 +2917,16 @@ defmodule Tucan do
   For supported options check `line/4`.
   """
   @doc section: :utilities
-  @spec hline(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+  @spec hruler(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
           VegaLite.t()
-  def hline(vl, y, opts \\ []) do
-    line(vl, :y, y, opts)
+  def hruler(vl, y, opts \\ []) do
+    ruler(vl, :y, y, opts)
   end
 
-  defp encode_line(vl, channel, number, _opts) when is_number(number),
+  defp encode_ruler(vl, channel, number, _opts) when is_number(number),
     do: Vl.encode(vl, channel, datum: number)
 
-  defp encode_line(vl, channel, field, opts) when is_binary(field) do
+  defp encode_ruler(vl, channel, field, opts) when is_binary(field) do
     Vl.encode_field(vl, channel, field, type: :quantitative, aggregate: opts[:aggregate])
   end
 

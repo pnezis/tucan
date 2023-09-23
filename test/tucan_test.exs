@@ -1714,7 +1714,7 @@ defmodule TucanTest do
     end
   end
 
-  describe "line, hline, vline" do
+  describe "ruler, hruler, vruler" do
     test "adds a line to the given numerical position" do
       base_plot =
         Vl.new()
@@ -1733,10 +1733,10 @@ defmodule TucanTest do
           |> Vl.encode(:y, datum: 5)
         ])
 
-      assert Tucan.hline(plot, 5) == expected_horizontal
+      assert Tucan.hruler(plot, 5) == expected_horizontal
 
       # color_by is ignored
-      assert Tucan.hline(plot, 5, color_by: "z") == expected_horizontal
+      assert Tucan.hruler(plot, 5, color_by: "z") == expected_horizontal
 
       expected_vertical =
         Vl.new()
@@ -1748,10 +1748,10 @@ defmodule TucanTest do
           |> Vl.encode(:x, datum: 5)
         ])
 
-      assert Tucan.vline(plot, 5, line_color: "red", stroke_width: 3) == expected_vertical
+      assert Tucan.vruler(plot, 5, line_color: "red", stroke_width: 3) == expected_vertical
 
       # color_by is ignored with number
-      assert Tucan.vline(plot, 5, color_by: "z", line_color: "red", stroke_width: 3) ==
+      assert Tucan.vruler(plot, 5, color_by: "z", line_color: "red", stroke_width: 3) ==
                expected_vertical
     end
 
@@ -1773,7 +1773,7 @@ defmodule TucanTest do
           |> Vl.encode_field(:y, "z", aggregate: :mean, type: :quantitative)
         ])
 
-      assert Tucan.hline(plot, "z") == expected_horizontal
+      assert Tucan.hruler(plot, "z") == expected_horizontal
 
       expected_vertical =
         Vl.new()
@@ -1785,7 +1785,7 @@ defmodule TucanTest do
           |> Vl.encode_field(:x, "z", aggregate: :median, type: :quantitative)
         ])
 
-      assert Tucan.vline(plot, "z", aggregate: :median, line_color: "red", stroke_width: 3) ==
+      assert Tucan.vruler(plot, "z", aggregate: :median, line_color: "red", stroke_width: 3) ==
                expected_vertical
     end
 
@@ -1808,7 +1808,7 @@ defmodule TucanTest do
           |> Vl.encode_field(:color, "r")
         ])
 
-      assert Tucan.hline(plot, "z", color_by: "r") == expected
+      assert Tucan.hruler(plot, "z", color_by: "r") == expected
     end
 
     test "can be used multiple times" do
@@ -1816,9 +1816,9 @@ defmodule TucanTest do
 
       with_lines =
         plot
-        |> Tucan.hline(3)
-        |> Tucan.hline(5)
-        |> Tucan.vline(2)
+        |> Tucan.hruler(3)
+        |> Tucan.hruler(5)
+        |> Tucan.vruler(2)
 
       assert length(with_lines.spec["layer"]) == 4
     end
