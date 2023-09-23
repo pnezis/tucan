@@ -1,8 +1,17 @@
 # Time Series Plots in Tucan
 
 ```elixir
+# Comment this out for running from the path
+# System.put_env("TUCAN_DEV", "true")
+
+tucan_version =
+  case System.get_env("TUCAN_DEV") do
+    nil -> "0.2.0"
+    _other -> [path: Path.expand("..", __DIR__)]
+  end
+
 Mix.install([
-  {:tucan, path: Path.expand("..", __DIR__)},
+  {:tucan, tucan_version},
   {:kino_vega_lite, "~> 0.1.9"}
 ])
 
@@ -206,7 +215,7 @@ Tucan.Scale.set_color_scheme(heatmap, :redyellowblue, reverse: true)
 
 ### Adding in heatmap cells the labels
 
-_Feature not supported yet_
+You can add annotations by setting the `:annotate` option to `true`. This will add a `:text` encoding to the plot which you can configure like all other encodings through the `:text` option.
 
 ```elixir
 Tucan.heatmap(:weather, "date", "date", "temp_max",
@@ -243,7 +252,7 @@ Tucan.punchcard(:weather, "date", "date", "temp_max",
 
 ### Add dual encoding of temp max
 
-We could also set a dual encoding where both **color** and **size** encode the average **temp_max** field.
+We could also set a dual encoding where both **color** and **size** encode the average **temp_max** field. Notice that since this is a layered plot we also need to set `recursive: true` in the `Tucan.color_by/3` call.
 
 ```elixir
 Tucan.punchcard(:weather, "date", "date", "temp_max",
@@ -251,7 +260,7 @@ Tucan.punchcard(:weather, "date", "date", "temp_max",
   y: [time_unit: :month],
   size: [aggregate: :mean]
 )
-|> Tucan.color_by("temp_max", aggregate: :mean)
+|> Tucan.color_by("temp_max", aggregate: :mean, recursive: true)
 |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
 |> Tucan.Axes.set_x_title("Day")
 |> Tucan.Axes.set_y_title("Month")
@@ -284,7 +293,7 @@ Tucan.punchcard(:weather, "date", "date", "precipitation",
   y: [time_unit: :month],
   size: [aggregate: :mean]
 )
-|> Tucan.color_by("temp_max", aggregate: :mean, type: :quantitative)
+|> Tucan.color_by("temp_max", aggregate: :mean, type: :quantitative, recursive: true)
 |> Tucan.Scale.set_color_scheme(:redyellowblue, reverse: true)
 |> Tucan.Axes.set_x_title("Day")
 |> Tucan.Axes.set_y_title("Month")
