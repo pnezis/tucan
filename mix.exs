@@ -38,10 +38,10 @@ defmodule Tucan.MixProject do
   defp deps do
     [
       {:nimble_options, "~> 1.0"},
-      {:vega_lite, "~> 0.1.7"},
+      {:vega_lite, "~> 0.1.8"},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:fancy_fences, "~> 0.2", only: :dev, runtime: false}
+      {:fancy_fences, "~> 0.3.0", only: :dev, runtime: false}
     ] ++ dev_deps()
   end
 
