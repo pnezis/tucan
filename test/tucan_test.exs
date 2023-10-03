@@ -370,12 +370,16 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 1.0, point: true)
+        |> Vl.mark(:line, fill_opacity: 1.0, point: [color: :red])
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")
 
-      assert Tucan.lineplot(@stocks_dataset, "date", "price", color_by: "symbol", points: true) ==
+      assert Tucan.lineplot(@stocks_dataset, "date", "price",
+               color_by: "symbol",
+               points: true,
+               point_color: "red"
+             ) ==
                expected
     end
 
@@ -400,7 +404,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:line, fill_opacity: 1.0, point: true, interpolate: "step")
+        |> Vl.mark(:line, fill_opacity: 1.0, point: [], interpolate: "step")
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative)
         |> Vl.encode_field(:color, "symbol")

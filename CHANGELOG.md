@@ -3,6 +3,10 @@
 ## [UNRELEASED]
 
 
+### Added plot options
+
+- Support `:point_color` in `Tucan.lineplot/4`
+
 ## [v0.2.0](https://github.com/pnezis/tucan/tree/v0.2.0) (2023-09-23)
 
 ### Added

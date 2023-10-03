@@ -1752,6 +1752,11 @@ defmodule Tucan do
       default: false,
       section: :style
     ],
+    point_color: [
+      type: :string,
+      doc: "The color of the points, if `:points` is set to `true`.",
+      section: :style
+    ],
     filled: [
       type: :boolean,
       doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
@@ -1890,11 +1895,12 @@ defmodule Tucan do
   defp maybe_add_point_opts(mark_opts, true, opts) do
     point_opts =
       case opts[:filled] do
-        true -> [point: true]
-        false -> [point: [filled: false, fill: "white"]]
+        true -> []
+        false -> [filled: false, fill: "white"]
       end
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
 
-    Keyword.merge(mark_opts, point_opts)
+    Keyword.merge(mark_opts, point: point_opts)
   end
 
   @doc """
