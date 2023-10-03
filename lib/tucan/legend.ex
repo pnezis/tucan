@@ -2,7 +2,7 @@ defmodule Tucan.Legend do
   @moduledoc """
   Helper utilities for configuring the plot legend.
   """
-  alias Tucan.VegaLiteUtils
+  alias Tucan.Utils
 
   @legend_channels [:color, :size, :shape]
 
@@ -69,7 +69,7 @@ defmodule Tucan.Legend do
     if enabled do
       vl
     else
-      VegaLiteUtils.put_encoding_options(vl, channel, legend: nil)
+      Utils.put_encoding_options(vl, channel, legend: nil)
     end
   end
 
@@ -95,7 +95,7 @@ defmodule Tucan.Legend do
   defp put_legend_options(vl, channel, opts, caller) do
     validate_inclusion!(channel, @legend_channels, "#{caller}: invalid legend channel")
 
-    VegaLiteUtils.put_encoding_options(vl, channel, legend: opts)
+    Utils.put_encoding_options(vl, channel, legend: opts)
   end
 
   defp validate_inclusion!(value, allowed, message) do

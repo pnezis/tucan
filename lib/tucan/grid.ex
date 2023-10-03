@@ -23,15 +23,15 @@ defmodule Tucan.Grid do
   def set_enabled(vl, enabled) when is_struct(vl, VegaLite) and is_boolean(enabled) do
     vl
     |> if_encoding(:x, fn vl ->
-      Tucan.VegaLiteUtils.put_encoding_options(vl, :x, axis: [grid: enabled])
+      Tucan.Utils.put_encoding_options(vl, :x, axis: [grid: enabled])
     end)
     |> if_encoding(:y, fn vl ->
-      Tucan.VegaLiteUtils.put_encoding_options(vl, :y, axis: [grid: enabled])
+      Tucan.Utils.put_encoding_options(vl, :y, axis: [grid: enabled])
     end)
   end
 
   defp if_encoding(vl, channel, fun) do
-    if Tucan.VegaLiteUtils.has_encoding?(vl, channel) do
+    if Tucan.Utils.has_encoding?(vl, channel) do
       fun.(vl)
     else
       vl
@@ -55,7 +55,7 @@ defmodule Tucan.Grid do
   @spec set_enabled(vl :: VegaLite.t(), channel :: atom(), enabled :: boolean()) ::
           VegaLite.t()
   def set_enabled(vl, channel, enabled) do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid: enabled])
+    Tucan.Utils.put_encoding_options(vl, channel, axis: [grid: enabled])
   end
 
   @doc """
@@ -77,7 +77,7 @@ defmodule Tucan.Grid do
           VegaLite.t()
   def set_color(vl, channel, color)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_binary(color) do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_color: color])
+    Tucan.Utils.put_encoding_options(vl, channel, axis: [grid_color: color])
   end
 
   @doc """
@@ -107,7 +107,7 @@ defmodule Tucan.Grid do
   def set_opacity(vl, channel, opacity)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_number(opacity) and opacity >= 0 and
              opacity <= 1 do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_opacity: opacity])
+    Tucan.Utils.put_encoding_options(vl, channel, axis: [grid_opacity: opacity])
   end
 
   @doc """
@@ -121,7 +121,7 @@ defmodule Tucan.Grid do
           VegaLite.t()
   def set_width(vl, channel, width)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_integer(width) and width > 0 do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_width: width])
+    Tucan.Utils.put_encoding_options(vl, channel, axis: [grid_width: width])
   end
 
   @doc """
@@ -151,6 +151,6 @@ defmodule Tucan.Grid do
   def set_dash_style(vl, channel, stroke, space)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_integer(stroke) and stroke > 0 and
              is_integer(space) and space > 0 do
-    Tucan.VegaLiteUtils.put_encoding_options(vl, channel, axis: [grid_dash: [stroke, space]])
+    Tucan.Utils.put_encoding_options(vl, channel, axis: [grid_dash: [stroke, space]])
   end
 end

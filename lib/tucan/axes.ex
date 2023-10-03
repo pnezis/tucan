@@ -2,7 +2,7 @@ defmodule Tucan.Axes do
   @moduledoc """
   Utilities for configuring plot axes.
   """
-  alias Tucan.VegaLiteUtils
+  alias Tucan.Utils
 
   @type axis :: :x | :y
 
@@ -52,6 +52,6 @@ defmodule Tucan.Axes do
   @spec put_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
           VegaLite.t()
   def put_options(vl, encoding, options) do
-    VegaLiteUtils.put_encoding_options(vl, encoding, axis: options)
+    Utils.put_encoding_options(vl, encoding, axis: options)
   end
 end

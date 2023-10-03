@@ -116,7 +116,7 @@ defmodule Tucan do
   )
   ```
   """
-  alias Tucan.VegaLiteUtils
+  alias Tucan.Utils
   alias VegaLite, as: Vl
 
   @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
@@ -168,7 +168,7 @@ defmodule Tucan do
 
     case tucan_opts do
       nil -> Vl.new(opts)
-      tucan_opts -> Vl.new(opts) |> VegaLiteUtils.put_in_spec("__tucan__", tucan_opts)
+      tucan_opts -> Vl.new(opts) |> Utils.put_in_spec("__tucan__", tucan_opts)
     end
   end
 
@@ -2701,11 +2701,11 @@ defmodule Tucan do
     case group_opts[:recursive] do
       true ->
         apply_recursively(vl, fn spec ->
-          VegaLiteUtils.encode_field_raw(spec, encoding, field, opts)
+          Utils.encode_field_raw(spec, encoding, field, opts)
         end)
 
       _ ->
-        VegaLiteUtils.validate_single_view!(vl, "#{encoding}_by", [
+        Utils.validate_single_view!(vl, "#{encoding}_by", [
           :layers,
           :concat,
           :vconcat,
@@ -2903,7 +2903,7 @@ defmodule Tucan do
         []
       )
 
-    VegaLiteUtils.append_layers(vl, ruler)
+    Utils.append_layers(vl, ruler)
   end
 
   @doc """
@@ -2991,7 +2991,7 @@ defmodule Tucan do
   def flip_axes(vl) when is_struct(vl, VegaLite) do
     axis_pairs = [{:x, :y}, {:x2, :y2}, {:x_offset, :y_offset}]
 
-    new_vl = VegaLiteUtils.drop_encoding_channels(vl, [:x, :y, :x2, :y2, :x_offset, :y_offset])
+    new_vl = Utils.drop_encoding_channels(vl, [:x, :y, :x2, :y2, :x_offset, :y_offset])
 
     Enum.reduce(axis_pairs, new_vl, fn {left, right}, new_vl ->
       new_vl
@@ -3018,13 +3018,13 @@ defmodule Tucan do
 
   # copies to left channel, the right channel options from the vl_origin specification
   defp copy_encoding(vl, left, right, vl_origin) do
-    case VegaLiteUtils.has_encoding?(vl_origin, left) do
+    case Utils.has_encoding?(vl_origin, left) do
       false ->
         vl
 
       true ->
-        opts = VegaLiteUtils.encoding_options(vl_origin, left) || []
-        VegaLiteUtils.encode_raw(vl, right, opts)
+        opts = Utils.encoding_options(vl_origin, left) || []
+        Utils.encode_raw(vl, right, opts)
     end
   end
 
@@ -3087,7 +3087,7 @@ defmodule Tucan do
       when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
     title_opts = Keyword.merge(opts, text: title)
 
-    VegaLiteUtils.put_in_spec(vl, :title, title_opts)
+    Utils.put_in_spec(vl, :title, title_opts)
   end
 
   @doc """

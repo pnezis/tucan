@@ -1,4 +1,4 @@
-defmodule Tucan.VegaLiteUtils do
+defmodule Tucan.Utils do
   @moduledoc false
 
   @doc """
@@ -22,7 +22,7 @@ defmodule Tucan.VegaLiteUtils do
 
       iex> VegaLite.new()
       ...> |> VegaLite.encode_field(:x, "x", foo: "bar")
-      ...> |> Tucan.VegaLiteUtils.encoding_options(:x)
+      ...> |> Tucan.Utils.encoding_options(:x)
       %{"field" => "x", "foo" => "bar"}
   """
   @spec encoding_options(vl :: VegaLite.t(), channel :: atom()) :: map() | nil
@@ -41,10 +41,10 @@ defmodule Tucan.VegaLiteUtils do
 
   ## Examples
 
-      iex> Tucan.VegaLiteUtils.has_encoding?(VegaLite.new(), :x)
+      iex> Tucan.Utils.has_encoding?(VegaLite.new(), :x)
       false
 
-      iex> Tucan.VegaLiteUtils.has_encoding?(VegaLite.encode_field(VegaLite.new(), :x, "x"), :x)
+      iex> Tucan.Utils.has_encoding?(VegaLite.encode_field(VegaLite.new(), :x, "x"), :x)
       true
   """
   @spec has_encoding?(vl :: VegaLite.t() | map(), channel :: atom()) :: boolean()

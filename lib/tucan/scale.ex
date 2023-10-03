@@ -58,7 +58,7 @@ defmodule Tucan.Scale do
   the color scheme, the domain or the scale type.
   """
 
-  alias Tucan.VegaLiteUtils
+  alias Tucan.Utils
 
   @type color_scheme :: atom() | [binary()]
 
@@ -310,7 +310,7 @@ defmodule Tucan.Scale do
 
     channel_type =
       vl
-      |> VegaLiteUtils.encoding_options!(channel)
+      |> Utils.encoding_options!(channel)
       |> Map.get("type")
       |> String.to_atom()
 
@@ -388,6 +388,6 @@ defmodule Tucan.Scale do
   @spec put_options(vl :: VegaLite.t(), encoding :: atom(), options :: keyword()) ::
           VegaLite.t()
   def put_options(vl, encoding, options) do
-    VegaLiteUtils.put_encoding_options(vl, encoding, scale: options)
+    Utils.put_encoding_options(vl, encoding, scale: options)
   end
 end
