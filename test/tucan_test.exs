@@ -79,6 +79,7 @@ defmodule TucanTest do
         |> Vl.data_from_url(@iris_dataset)
 
       assert Tucan.new(:iris) == expected
+      assert Tucan.new(:iris, only: [:petal_width]) == expected
     end
 
     test "a binary is treated as url" do
@@ -92,13 +93,22 @@ defmodule TucanTest do
     end
 
     test "with data" do
-      data = [%{a: 1}, %{a: 2}, %{a: 3}]
+      data = [%{a: 1, b: 1}, %{a: 2, b: 1}, %{a: 3, b: 1}]
 
       expected =
         Vl.new()
         |> Vl.data_from_values(data)
 
       assert Tucan.new(data) == expected
+      refute Tucan.new(data, only: [:a]) == expected
+
+      data_only_a = Enum.map(data, &Map.take(&1, [:a]))
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data_only_a)
+
+      assert Tucan.new(data, only: [:a]) == expected
     end
 
     test "with vega plot" do

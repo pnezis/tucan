@@ -15,6 +15,9 @@ defmodule Tucan.Options do
     grouping: [
       header: "Data Grouping Options"
     ],
+    data: [
+      header: "Data Options"
+    ],
     style: [
       header: "Styling Options"
     ],
@@ -55,6 +58,15 @@ defmodule Tucan.Options do
       type: :string,
       doc: "The title of the graph",
       section: :style,
+      dest: :spec
+    ],
+    only: [
+      type: {:list, {:or, [:string, :atom]}},
+      doc: """
+      A subset of fields to pick from the data. Applicable only if tabular data
+      are provided.
+      """,
+      section: :data,
       dest: :spec
     ],
 

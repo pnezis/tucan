@@ -152,15 +152,20 @@ defmodule Tucan do
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
   defp to_vega_plot(dataset, opts) when is_binary(dataset) do
+    # TODO: maybe raise if set
+    opts = Keyword.drop(opts, [:only])
+
     opts
     |> new_tucan_plot()
     |> Vl.data_from_url(dataset)
   end
 
   defp to_vega_plot(data, opts) do
-    opts
+    {data_opts, spec_opts} = Keyword.split(opts, [:only])
+
+    spec_opts
     |> new_tucan_plot()
-    |> Vl.data_from_values(data)
+    |> Vl.data_from_values(data, data_opts)
   end
 
   defp new_tucan_plot(opts) do
@@ -175,7 +180,7 @@ defmodule Tucan do
   ## Plots
 
   # global_opts should be applicable in all plot types
-  @global_opts [:width, :height, :title]
+  @global_opts [:width, :height, :title, :only]
   @global_mark_opts [:clip, :fill_opacity, :tooltip]
 
   histogram_opts = [
