@@ -5,13 +5,13 @@ defmodule Tucan.AxesTest do
 
   describe "set_title and friends" do
     test "raises if the encoding does not exist" do
-      vl = Vl.new()
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
 
-      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+      assert_raise ArgumentError, ~r"expects a single view", fn ->
         Tucan.Axes.set_x_title(vl, "title")
       end
 
-      assert_raise ArgumentError, "encoding for channel :y not found in the spec", fn ->
+      assert_raise ArgumentError, ~r"expects a single view", fn ->
         Tucan.Axes.set_y_title(vl, "title")
       end
     end
@@ -41,10 +41,10 @@ defmodule Tucan.AxesTest do
   end
 
   describe "put_options/3" do
-    test "raises if encoding does not exist" do
-      vl = Vl.new()
+    test "raises for multi view plots" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
 
-      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
+      assert_raise ArgumentError, ~r"expects a single view spec", fn ->
         Tucan.Axes.put_options(vl, :x, title: "hello")
       end
     end

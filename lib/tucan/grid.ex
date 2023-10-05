@@ -22,20 +22,8 @@ defmodule Tucan.Grid do
   @spec set_enabled(vl :: VegaLite.t(), enabled :: boolean()) :: VegaLite.t()
   def set_enabled(vl, enabled) when is_struct(vl, VegaLite) and is_boolean(enabled) do
     vl
-    |> if_encoding(:x, fn vl ->
-      Tucan.Utils.put_encoding_options(vl, :x, axis: [grid: enabled])
-    end)
-    |> if_encoding(:y, fn vl ->
-      Tucan.Utils.put_encoding_options(vl, :y, axis: [grid: enabled])
-    end)
-  end
-
-  defp if_encoding(vl, channel, fun) do
-    if Tucan.Utils.has_encoding?(vl, channel) do
-      fun.(vl)
-    else
-      vl
-    end
+    |> Tucan.Utils.put_encoding_options(:x, axis: [grid: enabled])
+    |> Tucan.Utils.put_encoding_options(:y, axis: [grid: enabled])
   end
 
   @doc """

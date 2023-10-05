@@ -3,7 +3,7 @@ defmodule Tucan.GridTest do
 
   alias VegaLite, as: Vl
 
-  test "all channel functions raise if channel is not encoded" do
+  test "all channel functions raise if non single view plot" do
     functions = [
       fn vl -> Tucan.Grid.set_color(vl, :x, "red") end,
       fn vl -> Tucan.Grid.set_dash_style(vl, :x, 2, 3) end,
@@ -12,7 +12,7 @@ defmodule Tucan.GridTest do
       fn vl -> Tucan.Grid.set_width(vl, :x, 1) end
     ]
 
-    vl = Vl.new()
+    vl = Vl.new() |> Vl.concat([Vl.new(), Vl.new()], :horizontal)
 
     for fun <- functions do
       assert_raise ArgumentError, fn -> fun.(vl) end

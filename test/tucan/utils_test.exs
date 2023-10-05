@@ -74,11 +74,7 @@ defmodule Tucan.UtilsTest do
     end
 
     test "with missing encoding channel" do
-      assert_raise ArgumentError,
-                   "encoding for channel :x not found in the spec",
-                   fn ->
-                     Utils.put_encoding_options(Vl.new(), :x, foo: "bar")
-                   end
+      assert Utils.put_encoding_options(Vl.new(), :x, foo: "bar") == Vl.new()
     end
 
     test "merges options" do
@@ -133,10 +129,6 @@ defmodule Tucan.UtilsTest do
           Vl.new() |> Vl.encode_field(:y, "y")
         ])
 
-      assert_raise ArgumentError, fn -> Utils.put_encoding_options(vl, :x, foo: 1) end
-
-      vl_multi_layer = Utils.put_in_spec(vl, "__tucan__", multilayer: true)
-
       expected =
         Vl.new()
         |> Vl.layers([
@@ -144,9 +136,8 @@ defmodule Tucan.UtilsTest do
           Vl.new() |> Vl.encode_field(:x, "x2", foo: 1),
           Vl.new() |> Vl.encode_field(:y, "y")
         ])
-        |> Utils.put_in_spec("__tucan__", multilayer: true)
 
-      assert Utils.put_encoding_options(vl_multi_layer, :x, foo: 1) == expected
+      assert Utils.put_encoding_options(vl, :x, foo: 1) == expected
     end
   end
 

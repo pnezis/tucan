@@ -4,14 +4,10 @@ defmodule Tucan.LegendTest do
   alias VegaLite, as: Vl
 
   describe "set_title/4" do
-    test "raises if the encoding does not exist or is invalid" do
+    test "raises if the encoding is invalid" do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x")
-
-      assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Legend.set_title(vl, :color, "title")
-      end
 
       assert_raise ArgumentError,
                    "set_title/4: invalid legend channel, allowed: [:color, :size, :shape], got: :x",
@@ -54,14 +50,10 @@ defmodule Tucan.LegendTest do
   end
 
   describe "set_orientation/4" do
-    test "raises if the encoding does not exist or is invalid" do
+    test "raises if the encoding is invalid" do
       vl =
         Vl.new()
         |> Vl.encode_field(:shape, "x")
-
-      assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Legend.set_orientation(vl, :color, "bottom")
-      end
 
       assert_raise ArgumentError,
                    "set_orientation/3: invalid legend channel, allowed: [:color, :size, :shape], got: :x",
@@ -95,14 +87,10 @@ defmodule Tucan.LegendTest do
   end
 
   describe "put_options/3" do
-    test "raises if the encoding does not exist or is invalid" do
+    test "raises if the encoding is invalid" do
       vl =
         Vl.new()
         |> Vl.encode_field(:shape, "x")
-
-      assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Legend.put_options(vl, :color, foo: 1)
-      end
 
       assert_raise ArgumentError,
                    "put_legend_options/3: invalid legend channel, allowed: [:color, :size, :shape], got: :x",

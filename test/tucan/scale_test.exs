@@ -49,12 +49,6 @@ defmodule Tucan.ScaleTest do
                      |> Tucan.Scale.set_color_scheme(:other)
                    end
     end
-
-    test "raises if no color encoding" do
-      assert_raise ArgumentError, "encoding for channel :color not found in the spec", fn ->
-        Tucan.Scale.set_color_scheme(Vl.new(), :blues)
-      end
-    end
   end
 
   test "schemes docs" do
@@ -154,18 +148,6 @@ defmodule Tucan.ScaleTest do
   end
 
   describe "set_domain" do
-    test "raises if encoding does not exist" do
-      vl = Vl.new()
-
-      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
-        Tucan.Scale.set_x_domain(vl, 1, 5)
-      end
-
-      assert_raise ArgumentError, "encoding for channel :y not found in the spec", fn ->
-        Tucan.Scale.set_y_domain(vl, 1, 5)
-      end
-    end
-
     test "raises if min >= max for x,y domain helpers" do
       vl = Vl.new()
 
@@ -189,9 +171,11 @@ defmodule Tucan.ScaleTest do
         |> Vl.encode_field(:y, "y", type: :quantitative)
         |> Tucan.Scale.set_x_domain(1, 10)
         |> Tucan.Scale.set_y_domain(-1.12, 2.33)
+        |> Tucan.Scale.set_domain(:color, [-1.12, 2.33])
 
       assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
       assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [-1.12, 2.33]
+      assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == nil
     end
 
     test "set_domain can set arbitrary domains" do
@@ -216,14 +200,6 @@ defmodule Tucan.ScaleTest do
   end
 
   describe "put_options/3" do
-    test "raises if encoding does not exist" do
-      vl = Vl.new()
-
-      assert_raise ArgumentError, "encoding for channel :x not found in the spec", fn ->
-        Tucan.Scale.put_options(vl, :x, domain: [1, 5])
-      end
-    end
-
     test "puts the given options if no scale is set" do
       vl =
         Vl.new()
