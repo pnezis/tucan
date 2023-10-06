@@ -388,6 +388,16 @@ defmodule Tucan do
   end
 
   density_opts = [
+    area_color: [
+      type: :string,
+      doc: "The color of the density area plot",
+      section: :style
+    ],
+    filled: [
+      type: :boolean,
+      doc: "Whether the density plot will be filled or not, default to `true` if not set",
+      section: :style
+    ],
     groupby: [
       type: {:list, :string},
       doc: """
@@ -567,7 +577,18 @@ defmodule Tucan do
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true, color_by: "Species")
   |> Tucan.facet_by(:column, "Species")
   ```
+
+  You can change the color of the plot by setting the `:area_color` option and/or specify if it
+  will be filled or not:
+
+  ```tucan
+  Tucan.hconcat([
+    Tucan.density(:penguins, "Body Mass (g)", area_color: "red"),
+    Tucan.density(:penguins, "Body Mass (g)", filled: false)
+  ])
+  ```
   """
+  # TODO: if filled is set to false we could use a line mark instead
   @doc section: :plots
   @spec density(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
   def density(plotdata, field, opts \\ []) do
@@ -578,6 +599,8 @@ defmodule Tucan do
     mark_opts =
       take_options(opts, @histogram_opts, :mark)
       |> Keyword.merge(orient: :vertical)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:area_color])
+      |> Tucan.Keyword.put_not_nil(:filled, opts[:filled])
 
     transform_opts =
       take_options(opts, @density_opts, :density_transform)

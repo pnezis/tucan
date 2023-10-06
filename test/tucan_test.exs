@@ -782,6 +782,29 @@ defmodule TucanTest do
                expected
     end
 
+    test "with area_color, filled set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25
+        )
+        |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical, color: "green", filled: true)
+        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
+
+      assert Tucan.density(@iris_dataset, "petal_width", area_color: "green", filled: true) ==
+               expected
+    end
+
     test "with orient set to vertical" do
       expected =
         Vl.new()
