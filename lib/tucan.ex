@@ -2943,6 +2943,39 @@ defmodule Tucan do
   end
 
   @doc """
+  Adds a `text` annotation to the given `x, y` position.
+
+  ## Options
+
+  You can pass any of the supported [vega-lite text mark properties](https://vega.github.io/vega-lite/docs/text.html#properties).
+
+  ## Examples
+
+  Multiple annotations on the same plot
+
+  ```tucan
+  Tucan.layers([
+    Tucan.annotate(15, 45, "Dennis", size: 25, font: "Courier New"),
+    Tucan.annotate(40, 35, "José", size: 30, color: :purple, font_weight: :bold),
+    Tucan.annotate(20, 25, "Joe", size: 25, color: :red),
+    Tucan.annotate(30, 15, "Guido", size: 20, color: :blue),
+    Tucan.annotate(5, 5, "James", size: 10, color: :orange, angle: 30)
+  ])
+  |> Tucan.Scale.set_x_domain(0, 50)
+  |> Tucan.Scale.set_y_domain(0, 50)
+  ```
+  """
+  @spec annotate(x :: number(), y :: number(), text :: String.t(), opts :: keyword()) ::
+          VegaLite.t()
+  def annotate(x, y, text, opts \\ []) do
+    Vl.new()
+    |> Vl.data_from_values(%{x: [x], y: [y]})
+    |> Vl.mark(:text, opts ++ [text: text])
+    |> Vl.encode_field(:x, "x", type: :quantitative)
+    |> Vl.encode_field(:y, "y", type: :quantitative)
+  end
+
+  @doc """
   Concatenates horizontally the given plots.
   """
   @doc section: :utilities

@@ -1838,6 +1838,30 @@ defmodule TucanTest do
     end
   end
 
+  describe "annotate/4" do
+    test "with default options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(%{x: [10], y: [10]})
+        |> Vl.mark(:text, text: "Hello")
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+
+      assert Tucan.annotate(10, 10, "Hello") == expected
+    end
+
+    test "with custom options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(%{x: [10], y: [10]})
+        |> Vl.mark(:text, text: "Hello", size: 10, angle: 10, font: "Courier")
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+
+      assert Tucan.annotate(10, 10, "Hello", size: 10, angle: 10, font: "Courier") == expected
+    end
+  end
+
   describe "plot size" do
     test "set_size/3" do
       vl = Tucan.set_size(Vl.new(), 100, 120)
