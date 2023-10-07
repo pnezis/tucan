@@ -2836,7 +2836,7 @@ defmodule Tucan do
 
   ## Utilities functions
 
-  line_opts = [
+  ruler_opts = [
     stroke_width: [
       type: :integer,
       doc: "The stroke width in pixels",
@@ -2846,7 +2846,7 @@ defmodule Tucan do
     ],
     line_color: [
       type: :string,
-      doc: "The color of the line",
+      doc: "The color of the ruler",
       section: :style,
       default: "black"
     ],
@@ -2857,8 +2857,8 @@ defmodule Tucan do
     ]
   ]
 
-  @line_opts Tucan.Options.take!([:color_by, :color], line_opts)
-  @line_schema Tucan.Options.to_nimble_schema!(@line_opts)
+  @ruler_opts Tucan.Options.take!([:color_by, :color], ruler_opts)
+  @ruler_schema Tucan.Options.to_nimble_schema!(@ruler_opts)
 
   @doc """
   Adds a vertical or horizontal ruler at the given position.
@@ -2875,7 +2875,7 @@ defmodule Tucan do
 
   ## Options
 
-  #{Tucan.Options.docs(@line_opts)}
+  #{Tucan.Options.docs(@ruler_opts)}
 
   ## Examples
 
@@ -2913,10 +2913,10 @@ defmodule Tucan do
           opts :: keyword()
         ) :: VegaLite.t()
   def ruler(vl, axis, position, opts) when axis in [:x, :y] do
-    opts = NimbleOptions.validate!(opts, @line_schema)
+    opts = NimbleOptions.validate!(opts, @ruler_schema)
 
     mark_opts =
-      take_options(opts, @line_opts, :mark)
+      take_options(opts, @ruler_opts, :mark)
       |> Keyword.merge(color: opts[:line_color])
 
     ruler =
