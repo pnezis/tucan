@@ -119,8 +119,8 @@ defmodule Tucan do
   alias Tucan.Utils
   alias VegaLite, as: Vl
 
-  @type plotdata :: binary() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
-  @type field :: binary()
+  @type plotdata :: String.t() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
+  @type field :: String.t()
 
   ## Custom guards
 
@@ -308,7 +308,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec histogram(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec histogram(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def histogram(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
@@ -590,7 +590,7 @@ defmodule Tucan do
   """
   # TODO: if filled is set to false we could use a line mark instead
   @doc section: :plots
-  @spec density(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec density(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
@@ -769,7 +769,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec stripplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec stripplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def stripplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
@@ -897,7 +897,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec boxplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec boxplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def boxplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @boxplot_schema)
 
@@ -1051,9 +1051,9 @@ defmodule Tucan do
   @doc section: :plots
   @spec heatmap(
           plotdata :: plotdata(),
-          x :: binary(),
-          y :: binary(),
-          color :: nil | binary(),
+          x :: String.t(),
+          y :: String.t(),
+          color :: nil | String.t(),
           opts :: keyword()
         ) ::
           VegaLite.t()
@@ -1121,9 +1121,9 @@ defmodule Tucan do
   @doc section: :plots
   @spec punchcard(
           plotdata :: plotdata(),
-          x :: binary(),
-          y :: binary(),
-          size :: nil | binary(),
+          x :: String.t(),
+          y :: String.t(),
+          size :: nil | String.t(),
           opts :: keyword()
         ) ::
           VegaLite.t()
@@ -1250,7 +1250,12 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec density_heatmap(plotdata :: plotdata(), x :: binary(), y :: binary(), opts :: keyword()) ::
+  @spec density_heatmap(
+          plotdata :: plotdata(),
+          x :: String.t(),
+          y :: String.t(),
+          opts :: keyword()
+        ) ::
           VegaLite.t()
   def density_heatmap(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_heatmap_schema)
@@ -1384,7 +1389,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec bar(plotdata :: plotdata(), field :: binary(), value :: binary(), opts :: keyword()) ::
+  @spec bar(plotdata :: plotdata(), field :: String.t(), value :: String.t(), opts :: keyword()) ::
           VegaLite.t()
   def bar(plotdata, field, value, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bar_schema)
@@ -1466,7 +1471,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec countplot(plotdata :: plotdata(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec countplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def countplot(plotdata, field, opts \\ []) do
     y_opts =
       Keyword.get(opts, :y, [])
@@ -1665,7 +1670,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec scatter(plotdata :: plotdata(), x :: binary(), y :: binary(), opts :: keyword()) ::
+  @spec scatter(plotdata :: plotdata(), x :: String.t(), y :: String.t(), opts :: keyword()) ::
           VegaLite.t()
   def scatter(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @scatter_schema)
@@ -2215,7 +2220,12 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec pie(plotdata :: plotdata(), field :: binary(), category :: binary(), opts :: keyword()) ::
+  @spec pie(
+          plotdata :: plotdata(),
+          field :: String.t(),
+          category :: String.t(),
+          opts :: keyword()
+        ) ::
           VegaLite.t()
   def pie(plotdata, field, category, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @pie_schema)
@@ -2256,7 +2266,12 @@ defmodule Tucan do
   ```
   """
   @doc section: :plots
-  @spec donut(plotdata :: plotdata(), field :: binary(), category :: binary(), opts :: keyword()) ::
+  @spec donut(
+          plotdata :: plotdata(),
+          field :: String.t(),
+          category :: String.t(),
+          opts :: keyword()
+        ) ::
           VegaLite.t()
   def donut(plotdata, field, category, opts \\ []) do
     opts = Keyword.put_new(opts, :inner_radius, 50)
@@ -2282,7 +2297,7 @@ defmodule Tucan do
       function with the following signature:
 
       ```elixir
-      (vl :: VegaLite.t(), row :: {binary(), integer()}, column :: {binary(), integer()})
+      (vl :: VegaLite.t(), row :: {String.t(), integer()}, column :: {String.t(), integer()})
         :: VegaLite.t() 
       ```
 
@@ -2390,7 +2405,8 @@ defmodule Tucan do
   ```
   """
   @doc section: :composite
-  @spec pairplot(plotdata :: plotdata(), fields :: [binary()], opts :: keyword()) :: VegaLite.t()
+  @spec pairplot(plotdata :: plotdata(), fields :: [String.t()], opts :: keyword()) ::
+          VegaLite.t()
   def pairplot(plotdata, fields, opts \\ []) when is_list(fields) do
     opts = NimbleOptions.validate!(opts, @pairplot_schema)
 
@@ -2658,7 +2674,7 @@ defmodule Tucan do
   will be passed to the underlying encoding.
   """
   @doc section: :grouping
-  @spec color_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec color_by(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def color_by(vl, field, opts \\ []), do: group_by(vl, :color, field, opts)
 
   @doc """
@@ -2672,7 +2688,7 @@ defmodule Tucan do
   will be passed to the underlying encoding.
   """
   @doc section: :grouping
-  @spec shape_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec shape_by(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def shape_by(vl, field, opts \\ []), do: group_by(vl, :shape, field, opts)
 
   @doc """
@@ -2686,7 +2702,7 @@ defmodule Tucan do
   will be passed to the underlying encoding.
   """
   @doc section: :grouping
-  @spec stroke_dash_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec stroke_dash_by(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def stroke_dash_by(vl, field, opts \\ []), do: group_by(vl, :stroke_dash, field, opts)
 
   @doc """
@@ -2700,7 +2716,7 @@ defmodule Tucan do
   will be passed to the underlying encoding.
   """
   @doc section: :grouping
-  @spec fill_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec fill_by(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def fill_by(vl, field, opts \\ []), do: group_by(vl, :fill, field, opts)
 
   @doc """
@@ -2717,7 +2733,7 @@ defmodule Tucan do
   will be passed to the underlying encoding.
   """
   @doc section: :grouping
-  @spec size_by(vl :: VegaLite.t(), field :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec size_by(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def size_by(vl, field, opts \\ []),
     do: group_by(vl, :size, field, [type: :quantitative] ++ opts)
 
@@ -2785,7 +2801,7 @@ defmodule Tucan do
   @spec facet_by(
           vl :: VegaLite.t(),
           faceting_mode :: :row | :column,
-          field :: binary(),
+          field :: String.t(),
           opts :: keyword()
         ) :: VegaLite.t()
   def facet_by(vl, faceting_mode, field, opts \\ [])
@@ -2909,7 +2925,7 @@ defmodule Tucan do
   @spec ruler(
           vl :: VegaLite.t(),
           axis :: :x | :y,
-          position :: number() | binary(),
+          position :: number() | String.t(),
           opts :: keyword()
         ) :: VegaLite.t()
   def ruler(vl, axis, position, opts) when axis in [:x, :y] do
@@ -2940,7 +2956,7 @@ defmodule Tucan do
   For supported options check `line/4`.
   """
   @doc section: :utilities
-  @spec vruler(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+  @spec vruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
           VegaLite.t()
   def vruler(vl, x, opts \\ []) do
     ruler(vl, :x, x, opts)
@@ -2952,7 +2968,7 @@ defmodule Tucan do
   For supported options check `line/4`.
   """
   @doc section: :utilities
-  @spec hruler(vl :: VegaLite.t(), position :: number() | binary(), opts :: keyword()) ::
+  @spec hruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
           VegaLite.t()
   def hruler(vl, y, opts \\ []) do
     ruler(vl, :y, y, opts)
@@ -3143,7 +3159,7 @@ defmodule Tucan do
   ```
   """
   @doc section: :styling
-  @spec set_title(vl :: VegaLite.t(), title :: binary(), opts :: keyword()) :: VegaLite.t()
+  @spec set_title(vl :: VegaLite.t(), title :: String.t(), opts :: keyword()) :: VegaLite.t()
   def set_title(vl, title, opts \\ [])
       when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
     title_opts = Keyword.merge(opts, text: title)

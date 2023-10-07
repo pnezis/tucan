@@ -33,7 +33,7 @@ defmodule Tucan.Themes.Helpers do
   end
 
   @doc false
-  @spec validate_theme(theme :: keyword()) :: {:ok, keyword()} | {:error, binary()}
+  @spec validate_theme(theme :: keyword()) :: {:ok, keyword()} | {:error, String.t()}
   def validate_theme(theme) do
     cond do
       not Keyword.keyword?(theme) ->
@@ -57,7 +57,7 @@ defmodule Tucan.Themes.Helpers do
     do: Keyword.has_key?(theme, :theme) and Keyword.has_key?(theme, :name)
 
   @doc false
-  @spec docs(themes :: keyword(), example :: binary()) :: binary()
+  @spec docs(themes :: keyword(), example :: String.t()) :: String.t()
   def docs(themes, example) do
     themes
     |> Enum.sort()

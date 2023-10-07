@@ -9,7 +9,7 @@ defmodule Tucan.Axes do
   @doc """
   Sets the _x-axis_ and _y-axis_ titles at once.
   """
-  @spec set_xy_titles(vl :: VegaLite.t(), x_title :: binary(), y_title :: binary()) ::
+  @spec set_xy_titles(vl :: VegaLite.t(), x_title :: String.t(), y_title :: String.t()) ::
           VegaLite.t()
   def set_xy_titles(vl, x_title, y_title) do
     vl
@@ -20,7 +20,7 @@ defmodule Tucan.Axes do
   @doc """
   Sets the x axis title.
   """
-  @spec set_x_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
+  @spec set_x_title(vl :: VegaLite.t(), title :: String.t()) :: VegaLite.t()
   def set_x_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     set_title(vl, :x, title)
   end
@@ -28,7 +28,7 @@ defmodule Tucan.Axes do
   @doc """
   Sets the y axis title.
   """
-  @spec set_y_title(vl :: VegaLite.t(), title :: binary()) :: VegaLite.t()
+  @spec set_y_title(vl :: VegaLite.t(), title :: String.t()) :: VegaLite.t()
   def set_y_title(vl, title) when is_struct(vl, VegaLite) and is_binary(title) do
     set_title(vl, :y, title)
   end
@@ -36,7 +36,7 @@ defmodule Tucan.Axes do
   @doc """
   Set the title of the given `axis`.
   """
-  @spec set_title(vl :: VegaLite.t(), axis :: axis(), title :: binary()) :: VegaLite.t()
+  @spec set_title(vl :: VegaLite.t(), axis :: axis(), title :: String.t()) :: VegaLite.t()
   def set_title(vl, axis, title) do
     put_options(vl, axis, title: title)
   end

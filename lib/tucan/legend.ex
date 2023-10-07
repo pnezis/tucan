@@ -24,7 +24,7 @@ defmodule Tucan.Legend do
   @spec set_title(
           vl :: VegaLite.t(),
           channel :: atom(),
-          title :: binary() | nil,
+          title :: String.t() | nil,
           opts :: keyword()
         ) :: VegaLite.t()
   def set_title(vl, channel, title, opts \\ [])
@@ -53,7 +53,7 @@ defmodule Tucan.Legend do
   |> Tucan.Legend.set_orientation(:shape, "top")
   ```
   """
-  @spec set_orientation(vl :: VegaLite.t(), channel :: atom(), orientation :: binary()) ::
+  @spec set_orientation(vl :: VegaLite.t(), channel :: atom(), orientation :: String.t()) ::
           VegaLite.t()
   def set_orientation(vl, channel, orientation)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_binary(orientation) do

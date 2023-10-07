@@ -6,7 +6,7 @@ defmodule Tucan.Docs do
 
   It expects the input to be a `%VegaLite{}` struct.
   """
-  @spec tucan(code :: binary(), opts :: keyword()) :: binary()
+  @spec tucan(code :: String.t(), opts :: keyword()) :: String.t()
   def tucan(code, _opts \\ []) do
     {%VegaLite{} = plot, _} = Code.eval_string(code, [], __ENV__)
 

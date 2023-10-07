@@ -2,7 +2,7 @@ defmodule Tucan.Datasets.Docs do
   @moduledoc false
 
   @doc false
-  @spec docs(datasets :: keyword()) :: binary()
+  @spec docs(datasets :: keyword()) :: String.t()
   def docs(datasets) do
     Enum.map_join(datasets, "\n", &dataset_docs/1)
   end
@@ -202,7 +202,7 @@ defmodule Tucan.Datasets do
 
   Raises an error if the dataset is invalid.
   """
-  @spec dataset(atom()) :: binary()
+  @spec dataset(atom()) :: String.t()
   def dataset(dataset) when is_atom(dataset) do
     case @datasets[dataset] do
       nil ->

@@ -355,7 +355,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  @spec docs(keyword(), keyword()) :: binary()
+  @spec docs(keyword(), keyword()) :: String.t()
   def docs(opts, section_opts \\ @sections) when is_list(opts) do
     opts
     |> Enum.group_by(fn {_key, opts} -> Keyword.get(opts, :section, :unknown) end)
@@ -400,7 +400,7 @@ defmodule Tucan.Options do
 
   @doc false
   @spec number_between(value :: term(), min :: number(), max :: number()) ::
-          {:ok, number()} | {:error, binary()}
+          {:ok, number()} | {:error, String.t()}
   def number_between(value, min, max) do
     if is_number(value) and value >= min and value <= max do
       {:ok, value}
@@ -410,7 +410,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  @spec tooltip(value :: term()) :: {:ok, boolean() | keyword()} | {:error, binary()}
+  @spec tooltip(value :: term()) :: {:ok, boolean() | keyword()} | {:error, String.t()}
   def tooltip(value) do
     cond do
       is_boolean(value) ->
@@ -447,7 +447,7 @@ defmodule Tucan.Options do
   end
 
   @doc false
-  @spec density_alias(value :: term()) :: {:ok, [binary(), ...]} | {:error, String.t()}
+  @spec density_alias(value :: term()) :: {:ok, [String.t(), ...]} | {:error, String.t()}
   def density_alias(alias) do
     if is_binary(alias) do
       {:ok, ["#{alias}_value", "#{alias}_density"]}

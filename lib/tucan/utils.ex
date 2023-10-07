@@ -137,7 +137,8 @@ defmodule Tucan.Utils do
   This is a destructive operation, any existing value for the provided `key` will be
   replaced by `opts`.
   """
-  @spec put_in_spec(vl :: VegaLite.t(), key :: atom() | binary(), opts :: term()) :: VegaLite.t()
+  @spec put_in_spec(vl :: VegaLite.t(), key :: atom() | String.t(), opts :: term()) ::
+          VegaLite.t()
   def put_in_spec(%VegaLite{spec: spec} = vl, key, opts) do
     key = to_vl_key(key)
     opts = to_vl(opts)
@@ -219,8 +220,8 @@ defmodule Tucan.Utils do
   """
   @spec encode_field_raw(
           vl :: VegaLite.t() | map(),
-          channel :: atom() | binary(),
-          field :: binary(),
+          channel :: atom() | String.t(),
+          field :: String.t(),
           opts :: keyword()
         ) :: VegaLite.t() | map()
   def encode_field_raw(vl, channel, field, opts) do
@@ -244,7 +245,7 @@ defmodule Tucan.Utils do
 
   All provided options are converted to channel properties.
   """
-  @spec encode_raw(vl :: VegaLite.t() | map(), channel :: atom() | binary(), opts :: keyword()) ::
+  @spec encode_raw(vl :: VegaLite.t() | map(), channel :: atom() | String.t(), opts :: keyword()) ::
           VegaLite.t() | map()
   def encode_raw(%VegaLite{} = vl, channel, opts) do
     update_in(vl.spec, fn spec -> encode_raw(spec, channel, opts) end)

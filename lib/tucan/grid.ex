@@ -61,7 +61,7 @@ defmodule Tucan.Grid do
   |> Tucan.Grid.set_color(:x, "#2A32F4")
   ```
   """
-  @spec set_color(vl :: VegaLite.t(), channel :: atom(), color :: binary()) ::
+  @spec set_color(vl :: VegaLite.t(), channel :: atom(), color :: String.t()) ::
           VegaLite.t()
   def set_color(vl, channel, color)
       when is_struct(vl, VegaLite) and is_atom(channel) and is_binary(color) do

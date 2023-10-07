@@ -4,7 +4,7 @@ defmodule Tucan.Scale.Utils do
   alias VegaLite, as: Vl
 
   @doc false
-  @spec schemes_doc(schemes :: [atom()]) :: binary()
+  @spec schemes_doc(schemes :: [atom()]) :: String.t()
   def schemes_doc(schemes) do
     """
     ```vega-lite
@@ -60,7 +60,7 @@ defmodule Tucan.Scale do
 
   alias Tucan.Utils
 
-  @type color_scheme :: atom() | [binary()]
+  @type color_scheme :: atom() | [String.t()]
 
   @categorical_schemes [
     :accent,
