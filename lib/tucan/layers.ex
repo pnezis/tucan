@@ -11,8 +11,8 @@ defmodule Tucan.Layers do
 
   Raises if the input `vl` is not a single view or layered specification.
   """
-  @spec prepend_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
-  def prepend_layers(vl, layers), do: add_layers(vl, layers, :prepend, "prepend_layers/2")
+  @spec prepend(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
+  def prepend(vl, layers), do: add_layers(vl, layers, :prepend, "Tucan.Layers.prepend/2")
 
   @doc """
   Appends the given layer or layers to the input specification.
@@ -22,8 +22,8 @@ defmodule Tucan.Layers do
 
   Raises if the input `vl` is not a single view or layered specification.
   """
-  @spec append_layers(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
-  def append_layers(vl, layers), do: add_layers(vl, layers, :append, "append_layers/2")
+  @spec append(vl :: VegaLite.t(), VegaLite.t() | [VegaLite.t()]) :: VegaLite.t()
+  def append(vl, layers), do: add_layers(vl, layers, :append, "Tucan.Layers.append/2")
 
   defp add_layers(vl, %VegaLite{} = layer, mode, caller),
     do: add_layers(vl, [layer], mode, caller)

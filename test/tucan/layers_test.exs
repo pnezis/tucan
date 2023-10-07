@@ -9,21 +9,21 @@ defmodule Tucan.LayersTest do
       vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
 
       expected =
-        "append_layers/2 expects a single view spec, multi view detected: :hconcat key is defined"
+        "Tucan.Layers.append/2 expects a single view spec, multi view detected: :hconcat key is defined"
 
       assert_raise ArgumentError,
                    expected,
                    fn ->
-                     Layers.append_layers(vl, VegaLite.new())
+                     Layers.append(vl, VegaLite.new())
                    end
 
       expected =
-        "prepend_layers/2 expects a single view spec, multi view detected: :hconcat key is defined"
+        "Tucan.Layers.prepend/2 expects a single view spec, multi view detected: :hconcat key is defined"
 
       assert_raise ArgumentError,
                    expected,
                    fn ->
-                     Layers.prepend_layers(vl, VegaLite.new())
+                     Layers.prepend(vl, VegaLite.new())
                    end
     end
 
@@ -46,14 +46,14 @@ defmodule Tucan.LayersTest do
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(layers)
 
-      assert Layers.append_layers(vl, layers) == expected_append
+      assert Layers.append(vl, layers) == expected_append
 
       expected_prepend =
         Vl.new()
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(layers)
 
-      assert Layers.prepend_layers(vl, layers) == expected_prepend
+      assert Layers.prepend(vl, layers) == expected_prepend
     end
 
     test "adds the layers with a single view" do
@@ -81,14 +81,14 @@ defmodule Tucan.LayersTest do
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers([input_layer] ++ layers)
 
-      assert Layers.append_layers(vl, layers) == expected_append
+      assert Layers.append(vl, layers) == expected_append
 
       expected_prepend =
         Vl.new()
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(layers ++ [input_layer])
 
-      assert Layers.prepend_layers(vl, layers) == expected_prepend
+      assert Layers.prepend(vl, layers) == expected_prepend
 
       # with a single layer
 
@@ -102,14 +102,14 @@ defmodule Tucan.LayersTest do
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers([input_layer, single_layer])
 
-      assert Layers.append_layers(vl, single_layer) == expected_append
+      assert Layers.append(vl, single_layer) == expected_append
 
       expected_prepend =
         Vl.new()
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers([single_layer, input_layer])
 
-      assert Layers.prepend_layers(vl, single_layer) == expected_prepend
+      assert Layers.prepend(vl, single_layer) == expected_prepend
     end
 
     test "adds the layers with a layered single view" do
@@ -144,14 +144,14 @@ defmodule Tucan.LayersTest do
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(input_layers ++ layers)
 
-      assert Layers.append_layers(vl, layers) == expected_append
+      assert Layers.append(vl, layers) == expected_append
 
       expected_prepend =
         Vl.new()
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(layers ++ input_layers)
 
-      assert Layers.prepend_layers(vl, layers) == expected_prepend
+      assert Layers.prepend(vl, layers) == expected_prepend
 
       # with a single spec passed
       single_layer =
@@ -164,14 +164,14 @@ defmodule Tucan.LayersTest do
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers(input_layers ++ [single_layer])
 
-      assert Layers.append_layers(vl, single_layer) == expected_append
+      assert Layers.append(vl, single_layer) == expected_append
 
       expected_prepend =
         Vl.new()
         |> Vl.data_from_url("a_dataset")
         |> Vl.layers([single_layer] ++ input_layers)
 
-      assert Layers.prepend_layers(vl, single_layer) == expected_prepend
+      assert Layers.prepend(vl, single_layer) == expected_prepend
     end
   end
 end

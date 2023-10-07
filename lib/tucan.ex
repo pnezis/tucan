@@ -2931,7 +2931,7 @@ defmodule Tucan do
         []
       )
 
-    Tucan.Layers.append_layers(vl, ruler)
+    Tucan.Layers.append(vl, ruler)
   end
 
   @doc """
