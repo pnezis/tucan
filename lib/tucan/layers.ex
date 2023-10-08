@@ -48,6 +48,18 @@ defmodule Tucan.Layers do
   defp extract_raw_layers(layers),
     do: Enum.map(layers, &(&1 |> VegaLite.to_spec() |> Map.delete("$schema")))
 
+  @doc """
+  Converts a single view plot to a layered plot.
+
+  `encoding`, `mark` and `data` will be extracted and added to a new layer.
+  """
+  @spec to_layered(vl :: VegaLite.t()) :: VegaLite.t()
+  def to_layered(vl) do
+    Tucan.Utils.validate_single_view!(vl, "to_layered/1")
+
+    update_in(vl.spec, fn spec -> maybe_enlayer(spec) end)
+  end
+
   defp maybe_enlayer(%{"layer" => _layers} = spec), do: spec
 
   defp maybe_enlayer(spec) do

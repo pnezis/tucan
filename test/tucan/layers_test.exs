@@ -174,4 +174,41 @@ defmodule Tucan.LayersTest do
       assert Layers.prepend(vl, single_layer) == expected_prepend
     end
   end
+
+  describe "to_layered/1" do
+    test "converts a single view to a layered view" do
+      vl =
+        Vl.new()
+        |> Vl.data_from_url("url")
+        |> Vl.mark(:area)
+        |> Vl.encode_field(:x, "x")
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_url("url")
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:area)
+          |> Vl.encode_field(:x, "x")
+        ])
+
+      assert Tucan.Layers.to_layered(vl) == expected
+    end
+
+    test "raises if a non single view" do
+      vl = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      message =
+        "to_layered/1 expects a single view spec, multi view detected: :hconcat key is defined"
+
+      assert_raise ArgumentError, message, fn -> Tucan.Layers.to_layered(vl) end
+
+      vl = Vl.layers(Vl.new(), [Vl.new(), Vl.new()])
+
+      message =
+        "to_layered/1 expects a single view spec, multi view detected: :layer key is defined"
+
+      assert_raise ArgumentError, message, fn -> Tucan.Layers.to_layered(vl) end
+    end
+  end
 end
