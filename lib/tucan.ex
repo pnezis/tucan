@@ -2953,7 +2953,7 @@ defmodule Tucan do
   @doc """
   Adds a vertical line at the given `x` position.
 
-  For supported options check `line/4`.
+  For supported options check `ruler/4`.
   """
   @doc section: :utilities
   @spec vruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
@@ -2965,7 +2965,7 @@ defmodule Tucan do
   @doc """
   Adds a horizontal line at the given `h` position.
 
-  For supported options check `line/4`.
+  For supported options check `ruler/4`.
   """
   @doc section: :utilities
   @spec hruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
