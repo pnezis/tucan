@@ -1864,24 +1864,53 @@ defmodule TucanTest do
   describe "annotate/4" do
     test "with default options" do
       expected =
-        Vl.new()
-        |> Vl.data_from_values(%{x: [10], y: [10]})
-        |> Vl.mark(:text, text: "Hello")
-        |> Vl.encode_field(:x, "x", type: :quantitative)
-        |> Vl.encode_field(:y, "y", type: :quantitative)
+        Vl.layers(
+          Vl.new(),
+          [
+            Vl.new()
+            |> Vl.data_from_values(%{x: [10], y: [10]})
+            |> Vl.mark(:text, text: "Hello")
+            |> Vl.encode_field(:x, "x", type: :quantitative)
+            |> Vl.encode_field(:y, "y", type: :quantitative)
+          ]
+        )
 
-      assert Tucan.annotate(10, 10, "Hello") == expected
+      assert Tucan.annotate(Vl.new(), 10, 10, "Hello") == expected
     end
 
     test "with custom options" do
       expected =
-        Vl.new()
-        |> Vl.data_from_values(%{x: [10], y: [10]})
-        |> Vl.mark(:text, text: "Hello", size: 10, angle: 10, font: "Courier")
-        |> Vl.encode_field(:x, "x", type: :quantitative)
-        |> Vl.encode_field(:y, "y", type: :quantitative)
+        Vl.layers(Vl.new(), [
+          Vl.new()
+          |> Vl.data_from_values(%{x: [10], y: [10]})
+          |> Vl.mark(:text, text: "Hello", size: 10, angle: 10, font: "Courier")
+          |> Vl.encode_field(:x, "x", type: :quantitative)
+          |> Vl.encode_field(:y, "y", type: :quantitative)
+        ])
 
-      assert Tucan.annotate(10, 10, "Hello", size: 10, angle: 10, font: "Courier") == expected
+      assert Tucan.annotate(Vl.new(), 10, 10, "Hello", size: 10, angle: 10, font: "Courier") ==
+               expected
+    end
+
+    test "piped multiple times" do
+      expected =
+        Vl.layers(Vl.new(), [
+          Vl.new()
+          |> Vl.data_from_values(%{x: [10], y: [10]})
+          |> Vl.mark(:text, text: "Hello")
+          |> Vl.encode_field(:x, "x", type: :quantitative)
+          |> Vl.encode_field(:y, "y", type: :quantitative),
+          Vl.new()
+          |> Vl.data_from_values(%{x: [20], y: [20]})
+          |> Vl.mark(:text, text: "World")
+          |> Vl.encode_field(:x, "x", type: :quantitative)
+          |> Vl.encode_field(:y, "y", type: :quantitative)
+        ])
+
+      assert Vl.new()
+             |> Tucan.annotate(10, 10, "Hello")
+             |> Tucan.annotate(20, 20, "World") ==
+               expected
     end
   end
 
