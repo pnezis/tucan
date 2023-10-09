@@ -129,6 +129,14 @@ defmodule Tucan do
   ## Plots
 
   @doc """
+  Creates an empty `VegaLite` plot.
+
+  This is a simple wrapper aroung `VegaLite.new/0`.
+  """
+  @spec new() :: VegaLite.t()
+  def new, do: VegaLite.new()
+
+  @doc """
   Creates if needed a `VegaLite` plot and adds data to it.
 
   The behaviour of this function depends on the type of `plotdata`:

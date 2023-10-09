@@ -72,7 +72,11 @@ defmodule TucanTest do
     end
   end
 
-  describe "new/2" do
+  describe "new/0, new/2" do
+    test "new/0" do
+      assert Tucan.new() == VegaLite.new()
+    end
+
     test "with a tucan dataset" do
       expected =
         Vl.new()
