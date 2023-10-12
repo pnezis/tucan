@@ -3202,6 +3202,44 @@ defmodule Tucan do
     end
   end
 
+  @doc """
+  Adds a background image to the current plot.
+
+  ## Examples
+
+  ```tucan
+  # generate some random samples
+  shots = 
+    for _index <- 1..30 do
+      %{x: Enum.random(10..90), y: Enum.random(10..90), team: Enum.random([:home, :away])}
+    end
+
+  pitch_image_url = "https://github.com/pnezis/tucan/raw/main/assets/soccer-field.jpeg"
+
+  Tucan.scatter(shots, "x", "y", color_by: "team", filled: true, point_size: 80, tooltip: true)
+  |> Tucan.Scale.set_x_domain(0, 100)
+  |> Tucan.Scale.set_y_domain(0, 100)
+  |> Tucan.Scale.set_color_scheme(["blue", "red"])
+  |> Tucan.Grid.set_enabled(false)
+  |> Tucan.background_image(pitch_image_url)
+  |> Tucan.Utils.put_encoding_options(:x, axis: nil)
+  |> Tucan.Utils.put_encoding_options(:y, axis: nil)
+  |> Tucan.set_size(700, 350)
+  |> Tucan.set_title("Shots")
+  ```
+  """
+  @spec background_image(vl :: VegaLite.t(), image_url :: String.t()) :: VegaLite.t()
+  def background_image(vl, image_url) do
+    vl
+    |> Tucan.Layers.to_layered()
+    |> Tucan.Layers.prepend(
+      Vl.new()
+      |> Vl.data_from_values([%{image: image_url}])
+      |> Vl.mark(:image, aspect: false, align: :right)
+      |> Vl.encode_field(:url, "image", type: :nominal)
+    )
+  end
+
   ## Styling functions
 
   @doc """

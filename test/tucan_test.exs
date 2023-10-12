@@ -1981,6 +1981,43 @@ defmodule TucanTest do
     end
   end
 
+  describe "background_image" do
+    test "with an empty plot" do
+      expected =
+        Vl.new()
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.data_from_values([%{image: "http://image"}])
+          |> Vl.mark(:image, align: :right, aspect: false)
+          |> Vl.encode_field(:url, "image", type: :nominal)
+        ])
+
+      assert Tucan.background_image(Vl.new(), "http://image") == expected
+    end
+
+    test "with an existing plot" do
+      base_plot =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+
+      plot = Vl.data_from_url(base_plot, @dataset)
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.data_from_values([%{image: "http://image"}])
+          |> Vl.mark(:image, align: :right, aspect: false)
+          |> Vl.encode_field(:url, "image", type: :nominal),
+          base_plot
+        ])
+
+      assert Tucan.background_image(plot, "http://image") == expected
+    end
+  end
+
   describe "annotate/4" do
     test "with default options" do
       expected =
