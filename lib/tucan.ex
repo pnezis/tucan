@@ -958,6 +958,31 @@ defmodule Tucan do
       doc: """
       If set to `true` then the values of each cell will be included in the plot.
       """
+    ],
+    text_color: [
+      type:
+        {:or,
+         [
+           :string,
+           {:list,
+            {:tuple, [{:or, [:integer, :float, nil]}, {:or, [:integer, :float, nil]}, :string]}}
+         ]},
+      doc: """
+      The color to be used for the textual annotations. Valid only if `:annotate` is set
+      to `true`. Can be one of the following:
+      * a `string` with the color to be used, e.g. `"white"`
+      * a list of tuples of the form `{low_threshold, upper_threshold, color}` for
+      conditionally setting the color based on the value of the annotated variable.
+      `low_threshold` and `upper_threshold` can either be a number or `nil`. For example
+      `[{nil, 0, "green"}, {0, 5, "red"}, {5, nil, "white"}]` will apply the following
+      colors:
+        * `green` for all items with `value < 0`
+        * `red` for all items with `value >= 0 && value < 5`
+        * `white` for all items with `value >= 5`
+      Notice that the `low_threshold`, `upper_threshold` correspond to the
+      `[low_threshold, upper_threshold)` range.
+      """,
+      section: :style
     ]
   ]
 
@@ -1038,11 +1063,15 @@ defmodule Tucan do
   |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
   ```
 
-  You can enable annotations by setting the `:annotate` flag:
+  You can enable annotations by setting the `:annotate` flag. Notice that you can conditionally
+  color the annotation text by setting the `:text_color` option. It expects a list of tuples
+  corresponding to `{lower_threshold, upper_threshold, color}`. Below we color white everything
+  below 0 and black everything with a value `>=0`.
 
   ```tucan
   Tucan.heatmap(:weather, "date", "date", "temp_max",
     annotate: true,
+    text_color: [{nil, 5, "white"}, {5, 25, "black"}, {25, nil, "white"}],
     x: [type: :ordinal, time_unit: :date],
     y: [type: :ordinal, time_unit: :month],
     text: [format: ".1f"],
@@ -1153,14 +1182,20 @@ defmodule Tucan do
         opts
       end
 
+    z_aggregate =
+      case z do
+        nil -> :count
+        _field -> opts[:aggregate] || :mean
+      end
+
     z_fn = fn vl, encoding ->
       case z do
         nil ->
-          encode(vl, encoding, opts, type: :quantitative, aggregate: :count)
+          encode(vl, encoding, opts, type: :quantitative, aggregate: z_aggregate)
 
         field ->
           encode_field(vl, encoding, field, opts,
-            aggregate: opts[:aggregate] || :mean,
+            aggregate: z_aggregate,
             type: :quantitative
           )
       end
@@ -1183,6 +1218,7 @@ defmodule Tucan do
           |> encode_field(:x, x, opts, type: :nominal)
           |> encode_field(:y, y, opts, type: :nominal)
           |> z_fn.(:text)
+          |> maybe_color_annotation(opts[:text_color], z, z_aggregate)
         ]
       else
         []
@@ -1192,6 +1228,51 @@ defmodule Tucan do
     |> new(spec_opts ++ [tucan: [multilayer: true]])
     |> layers(base_layer ++ text_layer)
   end
+
+  defp maybe_color_annotation(vl, nil, _field, _aggregate), do: vl
+
+  defp maybe_color_annotation(vl, color, _field, _aggrgate) when is_binary(color) do
+    Vl.encode(vl, :color, value: color)
+  end
+
+  defp maybe_color_annotation(vl, conditions, field, aggregate) do
+    conditions =
+      Enum.map(conditions, &to_vl_condition(&1, field, aggregate)) ++
+        [[test: "true", value: "black"]]
+
+    case field do
+      nil ->
+        Vl.encode(vl, :color, type: :quantitative, aggregate: :count, condition: conditions)
+
+      field ->
+        Vl.encode_field(vl, :color, field,
+          aggregate: aggregate,
+          type: :quantitative,
+          condition: conditions
+        )
+    end
+  end
+
+  defp to_vl_condition({nil, nil, _value} = condition, field, _aggregate),
+    do: raise(ArgumentError, "invalid condition #{inspect(condition)} for field #{field}")
+
+  defp to_vl_condition({nil, upper, value}, field, aggregate),
+    do: [value: value, test: "datum['#{datum_field_name(field, aggregate)}'] < #{upper}"]
+
+  defp to_vl_condition({lower, nil, value}, field, aggregate),
+    do: [value: value, test: "datum['#{datum_field_name(field, aggregate)}'] >= #{lower}"]
+
+  defp to_vl_condition({lower, upper, value}, field, aggregate),
+    do: [
+      value: value,
+      test:
+        "datum['#{datum_field_name(field, aggregate)}'] >= #{lower} && datum['#{datum_field_name(field, aggregate)}'] < #{upper}"
+    ]
+
+  # We manually construct the datum field name using the default naming convention of
+  # vega lite since we are using aggregations by default
+  defp datum_field_name(_field, :count), do: "__count"
+  defp datum_field_name(field, aggregate), do: "#{aggregate}_#{field}"
 
   density_heatmap_opts = [
     z: [

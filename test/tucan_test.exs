@@ -1021,6 +1021,122 @@ defmodule TucanTest do
         expected
       )
     end
+
+    test "with predefined annotation color" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean),
+          Vl.new()
+          |> Vl.mark(:text)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:text, "total_bill", type: :quantitative, aggregate: :mean)
+          |> Vl.encode(:color, value: "white")
+        ])
+
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+          annotate: true,
+          text_color: "white"
+        ),
+        expected
+      )
+    end
+
+    test "with conditional text color" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:color, "total_bill", type: :quantitative, aggregate: :mean),
+          Vl.new()
+          |> Vl.mark(:text)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode_field(:text, "total_bill", type: :quantitative, aggregate: :mean)
+          |> Vl.encode_field(:color, "total_bill",
+            type: :quantitative,
+            aggregate: :mean,
+            condition: [
+              [test: "datum['mean_total_bill'] < 10", value: "red"],
+              [
+                test: "datum['mean_total_bill'] >= 10 && datum['mean_total_bill'] < 40",
+                value: "white"
+              ],
+              [test: "datum['mean_total_bill'] >= 50", value: "green"],
+              [test: "true", value: "black"]
+            ]
+          )
+        ])
+
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+          annotate: true,
+          text_color: [{nil, 10, "red"}, {10, 40, "white"}, {50, nil, "green"}]
+        ),
+        expected
+      )
+    end
+
+    test "with conditional color and no field" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rect, fill_opacity: 1.0)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode(:color, type: :quantitative, aggregate: :count),
+          Vl.new()
+          |> Vl.mark(:text)
+          |> Vl.encode_field(:x, "day", type: :nominal)
+          |> Vl.encode_field(:y, "sex", type: :nominal)
+          |> Vl.encode(:text, type: :quantitative, aggregate: :count)
+          |> Vl.encode(:color,
+            type: :quantitative,
+            aggregate: :count,
+            condition: [
+              [test: "datum['__count'] < 10", value: "red"],
+              [
+                test: "datum['__count'] >= 10 && datum['__count'] < 40",
+                value: "white"
+              ],
+              [test: "datum['__count'] >= 50", value: "green"],
+              [test: "true", value: "black"]
+            ]
+          )
+        ])
+
+      assert_plot(
+        Tucan.heatmap(@tips_dataset, "day", "sex", nil,
+          annotate: true,
+          text_color: [{nil, 10, "red"}, {10, 40, "white"}, {50, nil, "green"}]
+        ),
+        expected
+      )
+    end
+
+    test "with invalid conditional color definition" do
+      message = ~S'invalid condition {nil, nil, "red"} for field total_bill'
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.heatmap(@tips_dataset, "day", "sex", "total_bill",
+          annotate: true,
+          text_color: [{nil, nil, "red"}]
+        )
+      end
+    end
   end
 
   describe "punchcard/5" do

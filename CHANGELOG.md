@@ -2,6 +2,18 @@
 
 ## [UNRELEASED]
 
+### Added
+
+- Support conditional text color in heatmaps using the `:text_color` option.
+
+```tucan
+Tucan.heatmap(:glue, "Task", "Model", "Score",
+  annotate: true,
+  text: [format: ".1f"],
+  text_color: [{nil, 40, "black"}, {40, 80, "white"}, {60, nil, "yellow"}]
+)
+|> Tucan.set_size(250, 250)
+```
 
 ### Added plot options
 
@@ -83,7 +95,7 @@ Tucan.layers(
 
 - Made `Tucan.VegaLiteUtils` private.
 - `Tucan.Axes.put_axis_options` is renamed to `Tucan.Axes.put_options/3`
-- Rename `:groupby` to `:group_by` in `Tucan.boxplot/3` options. 
+- Rename `:groupby` to `:group_by` in `Tucan.boxplot/3` options.
 
 ## [v0.1.1](https://github.com/pnezis/tucan/tree/v0.1.1) (2023-08-29)
 
