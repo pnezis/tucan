@@ -3214,16 +3214,15 @@ defmodule Tucan do
       %{x: Enum.random(10..90), y: Enum.random(10..90), team: Enum.random([:home, :away])}
     end
 
-  pitch_image_url = "https://github.com/pnezis/tucan/raw/main/assets/soccer-field.jpeg"
+  pitch_image_url = "https://raw.githubusercontent.com/pnezis/tucan/main/assets/soccer-field.jpeg"
 
   Tucan.scatter(shots, "x", "y", color_by: "team", filled: true, point_size: 80, tooltip: true)
+  # TODO: helper function for setting xy domain at once
   |> Tucan.Scale.set_x_domain(0, 100)
   |> Tucan.Scale.set_y_domain(0, 100)
   |> Tucan.Scale.set_color_scheme(["blue", "red"])
-  |> Tucan.Grid.set_enabled(false)
   |> Tucan.background_image(pitch_image_url)
-  |> Tucan.Utils.put_encoding_options(:x, axis: nil)
-  |> Tucan.Utils.put_encoding_options(:y, axis: nil)
+  |> Tucan.Axes.set_enabled(false)
   |> Tucan.set_size(700, 350)
   |> Tucan.set_title("Shots")
   ```

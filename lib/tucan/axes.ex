@@ -42,6 +42,40 @@ defmodule Tucan.Axes do
   end
 
   @doc """
+  Enables or disables both axes (`x`, `y`) at once.
+
+  See also `set_enabled/3`
+  """
+  @spec set_enabled(vl :: VegaLite.t(), enabled :: boolean()) :: VegaLite.t()
+  def set_enabled(vl, enabled) do
+    vl
+    |> set_enabled(:x, enabled)
+    |> set_enabled(:y, enabled)
+  end
+
+  @doc """
+  Enables or disables the given axis.
+
+  Notice that axes are enabled by default.
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_enabled(:x, false)
+  |> Tucan.Axes.set_enabled(:y, false)
+  ```
+  """
+  @spec set_enabled(vl :: VegaLite.t(), axis :: axis(), enabled :: boolean()) :: VegaLite.t()
+  def set_enabled(vl, axis, true) when is_struct(vl, VegaLite) do
+    Utils.put_encoding_options(vl, axis, axis: [])
+  end
+
+  def set_enabled(vl, axis, false) when is_struct(vl, VegaLite) do
+    Utils.put_encoding_options(vl, axis, axis: nil)
+  end
+
+  @doc """
   Sets an arbitrary set of options to the given `encoding` axis object.
 
   Notice that no validation is performed, any option set will be merged with

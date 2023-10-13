@@ -77,4 +77,38 @@ defmodule Tucan.AxesTest do
              }
     end
   end
+
+  describe "set_enabled/2" do
+    test "disables both axes" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Vl.encode_field(:x, "y", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_enabled(false)
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == nil
+      assert get_in(vl.spec, ["encoding", "y", "axis"]) == nil
+    end
+  end
+
+  describe "set_enabled/3" do
+    test "sets to nil an existing axis" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_enabled(:x, false)
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == nil
+    end
+
+    test "re-enables a disabled axis" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_enabled(:x, false)
+        |> Tucan.Axes.set_enabled(:x, true)
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == []
+    end
+  end
 end

@@ -115,22 +115,6 @@ defmodule Tucan.Utils do
     end
   end
 
-  #  def put_encoding_options!(vl, channel, opts) do
-  #     validate_single_view!(spec, "put_encoding_options/3")
-  #     validate_channel!(spec, channel)
-  #
-  #     update_in(spec, ["encoding", to_vl_key(channel)], fn encoding_opts ->
-  #       deep_merge(encoding_opts, opts_to_vl_props(opts))
-  #     end)
-  # end
-
-  # defp tucan_multi_layer_plot?(spec) do
-  #   case get_in(spec, ["__tucan__", "multilayer"]) do
-  #     true -> true
-  #     _other -> false
-  #   end
-  # end
-  #
   @doc """
   Puts the given `opts` under the given `key` in the provided `VegaLite` struct.
 
