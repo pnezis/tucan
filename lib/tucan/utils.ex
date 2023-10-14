@@ -132,6 +132,20 @@ defmodule Tucan.Utils do
 
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
+  @doc false
+  @spec multi_view?(vl :: VegaLite.t()) :: boolean()
+  def multi_view?(%VegaLite{spec: spec}) do
+    Enum.any?(@multi_view_only_keys, &Map.has_key?(spec, to_vl_key(&1)))
+  end
+
+  @doc false
+  @spec single_view?(vl :: VegaLite.t()) :: boolean()
+  def single_view?(vl), do: !multi_view?(vl)
+
+  @doc false
+  @spec layered_view?(vl :: VegaLite.t()) :: boolean()
+  def layered_view?(%VegaLite{spec: spec}), do: Map.has_key?(spec, "layer")
+
   # validates that the specification corresponds to a single view plot
   @doc false
   @spec validate_single_view!(

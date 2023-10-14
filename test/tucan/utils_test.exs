@@ -268,4 +268,25 @@ defmodule Tucan.UtilsTest do
       assert Utils.validate_layered_view!(vl, "") == :ok
     end
   end
+
+  @multilayer_plot Vl.layers(Vl.new(), [Vl.new(), Vl.new()])
+  @concatenated_plot Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+  test "single_view?/1" do
+    assert Utils.single_view?(Vl.new())
+    refute Utils.single_view?(@multilayer_plot)
+    refute Utils.single_view?(@concatenated_plot)
+  end
+
+  test "layered_view?/1" do
+    refute Utils.layered_view?(Vl.new())
+    assert Utils.layered_view?(@multilayer_plot)
+    refute Utils.layered_view?(@concatenated_plot)
+  end
+
+  test "multi_view?/1" do
+    refute Utils.multi_view?(Vl.new())
+    assert Utils.multi_view?(@multilayer_plot)
+    assert Utils.multi_view?(@concatenated_plot)
+  end
 end

@@ -1869,6 +1869,35 @@ defmodule TucanTest do
 
       assert Tucan.layers(vl, [plot1, plot2]) == Vl.layers(vl, [plot1, plot2])
     end
+
+    test "with layered plots" do
+      vl = VegaLite.new()
+
+      plot1 = Tucan.scatter(@dataset, "x", "y")
+      plot2 = Tucan.scatter(@dataset, "x2", "y2")
+      layered = Vl.layers(vl, [plot1, plot2])
+
+      assert Tucan.layers(vl, [plot1, layered]) == Vl.layers(vl, [plot1, plot1, plot2])
+    end
+
+    test "raises if layered plot has top level data" do
+      plot =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([Vl.new()])
+
+      assert_raise ArgumentError,
+                   ~r"Tucan.layers/2 expects either single view plots or multi layer plots",
+                   fn -> Tucan.layers(Vl.new(), [plot]) end
+    end
+
+    test "raises with a multi view" do
+      plot = Vl.concat(Vl.new(), [Vl.new(), Vl.new()], :horizontal)
+
+      assert_raise ArgumentError,
+                   ~r"Tucan.layers/2 expects a single view spec, multi view detected: :hconcat key is defined",
+                   fn -> Tucan.layers([plot]) end
+    end
   end
 
   describe "ruler, hruler, vruler" do

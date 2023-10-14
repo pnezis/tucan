@@ -3144,11 +3144,42 @@ defmodule Tucan do
   Creates a layered plot.
 
   This is a simple wrapper around `VegaLite.layers/2` which by default adds
-  the layers under an empty plot.
+  the layers under an empty plot. If a multi-layer plot is passed to `plots`
+  then it's layers will be extracted and merged with the rest layers as long
+  as the plot has not a top level data item defined.
   """
   @doc section: :utilities
   @spec layers(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def layers(vl \\ Vl.new(), plots) do
+    plots =
+      Enum.reduce(plots, [], fn plot, acc ->
+        Tucan.Utils.validate_single_or_layered_view!(plot, "Tucan.layers/2")
+
+        cond do
+          Tucan.Utils.single_view?(plot) ->
+            acc ++ [plot]
+
+          Map.has_key?(plot.spec, "data") ->
+            raise ArgumentError,
+                  """
+                  Tucan.layers/2 expects either single view plots or multi layer plots without global
+                  data, got:
+                     
+                    #{inspect(plot)}
+                  """
+
+          true ->
+            vl = VegaLite.new()
+
+            layers =
+              for layer <- plot.spec["layer"] do
+                %VegaLite{vl | spec: Map.merge(vl.spec, layer)}
+              end
+
+            acc ++ layers
+        end
+      end)
+
     VegaLite.layers(vl, plots)
   end
 
