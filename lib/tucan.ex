@@ -121,6 +121,7 @@ defmodule Tucan do
 
   @type plotdata :: String.t() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
   @type field :: String.t()
+  @type point :: {number(), number()}
 
   ## Custom guards
 
@@ -3109,6 +3110,69 @@ defmodule Tucan do
       |> Vl.encode_field(:y, "y", type: :quantitative)
 
     Tucan.Layers.append(vl, annotation)
+  end
+
+  # TODO: extract common options to Options and reuse across Tucan
+  circle_opts = [
+    stroke_width: [
+      type: :integer,
+      doc: "The stroke width in pixels",
+      dest: :mark,
+      section: :style,
+      default: 1
+    ],
+    line_color: [
+      type: :string,
+      doc: "The color of the line",
+      section: :style
+    ]
+  ]
+
+  @circle_opts Tucan.Options.take!([], circle_opts)
+  @circle_schema Tucan.Options.to_nimble_schema!(@circle_opts)
+
+  @doc """
+  Draws a circle with the given `center` and `radius`.
+
+  The circle will be added as a new layer to the given plot `vl`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@circle_opts)}
+
+
+  ## Examples
+
+  ```tucan
+  Tucan.new()
+  |> Tucan.circle({3, 2}, 5)
+  |> Tucan.circle({-1, 6}, 2, line_color: "red")
+  |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5)
+  |> Tucan.Scale.set_x_domain(-5, 10)
+  |> Tucan.Scale.set_y_domain(-5, 10)
+  ```
+  """
+  @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
+          VegaLite.t()
+  def circle(vl, {x, y}, radius, opts \\ []) when is_struct(vl, VegaLite) do
+    opts = NimbleOptions.validate!(opts, @circle_schema)
+
+    mark_opts =
+      opts
+      |> Keyword.take([:stroke_width])
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    circle =
+      Vl.new()
+      |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+      |> Vl.transform(calculate: "#{x} + cos(datum.theta*PI/180) * #{radius}", as: "x")
+      |> Vl.transform(calculate: "#{y} + sin(datum.theta*PI/180) * #{radius}", as: "y")
+      |> Vl.mark(:line, mark_opts)
+      |> Vl.encode_field(:x, "x", type: :quantitative)
+      |> Vl.encode_field(:y, "y", type: :quantitative)
+      |> Vl.encode_field(:order, "theta")
+
+    Tucan.Layers.append(vl, circle)
   end
 
   @doc """
