@@ -2166,6 +2166,12 @@ defmodule TucanTest do
       assert vl.spec["title"]["text"] == "A title"
     end
 
+    test "multi-line title" do
+      vl = Tucan.set_title(Vl.new(), "A multiline\ntitle")
+
+      assert vl.spec["title"]["text"] == ["A multiline", "title"]
+    end
+
     test "with extra options" do
       vl = Tucan.set_title(Vl.new(), "A title", color: "red")
 

@@ -3400,11 +3400,24 @@ defmodule Tucan do
       anchor: "start"
     )
   ```
+
+  If you need to set a multi-line title you can pass a multiline string.
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.set_title("My multiline\\nplot")
+  ```
   """
   @doc section: :styling
   @spec set_title(vl :: VegaLite.t(), title :: String.t(), opts :: keyword()) :: VegaLite.t()
   def set_title(vl, title, opts \\ [])
       when is_struct(vl, VegaLite) and is_binary(title) and is_list(opts) do
+    title =
+      case String.split(title, "\n") do
+        [title] -> title
+        title -> title
+      end
+
     title_opts = Keyword.merge(opts, text: title)
 
     Utils.put_in_spec(vl, :title, title_opts)
