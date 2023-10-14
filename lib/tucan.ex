@@ -3337,9 +3337,7 @@ defmodule Tucan do
   pitch_image_url = "https://raw.githubusercontent.com/pnezis/tucan/main/assets/soccer-field.jpeg"
 
   Tucan.scatter(shots, "x", "y", color_by: "team", filled: true, point_size: 80, tooltip: true)
-  # TODO: helper function for setting xy domain at once
-  |> Tucan.Scale.set_x_domain(0, 100)
-  |> Tucan.Scale.set_y_domain(0, 100)
+  |> Tucan.Scale.set_xy_domain(0, 100)
   |> Tucan.Scale.set_color_scheme(["blue", "red"])
   |> Tucan.background_image(pitch_image_url)
   |> Tucan.Axes.set_enabled(false)

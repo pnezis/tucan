@@ -178,6 +178,17 @@ defmodule Tucan.ScaleTest do
       assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == nil
     end
 
+    test "set_xy_domain/3" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Tucan.Scale.set_xy_domain(1, 10)
+
+      assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
+      assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == [1, 10]
+    end
+
     test "set_domain can set arbitrary domains" do
       vl =
         Vl.new()

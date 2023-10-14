@@ -336,6 +336,16 @@ defmodule Tucan.Scale do
   end
 
   @doc """
+  Sets the same `[x, y]` domain for _x-axis_ and _y-axis_ at once. 
+  """
+  @spec set_xy_domain(vl :: VegaLite.t(), min :: number(), max :: number()) :: VegaLite.t()
+  def set_xy_domain(vl, min, max) do
+    vl
+    |> set_x_domain(min, max)
+    |> set_y_domain(min, max)
+  end
+
+  @doc """
   Sets the _x-axis_ domain.
 
   This is a helper wrapper around `set_domain/3` for setting the domain of continuous
