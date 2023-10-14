@@ -3178,7 +3178,8 @@ defmodule Tucan do
   """
   @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
           VegaLite.t()
-  def circle(vl, {x, y}, radius, opts \\ []) when is_struct(vl, VegaLite) do
+  def circle(vl, {x, y}, radius, opts \\ [])
+      when is_struct(vl, VegaLite) and is_number(radius) and radius > 0 do
     opts = NimbleOptions.validate!(opts, @circle_schema)
 
     mark_opts =
