@@ -2950,6 +2950,12 @@ defmodule Tucan do
       section: :style,
       default: 1
     ],
+    stroke_dash: [
+      type: {:list, :integer},
+      doc: "The stroke dash style",
+      dest: :mark,
+      section: :style
+    ],
     line_color: [
       type: :string,
       doc: "The color of the ruler",
