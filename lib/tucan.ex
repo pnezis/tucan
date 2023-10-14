@@ -3151,6 +3151,30 @@ defmodule Tucan do
   |> Tucan.Scale.set_x_domain(-5, 10)
   |> Tucan.Scale.set_y_domain(-5, 10)
   ```
+
+  > #### Circles and plot dimensions {: .tip}
+  >
+  > Notice that the plot must be square with identical scale domains across
+  > the two axes for the circle to appear circular. In a different case it will
+  > look like an ellipsis.
+  >
+  > ```tucan
+  > circle = Tucan.circle(Tucan.new(), {0, 0}, 1)
+  >
+  > Tucan.hconcat([
+  >   circle
+  >   |> Tucan.set_size(150, 150)
+  >   |> Tucan.set_title("Square frame"),
+  >   circle
+  >   |> Tucan.Scale.set_x_domain(-2, 2)
+  >   |> Tucan.Scale.set_y_domain(-1, 1)
+  >   |> Tucan.set_size(150, 150)
+  >   |> Tucan.set_title("Different domains"),
+  >   circle
+  >   |> Tucan.set_size(200, 150)
+  >   |> Tucan.set_title("Different frame dimensions")
+  > ])
+  > ```
   """
   @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
           VegaLite.t()
