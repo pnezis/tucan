@@ -238,6 +238,26 @@ defmodule Tucan.Options do
       section: :style,
       default: :horizontal
     ],
+    stroke_dash: [
+      type: {:list, :pos_integer},
+      doc: """
+      An array of alternating stroke, space lengths in pixels for creating dashed
+      or dotted lines.
+      """,
+      dest: :mark,
+      section: :style
+    ],
+    stroke_width: [
+      type: :pos_integer,
+      doc: "The stroke width in pixels",
+      dest: :mark,
+      section: :style
+    ],
+    line_color: [
+      type: :string,
+      doc: "The color of the line",
+      section: :style
+    ],
 
     ## Other options
     stacked: [

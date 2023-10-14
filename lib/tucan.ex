@@ -1885,11 +1885,6 @@ defmodule Tucan do
       doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
       default: true,
       section: :style
-    ],
-    line_color: [
-      type: :string,
-      doc: "The color of the line",
-      section: :style
     ]
   ]
 
@@ -1902,7 +1897,10 @@ defmodule Tucan do
                      :color_by,
                      :x,
                      :y,
-                     :color
+                     :color,
+                     :stroke_width,
+                     :stroke_dash,
+                     :line_color
                    ],
                    lineplot_opts
                  )
@@ -1965,6 +1963,22 @@ defmodule Tucan do
     )
 
   Tucan.hconcat([filled_points, stroked_points])
+  ```
+
+  You can configure the style of the lines using `:stroke_dash`, `:stroke_width`
+  and `:line_color` options.
+
+  ```tucan
+  data =
+    for i <- 0..100, x = 0.1*i do
+      %{x: x, cos: :math.cos(x), sin: :math.sin(x)}
+    end
+
+  Tucan.layers([
+    Tucan.lineplot(data, "x", "cos", stroke_width: 3, stroke_dash: [5, 2], line_color: "red"),
+    Tucan.lineplot(data, "x", "sin", stroke_width: 2, stroke_dash: [5, 3, 2], line_color: "green")
+  ])
+  |> Tucan.set_width(300)
   ```
 
   You can use various interpolation methods. Some examples follow:
@@ -2943,25 +2957,8 @@ defmodule Tucan do
   ## Utilities functions
 
   ruler_opts = [
-    stroke_width: [
-      type: :integer,
-      doc: "The stroke width in pixels",
-      dest: :mark,
-      section: :style,
-      default: 1
-    ],
-    stroke_dash: [
-      type: {:list, :integer},
-      doc: "The stroke dash style",
-      dest: :mark,
-      section: :style
-    ],
-    line_color: [
-      type: :string,
-      doc: "The color of the ruler",
-      section: :style,
-      default: "black"
-    ],
+    line_color: [default: "black"],
+    stroke_width: [default: 1],
     aggregate: [
       type: :atom,
       doc: "The aggregate to used for calculating the line's coordinate",
@@ -2969,7 +2966,7 @@ defmodule Tucan do
     ]
   ]
 
-  @ruler_opts Tucan.Options.take!([:color_by, :color], ruler_opts)
+  @ruler_opts Tucan.Options.take!([:color_by, :color, :stroke_dash, :stroke_width], ruler_opts)
   @ruler_schema Tucan.Options.to_nimble_schema!(@ruler_opts)
 
   @doc """
@@ -3014,7 +3011,7 @@ defmodule Tucan do
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
   |> Tucan.ruler(:x, "petal_width", color_by: "species", stroke_width: 3)
-  |> Tucan.ruler(:y, "petal_length", color_by: "species")
+  |> Tucan.ruler(:y, "petal_length", color_by: "species", stroke_dash: [5, 5])
   ```
   """
   @doc section: :utilities
@@ -3118,23 +3115,11 @@ defmodule Tucan do
     Tucan.Layers.append(vl, annotation)
   end
 
-  # TODO: extract common options to Options and reuse across Tucan
   circle_opts = [
-    stroke_width: [
-      type: :integer,
-      doc: "The stroke width in pixels",
-      dest: :mark,
-      section: :style,
-      default: 1
-    ],
-    line_color: [
-      type: :string,
-      doc: "The color of the line",
-      section: :style
-    ]
+    stroke_width: [default: 1]
   ]
 
-  @circle_opts Tucan.Options.take!([], circle_opts)
+  @circle_opts Tucan.Options.take!([:stroke_width, :stroke_dash, :line_color], circle_opts)
   @circle_schema Tucan.Options.to_nimble_schema!(@circle_opts)
 
   @doc """
