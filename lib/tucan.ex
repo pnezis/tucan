@@ -119,8 +119,22 @@ defmodule Tucan do
   alias Tucan.Utils
   alias VegaLite, as: Vl
 
+  @typedoc """
+  The plot data.
+
+  This represents the input to all `Tucan` plots. It can be any of the following:
+
+  * an existing `t:VegaLite.t/0` struct
+  * a string corresponding to the url of a dataset
+  * a dataset implementing the `t:Table.Reader.t/0` protocol
+  * an atom corresponding to one of the supported `Tucan.Datasets`
+  """
   @type plotdata :: String.t() | Table.Reader.t() | Tucan.Datasets.t() | VegaLite.t()
+
+  @typedoc "A string corresponding to a dataset's field"
   @type field :: String.t()
+
+  @typedoc "A cartesian point in the form `{x, y}`"
   @type point :: {number(), number()}
 
   ## Custom guards
