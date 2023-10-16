@@ -87,14 +87,14 @@ defmodule Tucan.ScaleTest do
 
     test "raises if invalid scale" do
       message =
-        "scale can be one of [:linear, :pow, :sqrt, :symlog, :log, :time, :utc], got: :logg"
+        "scale can be one of [:linear, :pow, :sqrt, :symlog, :log, :time, :utc], got: :long"
 
       assert_raise ArgumentError, message, fn ->
-        Tucan.Scale.set_x_scale(Vl.new(), :logg)
+        Tucan.Scale.set_x_scale(Vl.new(), :long)
       end
 
       assert_raise ArgumentError, message, fn ->
-        Tucan.Scale.set_y_scale(Vl.new(), :logg)
+        Tucan.Scale.set_y_scale(Vl.new(), :long)
       end
     end
 

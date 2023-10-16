@@ -388,7 +388,7 @@ defmodule Tucan.Scale do
   end
 
   @doc """
-  Sets an arbitrary set of options to the given `encoding`'s scake object.
+  Sets an arbitrary set of options to the given `encoding`'s scale object.
 
   Notice that no validation is performed, any option set will be merged with
   the existing `scale` options of the given `encoding`.

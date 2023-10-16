@@ -146,7 +146,7 @@ defmodule Tucan do
   @doc """
   Creates an empty `VegaLite` plot.
 
-  This is a simple wrapper aroung `VegaLite.new/0`.
+  This is a simple wrapper around `VegaLite.new/0`.
   """
   @doc section: :utilities
   @spec new() :: VegaLite.t()
@@ -962,7 +962,7 @@ defmodule Tucan do
     color_scheme: [
       type: :atom,
       doc: """
-      The colorscheme to use, for supported colorschemes check `Tucan.Scale`. Notice that
+      The color scheme to use, for supported color schemes check `Tucan.Scale`. Notice that
       this is just a helper option for easily setting color schemes. If you need to set
       specific colors or customize the scheme, use `Tucan.Scale.set_color_scheme/3`. 
       """,
@@ -1247,7 +1247,7 @@ defmodule Tucan do
 
   defp maybe_color_annotation(vl, nil, _field, _aggregate), do: vl
 
-  defp maybe_color_annotation(vl, color, _field, _aggrgate) when is_binary(color) do
+  defp maybe_color_annotation(vl, color, _field, _aggregate) when is_binary(color) do
     Vl.encode(vl, :color, value: color)
   end
 
