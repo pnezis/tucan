@@ -15,9 +15,39 @@ Tucan.heatmap(:glue, "Task", "Model", "Score",
 |> Tucan.set_size(250, 250)
 ```
 
+- Add `Tucan.annotate/5` auxiliary plot for adding text to a plot
+
+```tucan
+Tucan.new()
+|> Tucan.annotate(10, 10, "Hello", color: :red, font_size: 20)
+|> Tucan.annotate(15, 12, "world...", color: :green, font_weight: :bold)
+|> Tucan.Scale.set_xy_domain(8, 17)
+```
+
+- Add `Tucan.Layers` with helper layers related functions.
+- Add `Tucan.background_image/2` helper function.
+
+- Add `Tucan.circle/4` helper function
+
+```tucan
+Tucan.new()
+|> Tucan.circle({3, 2}, 5, line_color: "purple")
+|> Tucan.circle({-1, 6}, 2, line_color: "red")
+|> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 3)
+|> Tucan.Scale.set_xy_domain(-4, 8)
+```
+
+- Add `Tucan.Scale.set_xy_domain/3`
+- Support setting multi-line string in `Tucan.set_title/3`
+
 ### Added plot options
 
+- Support `:only` in all plots. Using `:only` you can select only a subset of the input
+dataset for the current plot.
 - Support `:point_color` in `Tucan.lineplot/4`
+- Support `:area_color` and `:filled` in density plot
+- Support `:stroke_dash` in `Tucan.ruler/4`, `Tucan.hruler/3` and `Tucan.vruler/3`
+- Support `:stroke_dash` in `Tucan.lineplot/4`
 
 ## [v0.2.0](https://github.com/pnezis/tucan/tree/v0.2.0) (2023-09-23)
 
