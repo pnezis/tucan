@@ -68,6 +68,8 @@ defmodule Tucan.MixProject do
       groups_for_docs: [
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
+        "Auxiliary Plots": &(&1[:section] == :auxiliary_plots),
+        Layout: &(&1[:section] == :layout),
         Grouping: &(&1[:section] == :grouping),
         Utilities: &(&1[:section] == :utilities),
         Styling: &(&1[:section] == :styling)
@@ -75,6 +77,9 @@ defmodule Tucan.MixProject do
       groups_for_modules: [
         Plots: [
           Tucan
+        ],
+        Layout: [
+          Tucan.Layers
         ],
         Styling: [
           Tucan.Axes,

@@ -134,6 +134,7 @@ defmodule Tucan do
 
   This is a simple wrapper aroung `VegaLite.new/0`.
   """
+  @doc section: :utilities
   @spec new() :: VegaLite.t()
   def new, do: VegaLite.new()
 
@@ -2954,7 +2955,7 @@ defmodule Tucan do
     Enum.map(spec, fn item -> do_apply_recursively(item, fun) end)
   end
 
-  ## Utilities functions
+  ## Auxiliary plots
 
   ruler_opts = [
     line_color: [default: "black"],
@@ -3014,7 +3015,7 @@ defmodule Tucan do
   |> Tucan.ruler(:y, "petal_length", color_by: "species", stroke_dash: [5, 5])
   ```
   """
-  @doc section: :utilities
+  @doc section: :auxiliary_plots
   @spec ruler(
           vl :: VegaLite.t(),
           axis :: :x | :y,
@@ -3048,7 +3049,7 @@ defmodule Tucan do
 
   For supported options check `ruler/4`.
   """
-  @doc section: :utilities
+  @doc section: :auxiliary_plots
   @spec vruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
           VegaLite.t()
   def vruler(vl, x, opts \\ []) do
@@ -3060,7 +3061,7 @@ defmodule Tucan do
 
   For supported options check `ruler/4`.
   """
-  @doc section: :utilities
+  @doc section: :auxiliary_plots
   @spec hruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
           VegaLite.t()
   def hruler(vl, y, opts \\ []) do
@@ -3096,6 +3097,7 @@ defmodule Tucan do
   |> Tucan.Scale.set_y_domain(0, 50)
   ```
   """
+  @doc section: :auxiliary_plots
   @spec annotate(
           vl :: VegaLite.t(),
           x :: number(),
@@ -3167,6 +3169,7 @@ defmodule Tucan do
   > ])
   > ```
   """
+  @doc section: :auxiliary_plots
   @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
           VegaLite.t()
   def circle(vl, {x, y}, radius, opts \\ [])
@@ -3191,10 +3194,12 @@ defmodule Tucan do
     Tucan.Layers.append(vl, circle)
   end
 
+  ## Layout plots
+
   @doc """
   Concatenates horizontally the given plots.
   """
-  @doc section: :utilities
+  @doc section: :layout
   @spec hconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def hconcat(vl \\ Vl.new(), plots) when is_list(plots) do
     VegaLite.concat(vl, plots, :horizontal)
@@ -3203,7 +3208,7 @@ defmodule Tucan do
   @doc """
   Concatenates vertically the given plots.
   """
-  @doc section: :utilities
+  @doc section: :layout
   @spec vconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def vconcat(vl \\ Vl.new(), plots) when is_list(plots) do
     VegaLite.concat(vl, plots, :vertical)
@@ -3214,7 +3219,7 @@ defmodule Tucan do
 
   This corresponds to the general concatenation of vega-lite (wrappable).
   """
-  @doc section: :utilities
+  @doc section: :layout
   @spec concat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def concat(vl \\ Vl.new(), plots) when is_list(plots) do
     VegaLite.concat(vl, plots, :wrappable)
@@ -3228,7 +3233,7 @@ defmodule Tucan do
   then it's layers will be extracted and merged with the rest layers as long
   as the plot has not a top level data item defined.
   """
-  @doc section: :utilities
+  @doc section: :layout
   @spec layers(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
   def layers(vl \\ Vl.new(), plots) do
     plots =
@@ -3262,6 +3267,8 @@ defmodule Tucan do
 
     VegaLite.layers(vl, plots)
   end
+
+  ## Utility plots
 
   @doc """
   Flips the axes of the provided chart.
@@ -3336,6 +3343,7 @@ defmodule Tucan do
   |> Tucan.set_title("Shots")
   ```
   """
+  @doc section: :utilities
   @spec background_image(vl :: VegaLite.t(), image_url :: String.t()) :: VegaLite.t()
   def background_image(vl, image_url) do
     vl
