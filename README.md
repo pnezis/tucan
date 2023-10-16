@@ -95,6 +95,10 @@ def deps do
 end
 ```
 
+**NOTE:** While I will try to maintain backwards compatibility as much as possible, since this
+is still a 0.x.x project the API is not considered stable and thus subject to possible breaking
+changes up until v1.0.0.
+
 ## Acknowledgements
 
 - [vega-lite](https://vega.github.io/vega-lite/) and the awesome docs of it, many examples
@@ -104,7 +108,6 @@ and most of the datasets used are based on it.
 [ggplot2](https://ggplot2.tidyverse.org/) upon which the high level API is partially based.
 - [vega-themes](https://github.com/vega/vega-themes) from which the existing themes are
 ported.
-
 
 ## License
 
