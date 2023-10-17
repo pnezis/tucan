@@ -6,13 +6,13 @@
 
 tucan_version =
   case System.get_env("TUCAN_DEV") do
-    nil -> "0.2.0"
+    nil -> "~> 0.2.1"
     _other -> [path: Path.expand("..", __DIR__)]
   end
 
 Mix.install([
   {:tucan, tucan_version},
-  {:kino_vega_lite, "~> 0.1.9"}
+  {:kino_vega_lite, "~> 0.1.10"}
 ])
 
 alias VegaLite, as: Vl
@@ -215,7 +215,7 @@ Tucan.Scale.set_color_scheme(heatmap, :redyellowblue, reverse: true)
 
 ### Adding in heatmap cells the labels
 
-You can add annotations by setting the `:annotate` option to `true`. This will add a `:text` encoding to the plot which you can configure like all other encodings through the `:text` option.
+You can add annotations by setting the `:annotate` option to `true`. This will add a `:text` encoding to the plot which you can configure like all other encodings through the `:text` option. You can also conditionally color the text using `:text_color`
 
 ```elixir
 Tucan.heatmap(:weather, "date", "date", "temp_max",
@@ -223,7 +223,8 @@ Tucan.heatmap(:weather, "date", "date", "temp_max",
   x: [time_unit: :date],
   y: [time_unit: :month],
   color: [aggregate: :mean],
-  text: [format: ".1f"]
+  text: [format: ".1f"],
+  text_color: [{nil, 9, "white"}, {25, nil, "white"}]
 )
 |> Tucan.set_title("Heatmap of Avg Max Temperatures in Seattle (2012-2015)")
 |> Tucan.Axes.set_x_title("Day")
