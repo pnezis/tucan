@@ -86,7 +86,8 @@ defmodule Tucan.MixProject do
           Tucan.Grid,
           Tucan.Legend,
           Tucan.Scale,
-          Tucan.Themes
+          Tucan.Themes,
+          Tucan.View
         ],
         Datasets: [
           Tucan.Datasets

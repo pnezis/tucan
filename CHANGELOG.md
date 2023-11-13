@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Support for setting plot's background color through `Tucan.View.set_background/2`
+- Support setting axes orientation with `Tucan.Axes.set_orientation/3`
+
+```tucan
+Tucan.scatter(:iris, "petal_width", "petal_length")
+|> Tucan.Axes.set_orientation(:y, :right)
+```
+
 ## [v0.2.1](https://github.com/pnezis/tucan/tree/v0.2.1) (2023-10-17)
 
 ### Added

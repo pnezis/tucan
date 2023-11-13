@@ -111,4 +111,38 @@ defmodule Tucan.AxesTest do
       assert get_in(vl.spec, ["encoding", "x", "axis"]) == []
     end
   end
+
+  describe "set_orientation/3" do
+    test "invalid arguments" do
+      assert_raise ArgumentError,
+                   "you can only set orientation for :x, :y axes, got: :color",
+                   fn ->
+                     Tucan.Axes.set_orientation(Vl.new(), :color, :left)
+                   end
+
+      assert_raise ArgumentError,
+                   "you can only set :bottom or :top orientation for :x axis, got: :left",
+                   fn ->
+                     Tucan.Axes.set_orientation(Vl.new(), :x, :left)
+                   end
+
+      assert_raise ArgumentError,
+                   "you can only set :left or :right orientation for :y axis, got: :bottom",
+                   fn ->
+                     Tucan.Axes.set_orientation(Vl.new(), :y, :bottom)
+                   end
+    end
+
+    test "sets axes orientation" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Vl.encode_field(:y, "y", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_orientation(:x, :top)
+        |> Tucan.Axes.set_orientation(:y, :right)
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "orient" => "top"}
+      assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "orient" => "right"}
+    end
+  end
 end

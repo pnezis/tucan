@@ -41,6 +41,45 @@ defmodule Tucan.Axes do
     put_options(vl, axis, title: title)
   end
 
+  @type orient :: :bottom | :top | :left | :right
+
+  @doc """
+  Sets the orientation for the given axis.
+
+  Valid values for `orient` are:
+
+  * `:top`, `:bottom` for the x axis
+  * `:left`, `:right` for the y axis
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_orientation(:x, :top)
+  |> Tucan.Axes.set_orientation(:y, :right)
+  ```
+  """
+  @spec set_orientation(vl :: VegaLite.t(), axis :: axis(), orient :: orient()) :: VegaLite.t()
+  def set_orientation(vl, axis, orientation) do
+    cond do
+      axis not in [:x, :y] ->
+        raise ArgumentError, "you can only set orientation for :x, :y axes, got: #{inspect(axis)}"
+
+      axis == :x and orientation not in [:bottom, :top] ->
+        raise ArgumentError,
+              "you can only set :bottom or :top orientation for :x axis, " <>
+                "got: #{inspect(orientation)}"
+
+      axis == :y and orientation not in [:left, :right] ->
+        raise ArgumentError,
+              "you can only set :left or :right orientation for :y axis, " <>
+                "got: #{inspect(orientation)}"
+
+      true ->
+        put_options(vl, axis, orient: orientation)
+    end
+  end
+
   @doc """
   Enables or disables both axes (`x`, `y`) at once.
 
