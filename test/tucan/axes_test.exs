@@ -145,4 +145,26 @@ defmodule Tucan.AxesTest do
       assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "orient" => "right"}
     end
   end
+
+  describe "set_offset/2" do
+    test "raises if invalid axis" do
+      assert_raise ArgumentError,
+                   "invalid axis :z set in set_offset/3, only one of [:x, :y] is allowed",
+                   fn ->
+                     Tucan.Axes.set_offset(Vl.new(), :z, 10)
+                   end
+    end
+
+    test "sets axes offset" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Vl.encode_field(:y, "y", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_offset(:x, 10)
+        |> Tucan.Axes.set_offset(:y, -10)
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "offset" => 10}
+      assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "offset" => -10}
+    end
+  end
 end

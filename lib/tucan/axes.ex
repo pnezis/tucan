@@ -41,6 +41,27 @@ defmodule Tucan.Axes do
     put_options(vl, axis, title: title)
   end
 
+  @doc """
+  Sets the axis offset (in pixels).
+
+  The offset indicates the amount in pixels by which the axis will be  displaces from the
+  edge of the enclosing group or data rectangle.
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_offset(:y, 10)
+  |> Tucan.Grid.set_enabled(false)
+  ```
+  """
+  @spec set_offset(vl :: VegaLite.t(), axis :: axis(), offset :: number()) :: VegaLite.t()
+  def set_offset(vl, axis, offset) when is_struct(vl, VegaLite) and is_integer(offset) do
+    validate_axis!(axis, [:x, :y], "set_offset/3")
+
+    put_options(vl, axis, offset: offset)
+  end
+
   @type orient :: :bottom | :top | :left | :right
 
   @doc """
@@ -126,5 +147,14 @@ defmodule Tucan.Axes do
           VegaLite.t()
   def put_options(vl, encoding, options) do
     Utils.put_encoding_options(vl, encoding, axis: options)
+  end
+
+  defp validate_axis!(axis, allowed, caller) do
+    if axis not in allowed do
+      raise ArgumentError,
+            "invalid axis #{inspect(axis)} set in #{caller}, only one of #{inspect(allowed)} is allowed"
+    end
+
+    :ok
   end
 end

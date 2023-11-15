@@ -5,6 +5,7 @@
 ### Added
 
 - Support for setting plot's background color through `Tucan.View.set_background/2`
+- Add `Tucan.Axes.set_offset/3`
 - Support setting axes orientation with `Tucan.Axes.set_orientation/3`
 
 ```tucan
@@ -55,7 +56,7 @@ Tucan.new()
 ### Added plot options
 
 - Support `:only` in all plots. Using `:only` you can select only a subset of the input
-dataset for the current plot.
+  dataset for the current plot.
 - Support `:point_color` in `Tucan.lineplot/4`
 - Support `:area_color` and `:filled` in density plot
 - Support `:stroke_dash` in `Tucan.ruler/4`, `Tucan.hruler/3` and `Tucan.vruler/3`
@@ -77,7 +78,7 @@ dataset for the current plot.
 ```
 
 - Add `Tucan.punchcard/5` plot. This is similar to heatmap but the third
-dimension is encoded by size instead of color.
+  dimension is encoded by size instead of color.
 
 ```tucan
 Tucan.punchcard(:glue, "Task", "Model", "Score")
@@ -103,11 +104,11 @@ Tucan.scatter(:iris, "petal_width", "petal_length", width: 300)
 
 - Add `Tucan.Legend` module for customizing legend properties.
 - Add `Tucan.Scale` helper module with helper functions for working with
-scales, like `Tucan.Scale.set_color_scheme/3`.
+  scales, like `Tucan.Scale.set_color_scheme/3`.
 - Add `Tucan.set_size/3` helper for setting both width and height at once.
 - Add `Tucan.Axes.set_xy_titles/3` for setting axes titles at once.
 - Port more themes from `vega-themes`, check `Tucan.Themes` for all
-available themes.
+  available themes.
 
 - Add `Tucan.layers/2` helper
 
