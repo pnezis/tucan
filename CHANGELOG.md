@@ -4,10 +4,11 @@
 
 ### Added
 
-- Support for setting plot's background color through `Tucan.View.set_background/2`
+- Support setting plot's background color through `Tucan.View.set_background/2`
+- Support setting view's background color through `Tucan.View.set_view_background/2`
 - Add `Tucan.Axes.set_offset/3`
-- Support setting axes orientation with `Tucan.Axes.set_orientation/3`
 - Add `Tucan.Legend.set_offset/3`
+- Support setting axes orientation with `Tucan.Axes.set_orientation/3`
 
 ```tucan
 Tucan.scatter(:iris, "petal_width", "petal_length")
