@@ -33,6 +33,17 @@ defmodule Tucan.LegendTest do
     end
   end
 
+  describe "set_offset/3" do
+    test "sets the legend offset" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:color, "x")
+        |> Tucan.Legend.set_offset(:color, 5)
+
+      assert get_in(vl.spec, ["encoding", "color", "legend", "offset"]) == 5
+    end
+  end
+
   describe "set_enabled/3" do
     test "disables the legend" do
       vl =

@@ -74,6 +74,25 @@ defmodule Tucan.Legend do
   end
 
   @doc """
+  Sets the offset in pixels by which to displace the legend from the data rectangle
+  and axes.
+
+  If not set defaults to 18 pixels.
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.color_by("species")
+  |> Tucan.Legend.set_offset(:color, 5)
+  ```
+  """
+  @spec set_offset(vl :: VegaLite.t(), channel :: atom(), offset :: integer()) :: VegaLite.t()
+  def set_offset(vl, channel, offset) do
+    put_legend_options(vl, channel, [offset: offset], "set_offset/3")
+  end
+
+  @doc """
   Set arbitrary options to the legend of the given channel.
 
   The options are deep merged with existing options.
