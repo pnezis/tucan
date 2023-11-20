@@ -949,6 +949,7 @@ defmodule Tucan do
   """
   # TODO: add :points option to support points
   # TODO: options for configuring tick color and width
+  @doc section: :plots
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def errorbar(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @errorbar_schema)
