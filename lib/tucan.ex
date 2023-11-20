@@ -834,6 +834,144 @@ defmodule Tucan do
     end
   end
 
+  errorbar_opts = [
+    group_by: [
+      type: :string,
+      doc: """
+      A field to be used for grouping the error bars by a category. If not set the plot will
+      be one dimensional.
+      """
+    ],
+    extent: [
+      type: {:in, [:ci, :stderr, :stdev, :iqr]},
+      doc: """
+      The extent of the rule. Can be one of the following:
+
+      * `:ci` - Extend the rule to the confidence interval of the mean.
+      * `:stderr` - The size of rule are set to the value of standard error, extending from the mean.
+      * `:stdev` - The size of rule are set to the value of standard deviation, extending from the
+      mean.
+      * `:iqr` - Extend the rule to the q1 and q3.
+
+      If not set defaults to `:stderr`
+      """,
+      default: :stderr,
+      dest: :mark
+    ],
+    ticks: [
+      type: :boolean,
+      doc: "If set ticks will be included to the error bars ends",
+      dest: :mark
+    ]
+  ]
+
+  @errorbar_opts Tucan.Options.take!(
+                   [
+                     @global_opts,
+                     @global_mark_opts,
+                     :orient,
+                     :x,
+                     :y,
+                     :line_color,
+                     :stroke_width
+                   ],
+                   errorbar_opts
+                 )
+  @errorbar_schema Tucan.Options.to_nimble_schema!(@errorbar_opts)
+
+  @doc """
+  Plots the errorbar for the given numerical variable `field`.
+
+  Error bars sho by default the standard error. It can also be explicitly specified by setting
+  `:extent` to `:stderr`. The length of lower and upper rules represent standard error. By
+  default, the rule marks expand from the mean.
+
+  ## Options
+
+  #{Tucan.Options.docs(@errorbar_opts)}
+
+  ## Examples
+
+  A 1-d error bar:
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield")
+  ```
+
+  By setting the `:group_by` option you can show the error range of a coninuous field
+  broken down by categories.
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety")
+  ```
+
+  You can change the orientation by setting the `:orient` option:
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety", orient: :vertical)
+  ```
+
+  By setting `:ticks` to `true` you can enable errorbar end ticks:
+
+   ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety", ticks: true)
+  ```
+
+  You can change the `:extent` value in order to configure how the error bars are extended. Below
+  you can see all supported options:
+
+  ```tucan
+  valid_extent_values = [:ci, :stderr, :stdev, :iqr]
+
+  plots =
+    for extent <- valid_extent_values do
+      Tucan.errorbar(:barley, "yield", group_by: "variety", extent: extent)
+      |> Tucan.set_title(inspect(extent) <> " extent")
+      |> Tucan.Axes.set_enabled(:y, extent == :ci)
+      |> Tucan.set_size(160, 160)
+    end
+
+  Tucan.hconcat(Tucan.new(), plots)
+  ```
+
+  You can use `:line_color` and `:stroke_width` to modify the look of the error bars:
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety", line_color: "red", stroke_width: 3, ticks: true)
+  ```
+
+  You can color categories by combining it with `Tucan.color_by/3`.
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety")
+  |> Tucan.color_by("variety")
+  ```
+  """
+  # TODO: add :points option to support points
+  # TODO: options for configuring tick color and width
+  @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
+  def errorbar(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @errorbar_schema)
+    spec_opts = take_options(opts, @errorbar_opts, :spec)
+
+    mark_opts =
+      take_options(opts, @errorbar_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+      |> Tucan.Keyword.put_new_conditionally(:rule, [stroke_width: opts[:stroke_width]], fn ->
+        opts[:stroke_width] != nil
+      end)
+      |> Keyword.delete(:stroke_width)
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:errorbar, mark_opts)
+    |> encode_field(:x, field, opts, type: :quantitative, scale: [zero: false])
+    |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+      type: :nominal
+    )
+    |> maybe_flip_axes(opts[:orient] == :vertical)
+  end
+
   boxplot_opts = [
     group_by: [
       type: :string,
