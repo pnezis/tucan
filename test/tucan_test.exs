@@ -6,6 +6,7 @@ defmodule TucanTest do
 
   @dataset "dataset.csv"
 
+  @barley_dataset Tucan.Datasets.dataset(:barley)
   @cars_dataset Tucan.Datasets.dataset(:cars)
   @iris_dataset Tucan.Datasets.dataset(:iris)
   @tips_dataset Tucan.Datasets.dataset(:tips)
@@ -690,6 +691,51 @@ defmodule TucanTest do
         |> Vl.encode_field(:color, "sex")
 
       assert Tucan.stripplot(@tips_dataset, "total_bill", group: "sex", color_by: "sex") ==
+               expected
+    end
+  end
+
+  describe "errorbar/3" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.errorbar(@barley_dataset, "yield") == expected
+    end
+
+    test "with ticks" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1, ticks: true)
+        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.errorbar(@barley_dataset, "yield", ticks: true) == expected
+    end
+
+    test "with grouping" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:y, "variety", type: :nominal)
+
+      assert Tucan.errorbar(@barley_dataset, "yield", group_by: "variety") == expected
+    end
+
+    test "with grouping and vertical orientation" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+        |> Vl.encode_field(:y, "yield", type: :quantitative, scale: [zero: false])
+        |> Vl.encode_field(:x, "variety", type: :nominal)
+
+      assert Tucan.errorbar(@barley_dataset, "yield", group_by: "variety", orient: :vertical) ==
                expected
     end
   end
