@@ -852,8 +852,6 @@ defmodule Tucan do
       * `:stdev` - The size of rule are set to the value of standard deviation, extending from the
       mean.
       * `:iqr` - Extend the rule to the q1 and q3.
-
-      If not set defaults to `:stderr`
       """,
       default: :stderr,
       dest: :mark
