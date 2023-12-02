@@ -15,6 +15,17 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 |> Tucan.Axes.set_orientation(:y, :right)
 ```
 
+- Add `Tucan.errorbar/3` plot
+
+```tucan
+Tucan.errorbar(:barley, "yield", group_by: "variety")
+|> Tucan.color_by("variety")
+```
+
+### Deprecated
+
+- Deprecate `Tucan.circle/4` in favour of `Tucan.Geometry.circle/4`
+
 ## [v0.2.1](https://github.com/pnezis/tucan/tree/v0.2.1) (2023-10-17)
 
 ### Added

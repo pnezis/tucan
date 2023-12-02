@@ -41,7 +41,7 @@ defmodule Tucan do
   ```
 
   You can apply semantic grouping by a third variable by modifying the color, the
-  shape or the size of the points: 
+  shape or the size of the points:
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species", shape_by: "species")
@@ -71,7 +71,7 @@ defmodule Tucan do
 
   Tucan.pairplot(:penguins, fields, diagonal: :density)
   ```
-   
+
   ## Customization & Themes
 
   Various methods and helper modules allow you to easily modify the style of
@@ -133,9 +133,6 @@ defmodule Tucan do
 
   @typedoc "A string corresponding to a dataset's field"
   @type field :: String.t()
-
-  @typedoc "A cartesian point in the form `{x, y}`"
-  @type point :: {number(), number()}
 
   ## Custom guards
 
@@ -595,7 +592,7 @@ defmodule Tucan do
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true)
   ```
 
-  or calculate a separate cumulative distribution for each group: 
+  or calculate a separate cumulative distribution for each group:
 
   ```tucan
   Tucan.density(:penguins, "Body Mass (g)", cumulative: true, color_by: "Species")
@@ -704,7 +701,7 @@ defmodule Tucan do
   #{Tucan.Options.docs(@stripplot_opts)}
 
   > ### Internal `VegaLite` representation {: .info}
-  > 
+  >
   > If style is set to `:tick` the following `VegaLite` representation is generated:
   >
   > ```elixir
@@ -1033,7 +1030,7 @@ defmodule Tucan do
 
   ## Examples
 
-  A one dimensional Tukey boxplot: 
+  A one dimensional Tukey boxplot:
 
   ```tucan
   Tucan.boxplot(:penguins, "Body Mass (g)")
@@ -1101,7 +1098,7 @@ defmodule Tucan do
       doc: """
       The color scheme to use, for supported color schemes check `Tucan.Scale`. Notice that
       this is just a helper option for easily setting color schemes. If you need to set
-      specific colors or customize the scheme, use `Tucan.Scale.set_color_scheme/3`. 
+      specific colors or customize the scheme, use `Tucan.Scale.set_color_scheme/3`.
       """,
       section: :style
     ],
@@ -1465,7 +1462,7 @@ defmodule Tucan do
   each rectangle is shown with the fill color.
 
   By default the `count` of observations within each rectangle is encoded, but you
-  can calculate the statistic of any field and use it instead. 
+  can calculate the statistic of any field and use it instead.
 
   Density heatmaps are a powerful visualization tool that find their best use cases
   in situations where you need to explore and understand the distribution and
@@ -1532,7 +1529,7 @@ defmodule Tucan do
       doc: """
       The stacking mode, applied only if `:color_by` is set. Can be one of the
       following:
-        * `:stacked` - the default one, bars are stacked 
+        * `:stacked` - the default one, bars are stacked
         * `:normalize` - the bars are stacked are normalized
         * `:grouped` - no stacking is applied, a separate bar for each category
       """,
@@ -1670,7 +1667,7 @@ defmodule Tucan do
   observations is mapped to the `y` variable.
 
   > #### What is a countplot? {: .tip}
-  > 
+  >
   > A countplot is a type of bar chart used in data visualization to
   > display the **frequency of occurrences of categorical data**. It is
   > particularly useful for visualizing the *distribution* and *frequency*
@@ -1785,11 +1782,11 @@ defmodule Tucan do
   Both `x` and `y` must be `:quantitative`.
 
   > #### Semantic groupings {: .tip}
-  >   
+  >
   > The relationship between `x` and `y` can be shown for different subsets of the
   > data using the `color_by`, `size_by` and `shape_by` parameters. This is equivalent
   > to calling the corresponding functions after a `scatter/4` call.
-  > 
+  >
   > These parameters control what visual semantics are used to identify the different
   > subsets. It is possible to show up to three dimensions independently by using all
   > three semantic types, but this style of plot can be hard to interpret and is often
@@ -1802,7 +1799,7 @@ defmodule Tucan do
   >   size_by: "size"
   > )
   > ```
-  > 
+  >
   > The above is equivalent to calling:
   >
   > ```elixir
@@ -1811,7 +1808,7 @@ defmodule Tucan do
   > |> Tucan.shape_by("sex", type: :nominal)
   > |> Tucan.size_by("size", type: :quantitative)
   > ```
-  > 
+  >
   > Using redundant semantics (i.e. both color and shape for the same variable) can be
   > helpful for making graphics more accessible.
   >
@@ -2071,7 +2068,7 @@ defmodule Tucan do
 
   Plotting a simple line chart of Google stock price over time. Notice how we change the
   `x` axis type from the default (`:quantitative`) to `:temporal` using the generic
-  `:x` channel configuration option: 
+  `:x` channel configuration option:
 
   ```tucan
   Tucan.lineplot(:stocks, "date", "price", x: [type: :temporal])
@@ -2136,7 +2133,7 @@ defmodule Tucan do
   You can use various interpolation methods. Some examples follow:
 
   ```tucan
-  plots = 
+  plots =
     for interpolation <- ["linear", "step", "cardinal", "monotone"] do
       Tucan.lineplot(:stocks, "date", "price",
         x: [type: :temporal, time_unit: :year],
@@ -2241,7 +2238,7 @@ defmodule Tucan do
       doc: """
       The stacking mode, applied only if `:color_by` is set. Can be one of the
       following:
-        * `:stacked` - the default one, areas are stacked 
+        * `:stacked` - the default one, areas are stacked
         * `:normalize` - the stacked charts are normalized
         * `:streamgraph` - the chart is displaced around a central axis
         * `:no_stack` - no stacking is applied
@@ -2276,7 +2273,7 @@ defmodule Tucan do
 
   A simple area chart of Google stock price over time. Notice how we change the
   `x` axis type from the default (`:quantitative`) to `:temporal` using the generic
-  `:x` channel configuration option: 
+  `:x` channel configuration option:
 
   ```tucan
   Tucan.area(:stocks, "date", "price", x: [type: :temporal])
@@ -2444,7 +2441,7 @@ defmodule Tucan do
   >
   > Instead, opt for alternatives such as bar charts for straightforward comparisons,
   > stacked area charts for cumulative effects.
-  > 
+  >
   > The following example showcases the limitations of a pie chart, compared to a
   > bar chart:
   >
@@ -2456,7 +2453,7 @@ defmodule Tucan do
   >   %{value: 33, category: "B"},
   >   %{value: 38, category: "C"}
   > ]
-  > 
+  >
   > pie = Tucan.pie(data, "value", "category")
   > bar = Tucan.bar(data, "category", "value", orient: :vertical)
   >
@@ -2506,7 +2503,7 @@ defmodule Tucan do
 
   A donut chart is a circular visualization that resembles a pie chart but
   features a hole at its center. This central hole creates a _donut_ shape,
-  distinguishing it from traditional pie charts. 
+  distinguishing it from traditional pie charts.
 
   This is a wrapper around `pie/4` that sets by default the `:inner_radius`.
 
@@ -2554,7 +2551,7 @@ defmodule Tucan do
 
       ```elixir
       (vl :: VegaLite.t(), row :: {String.t(), integer()}, column :: {String.t(), integer()})
-        :: VegaLite.t() 
+        :: VegaLite.t()
       ```
 
       where both `row` and `column` are tuples containing the index and field of
@@ -2631,14 +2628,14 @@ defmodule Tucan do
     height: 150,
     plot_fn: fn vl, {row_field, row_index}, {col_field, col_index} ->
       cond do
-        # For the first two diagonal elements we plot a histogram, no 
+        # For the first two diagonal elements we plot a histogram, no
         row_index == col_index and row_index < 2 ->
           Tucan.histogram(vl, row_field)
 
         row_index == 2 and col_index == 2 ->
           Tucan.stripplot(vl, row_field, group: "species", style: :tick)
-          |> Tucan.color_by("species") 
-          |> Tucan.Axes.put_options(:y, labels: false)  
+          |> Tucan.color_by("species")
+          |> Tucan.Axes.put_options(:y, labels: false)
 
         # For the other diagonal plots we plot a histogram colored_by the species
         row_index == col_index ->
@@ -2654,7 +2651,7 @@ defmodule Tucan do
         true ->
           Tucan.scatter(vl, col_field, row_field)
           |> Tucan.size_by("petal_width", type: :quantitative)
-          
+
       end
     end
   )
@@ -2753,7 +2750,7 @@ defmodule Tucan do
       default: [],
       doc: """
       Arbitrary options list for the joint plot. The supported options
-      depend on the selected `:joint` type. 
+      depend on the selected `:joint` type.
       """
     ],
     marginal: [
@@ -2769,7 +2766,7 @@ defmodule Tucan do
       default: [],
       doc: """
       Arbitrary options list for the marginal plots. The supported options
-      depend on the selected `:marginal` type. 
+      depend on the selected `:marginal` type.
       """
     ],
     spacing: [
@@ -3268,81 +3265,17 @@ defmodule Tucan do
     Tucan.Layers.append(vl, annotation)
   end
 
-  circle_opts = [
-    stroke_width: [default: 1]
-  ]
-
-  @circle_opts Tucan.Options.take!([:stroke_width, :stroke_dash, :line_color], circle_opts)
-  @circle_schema Tucan.Options.to_nimble_schema!(@circle_opts)
-
-  @doc """
-  Draws a circle with the given `center` and `radius`.
-
-  The circle will be added as a new layer to the given plot `vl`.
-
-  ## Options
-
-  #{Tucan.Options.docs(@circle_opts)}
-
-
-  ## Examples
-
-  ```tucan
-  Tucan.new()
-  |> Tucan.circle({3, 2}, 5)
-  |> Tucan.circle({-1, 6}, 2, line_color: "red")
-  |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5)
-  |> Tucan.Scale.set_x_domain(-5, 10)
-  |> Tucan.Scale.set_y_domain(-5, 10)
-  ```
-
-  > #### Circles and plot dimensions {: .tip}
-  >
-  > Notice that the plot must be square with identical scale domains across
-  > the two axes for the circle to appear circular. In a different case it will
-  > look like an ellipsis.
-  >
-  > ```tucan
-  > circle = Tucan.circle(Tucan.new(), {0, 0}, 1)
-  >
-  > Tucan.hconcat([
-  >   circle
-  >   |> Tucan.set_size(150, 150)
-  >   |> Tucan.set_title("Square frame"),
-  >   circle
-  >   |> Tucan.Scale.set_x_domain(-2, 2)
-  >   |> Tucan.Scale.set_y_domain(-1, 1)
-  >   |> Tucan.set_size(150, 150)
-  >   |> Tucan.set_title("Different domains"),
-  >   circle
-  >   |> Tucan.set_size(200, 150)
-  >   |> Tucan.set_title("Different frame dimensions")
-  > ])
-  > ```
-  """
-  @doc section: :auxiliary_plots
-  @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
+  @doc false
+  @deprecated "Use Tucan.Geometry.circle/4 instead"
+  @spec circle(
+          vl :: VegaLite.t(),
+          center :: {number(), number()},
+          radius :: number(),
+          opts :: keyword()
+        ) ::
           VegaLite.t()
-  def circle(vl, {x, y}, radius, opts \\ [])
-      when is_struct(vl, VegaLite) and is_number(radius) and radius > 0 do
-    opts = NimbleOptions.validate!(opts, @circle_schema)
-
-    mark_opts =
-      opts
-      |> Keyword.take([:stroke_width])
-      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
-
-    circle =
-      Vl.new()
-      |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
-      |> Vl.transform(calculate: "#{x} + cos(datum.theta*PI/180) * #{radius}", as: "x")
-      |> Vl.transform(calculate: "#{y} + sin(datum.theta*PI/180) * #{radius}", as: "y")
-      |> Vl.mark(:line, mark_opts)
-      |> Vl.encode_field(:x, "x", type: :quantitative)
-      |> Vl.encode_field(:y, "y", type: :quantitative)
-      |> Vl.encode_field(:order, "theta")
-
-    Tucan.Layers.append(vl, circle)
+  def circle(vl, {x, y}, radius, opts \\ []) do
+    Tucan.Geometry.circle(vl, {x, y}, radius, opts)
   end
 
   ## Layout plots
@@ -3400,7 +3333,7 @@ defmodule Tucan do
                   """
                   Tucan.layers/2 expects either single view plots or multi layer plots without global
                   data, got:
-                     
+
                     #{inspect(plot)}
                   """
 
@@ -3478,7 +3411,7 @@ defmodule Tucan do
 
   ```tucan
   # generate some random samples
-  shots = 
+  shots =
     for _index <- 1..30 do
       %{x: Enum.random(10..90), y: Enum.random(10..90), team: Enum.random([:home, :away])}
     end
