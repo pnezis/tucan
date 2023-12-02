@@ -3497,7 +3497,7 @@ defmodule Tucan do
 
   ```tucan
   Tucan.scatter(:iris, "petal_width", "petal_length")
-  |> Tucan.set_title("My multiline\\nplot")
+  |> Tucan.set_title("My multiline\\ntitle")
   ```
   """
   @doc section: :styling
