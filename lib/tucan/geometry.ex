@@ -11,7 +11,18 @@ defmodule Tucan.Geometry do
     stroke_width: [default: 1]
   ]
 
-  @circle_opts Tucan.Options.take!([:stroke_width, :stroke_dash, :line_color], circle_opts)
+  @circle_opts Tucan.Options.take!(
+                 [
+                   :stroke_width,
+                   :stroke_dash,
+                   :line_color,
+                   :opacity,
+                   :stroke_opacity,
+                   :fill_color,
+                   :fill_opacity
+                 ],
+                 circle_opts
+               )
   @circle_schema Tucan.Options.to_nimble_schema!(@circle_opts)
 
   @doc """
@@ -30,6 +41,19 @@ defmodule Tucan.Geometry do
   |> Tucan.circle({3, 2}, 5)
   |> Tucan.circle({-1, 6}, 2, line_color: "red")
   |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5)
+  |> Tucan.Scale.set_x_domain(-5, 10)
+  |> Tucan.Scale.set_y_domain(-5, 10)
+  ```
+
+  You can also draw filled circles by setting the `:fill_color` option. Opacity of the fill color and
+  the stroke color can be configured by `:opacity` or independently by `:fill_opacity` and
+  `:stroke_opacity`.
+
+  ```tucan
+  Tucan.new()
+  |> Tucan.circle({3, 2}, 5, stroke_width: 3, stroke_opacity: 0.4)
+  |> Tucan.circle({-1, 6}, 2, line_color: "red", fill_color: "pink", opacity: 0.3)
+  |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5, fill_color: "green", fill_opacity: 0.2)
   |> Tucan.Scale.set_x_domain(-5, 10)
   |> Tucan.Scale.set_y_domain(-5, 10)
   ```
@@ -66,8 +90,9 @@ defmodule Tucan.Geometry do
 
     mark_opts =
       opts
-      |> Keyword.take([:stroke_width])
+      |> take_options(@circle_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+      |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
     circle =
       Vl.new()
@@ -80,5 +105,17 @@ defmodule Tucan.Geometry do
       |> Vl.encode_field(:order, "theta")
 
     Tucan.Layers.append(vl, circle)
+  end
+
+  # TODO move in helper, used in Tucan as well
+  defp take_options(opts, schema, dest) do
+    dest_opts =
+      schema
+      |> Enum.filter(fn {_key, opts} ->
+        opts[:dest] == dest
+      end)
+      |> Keyword.keys()
+
+    Keyword.take(opts, dest_opts)
   end
 end

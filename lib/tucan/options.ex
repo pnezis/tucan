@@ -220,6 +220,16 @@ defmodule Tucan.Options do
       section: :style,
       dest: :mark
     ],
+    stroke_opacity: [
+      type: {:custom, Tucan.Options, :number_between, [0, 1]},
+      type_doc: "`t:number/0`",
+      default: 1,
+      doc: """
+      The opacity of the stroke.
+      """,
+      section: :style,
+      dest: :mark
+    ],
     opacity: [
       type: {:custom, Tucan.Options, :number_between, [0, 1]},
       type_doc: "`t:number/0`",
@@ -256,6 +266,11 @@ defmodule Tucan.Options do
     line_color: [
       type: :string,
       doc: "The color of the line",
+      section: :style
+    ],
+    fill_color: [
+      type: :string,
+      doc: "The fill color of the marks. This will override the `color` encoding if set.",
       section: :style
     ],
 
