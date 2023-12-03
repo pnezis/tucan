@@ -125,6 +125,8 @@ defmodule Tucan.Geometry do
   |> Tucan.set_size(400, 300)
   ```
   """
+  @spec rectangle(vl :: VegaLite.t(), point1 :: point(), point2 :: point(), opts :: keyword()) ::
+          VegaLite.t()
   def rectangle(vl, {x1, y1}, {x2, y2}, opts \\ []) do
     if x1 == x2 do
       raise ArgumentError, "the two points must have different x coordinates"
@@ -218,6 +220,7 @@ defmodule Tucan.Geometry do
   |> Tucan.Scale.set_y_domain(-1, 9)
   ```
   """
+  @spec polyline(vl :: VegaLite.t(), vertices :: [point()], opts :: keyword()) :: VegaLite.t()
   def polyline(vl, vertices, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @polyline_schema)
 
