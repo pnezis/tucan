@@ -4,6 +4,30 @@
 
 ### Added
 
+- Add `Tucan.errorbar/3` plot
+
+```tucan
+Tucan.errorbar(:barley, "yield", group_by: "variety")
+|> Tucan.color_by("variety")
+```
+
+- Add `Tucan.Geometry.polyline/3` and `Tucan.Geometry.rectangle/4`
+
+```tucan
+Tucan.new()
+|> Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green")
+|> Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2},
+  fill_color: "pink",
+  fill_opacity: 0.3
+)
+|> Tucan.Geometry.polyline([{1, 1}, {2, 7}, {5, 3}],
+  closed: true,
+  fill_color: "green",
+  fill_opacity: 0.3
+)
+|> Tucan.Scale.set_xy_domain(-5, 11)
+```
+
 - Support setting plot's background color through `Tucan.View.set_background/2`
 - Support setting view's background color through `Tucan.View.set_view_background/2`
 - Add `Tucan.Axes.set_offset/3`
@@ -13,13 +37,6 @@
 ```tucan
 Tucan.scatter(:iris, "petal_width", "petal_length")
 |> Tucan.Axes.set_orientation(:y, :right)
-```
-
-- Add `Tucan.errorbar/3` plot
-
-```tucan
-Tucan.errorbar(:barley, "yield", group_by: "variety")
-|> Tucan.color_by("variety")
 ```
 
 ### Deprecated
