@@ -203,7 +203,7 @@ defmodule Tucan.Geometry do
   |> Tucan.Scale.set_y_domain(-1, 9)
   ```
 
-  You can change the appearence of the polyline/polygon.
+  You can change the appearance of the polyline/polygon.
 
   ```tucan
   points = [{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}]

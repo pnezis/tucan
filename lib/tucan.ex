@@ -893,7 +893,7 @@ defmodule Tucan do
   Tucan.errorbar(:barley, "yield")
   ```
 
-  By setting the `:group_by` option you can show the error range of a coninuous field
+  By setting the `:group_by` option you can show the error range of a continuous field
   broken down by categories.
 
   ```tucan

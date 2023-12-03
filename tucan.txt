@@ -13,6 +13,7 @@ darkgreen
 darkmulti
 darkred
 enlayer
+errorbar
 gapminder
 ggplot
 goldgreen
@@ -49,6 +50,7 @@ panagiotis
 pclass
 pinkyellowgreen
 plotdata
+polyline
 punchcard
 purpleblue
 purplebluegreen
@@ -63,6 +65,7 @@ redyellowgreen
 scatterplot
 seaborn
 sinebow
+stdev
 streamgraph
 stripplot
 symlog
