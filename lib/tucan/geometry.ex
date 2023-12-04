@@ -90,7 +90,7 @@ defmodule Tucan.Geometry do
 
     mark_opts =
       opts
-      |> take_options(@circle_opts, :mark)
+      |> Tucan.Options.take_options(@circle_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
       |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
@@ -226,7 +226,7 @@ defmodule Tucan.Geometry do
 
     mark_opts =
       opts
-      |> take_options(@polyline_opts, :mark)
+      |> Tucan.Options.take_options(@polyline_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
       |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
@@ -252,17 +252,5 @@ defmodule Tucan.Geometry do
       |> Vl.encode_field(:order, "order")
 
     Tucan.Layers.append(vl, polyline)
-  end
-
-  # TODO move in helper, used in Tucan as well
-  defp take_options(opts, schema, dest) do
-    dest_opts =
-      schema
-      |> Enum.filter(fn {_key, opts} ->
-        opts[:dest] == dest
-      end)
-      |> Keyword.keys()
-
-    Keyword.take(opts, dest_opts)
   end
 end

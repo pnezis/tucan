@@ -376,6 +376,19 @@ defmodule Tucan.Options do
   end
 
   @doc false
+  @spec take_options(opts :: keyword(), schema :: keyword(), dest :: atom()) :: keyword()
+  def take_options(opts, schema, dest) do
+    dest_opts =
+      schema
+      |> Enum.filter(fn {_key, opts} ->
+        opts[:dest] == dest
+      end)
+      |> Keyword.keys()
+
+    Keyword.take(opts, dest_opts)
+  end
+
+  @doc false
   @spec to_nimble_schema!(opts :: keyword()) :: NimbleOptions.t()
   def to_nimble_schema!(opts) do
     opts

@@ -333,8 +333,8 @@ defmodule Tucan do
   def histogram(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
-    spec_opts = take_options(opts, @histogram_opts, :spec)
-    mark_opts = take_options(opts, @histogram_opts, :mark)
+    spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @histogram_opts, :mark)
 
     plotdata
     |> new(spec_opts ++ [tucan: [plot: :histogram]])
@@ -350,7 +350,7 @@ defmodule Tucan do
 
   defp bin_count_transform(vl, field, opts) do
     bin_opts =
-      case take_options(opts, @histogram_opts, :bin) do
+      case Tucan.Options.take_options(opts, @histogram_opts, :bin) do
         [] -> true
         bin_opts -> bin_opts
       end
@@ -615,16 +615,16 @@ defmodule Tucan do
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
-    spec_opts = take_options(opts, @histogram_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
 
     mark_opts =
-      take_options(opts, @histogram_opts, :mark)
+      Tucan.Options.take_options(opts, @histogram_opts, :mark)
       |> Keyword.merge(orient: :vertical)
       |> Tucan.Keyword.put_not_nil(:color, opts[:area_color])
       |> Tucan.Keyword.put_not_nil(:filled, opts[:filled])
 
     transform_opts =
-      take_options(opts, @density_opts, :density_transform)
+      Tucan.Options.take_options(opts, @density_opts, :density_transform)
       |> Keyword.merge(density: field)
       |> Tucan.Keyword.put_new_conditionally(:groupby, [opts[:color_by]], fn ->
         opts[:color_by] != nil
@@ -794,7 +794,7 @@ defmodule Tucan do
   def stripplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
-    spec_opts = take_options(opts, @stripplot_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @stripplot_opts, :spec)
 
     plotdata
     |> new(spec_opts)
@@ -948,10 +948,10 @@ defmodule Tucan do
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def errorbar(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @errorbar_schema)
-    spec_opts = take_options(opts, @errorbar_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @errorbar_opts, :spec)
 
     mark_opts =
-      take_options(opts, @errorbar_opts, :mark)
+      Tucan.Options.take_options(opts, @errorbar_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
       |> Tucan.Keyword.put_new_conditionally(:rule, [stroke_width: opts[:stroke_width]], fn ->
         opts[:stroke_width] != nil
@@ -1065,10 +1065,10 @@ defmodule Tucan do
         :min_max -> "min-max"
       end
 
-    spec_opts = take_options(opts, @boxplot_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @boxplot_opts, :spec)
 
     mark_opts =
-      take_options(opts, @boxplot_opts, :mark)
+      Tucan.Options.take_options(opts, @boxplot_opts, :mark)
       |> Keyword.merge(extent: extent)
 
     group_field = opts[:group_by] || opts[:color_by]
@@ -1320,8 +1320,8 @@ defmodule Tucan do
   end
 
   defp heatmap_specification(plotdata, x, y, z, z_encoding, mark, opts, plot_opts) do
-    spec_opts = take_options(opts, plot_opts, :spec)
-    mark_opts = take_options(opts, plot_opts, :mark)
+    spec_opts = Tucan.Options.take_options(opts, plot_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, plot_opts, :mark)
 
     opts =
       if opts[:color_scheme] do
@@ -1499,8 +1499,8 @@ defmodule Tucan do
   def density_heatmap(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_heatmap_schema)
 
-    spec_opts = take_options(opts, @density_heatmap_opts, :spec)
-    mark_opts = take_options(opts, @density_heatmap_opts, :mark)
+    spec_opts = Tucan.Options.take_options(opts, @density_heatmap_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @density_heatmap_opts, :mark)
 
     color_fn = fn vl ->
       case opts[:z] do
@@ -1633,8 +1633,8 @@ defmodule Tucan do
   def bar(plotdata, field, value, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bar_schema)
 
-    spec_opts = take_options(opts, @bar_opts, :spec)
-    mark_opts = take_options(opts, @bar_opts, :mark)
+    spec_opts = Tucan.Options.take_options(opts, @bar_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @bar_opts, :mark)
 
     y_opts =
       case opts[:mode] do
@@ -1914,10 +1914,10 @@ defmodule Tucan do
   def scatter(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @scatter_schema)
 
-    spec_opts = take_options(opts, @scatter_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @scatter_opts, :spec)
 
     mark_opts =
-      take_options(opts, @scatter_opts, :mark)
+      Tucan.Options.take_options(opts, @scatter_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
       |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
       |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
@@ -1999,7 +1999,7 @@ defmodule Tucan do
   def bubble(plotdata, x, y, size, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bubble_schema)
 
-    spec_opts = take_options(opts, @bubble_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @bubble_opts, :spec)
 
     plotdata
     |> new(spec_opts)
@@ -2154,10 +2154,10 @@ defmodule Tucan do
   def lineplot(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @lineplot_schema)
 
-    spec_opts = take_options(opts, @lineplot_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @lineplot_opts, :spec)
 
     mark_opts =
-      take_options(opts, @lineplot_opts, :mark)
+      Tucan.Options.take_options(opts, @lineplot_opts, :mark)
       |> maybe_add_point_opts(opts[:points], opts)
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
 
@@ -2345,10 +2345,10 @@ defmodule Tucan do
   def area(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @area_schema)
 
-    spec_opts = take_options(opts, @area_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @area_opts, :spec)
 
     mark_opts =
-      take_options(opts, @area_opts, :mark)
+      Tucan.Options.take_options(opts, @area_opts, :mark)
       |> Keyword.put(:point, Keyword.get(opts, :points, false))
 
     stack =
@@ -2483,12 +2483,12 @@ defmodule Tucan do
   def pie(plotdata, field, category, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @pie_schema)
 
-    spec_opts = take_options(opts, @pie_opts, :spec)
-    mark_opts = take_options(opts, @pie_opts, :mark)
+    spec_opts = Tucan.Options.take_options(opts, @pie_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @pie_opts, :mark)
 
     theta_opts =
       opts
-      |> take_options(@pie_opts, :theta)
+      |> Tucan.Options.take_options(@pie_opts, :theta)
       |> Keyword.merge(type: :quantitative)
 
     plotdata
@@ -3174,7 +3174,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @ruler_schema)
 
     mark_opts =
-      take_options(opts, @ruler_opts, :mark)
+      Tucan.Options.take_options(opts, @ruler_opts, :mark)
       |> Keyword.merge(color: opts[:line_color])
 
     ruler =
@@ -3532,17 +3532,6 @@ defmodule Tucan do
 
   defp maybe_flip_axes(vl, false), do: vl
   defp maybe_flip_axes(vl, true), do: flip_axes(vl)
-
-  defp take_options(opts, schema, dest) do
-    dest_opts =
-      schema
-      |> Enum.filter(fn {_key, opts} ->
-        opts[:dest] == dest
-      end)
-      |> Keyword.keys()
-
-    Keyword.take(opts, dest_opts)
-  end
 
   # we use encode_field and encode instead of Vl.encode_field and Vl.encode in all
   # tucan plots for the following reason:
