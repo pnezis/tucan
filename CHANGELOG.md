@@ -39,6 +39,8 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 |> Tucan.Axes.set_orientation(:y, :right)
 ```
 
+- Add `Tucan.Scale.set_scale/4` and enable passing scale options.
+
 ### Deprecated
 
 - Deprecate `Tucan.circle/4` in favour of `Tucan.Geometry.circle/4`
