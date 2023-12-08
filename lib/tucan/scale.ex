@@ -285,28 +285,89 @@ defmodule Tucan.Scale do
   @doc """
   Sets the x axis scale.
 
-  Notice that only continuous scales are supported.
+  ## Options
+
+  See `scale/4`.
   """
-  @spec set_x_scale(vl :: VegaLite.t(), scale :: atom()) :: VegaLite.t()
-  def set_x_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    set_scale(vl, :x, scale)
+  @spec set_x_scale(vl :: VegaLite.t(), scale :: atom(), opts :: keyword()) :: VegaLite.t()
+  def set_x_scale(vl, scale, opts \\ []) when is_struct(vl, VegaLite) and is_atom(scale) do
+    set_scale(vl, :x, scale, opts)
   end
 
   @doc """
   Sets the y axis scale.
 
-  Notice that only continuous scales are supported.
+  ## Options
+
+  See `scale/4`.
   """
-  @spec set_y_scale(vl :: VegaLite.t(), scale :: atom()) :: VegaLite.t()
-  def set_y_scale(vl, scale) when is_struct(vl, VegaLite) and is_atom(scale) do
-    set_scale(vl, :y, scale)
+  @spec set_y_scale(vl :: VegaLite.t(), scale :: atom(), opts :: keyword()) :: VegaLite.t()
+  def set_y_scale(vl, scale, opts \\ []) when is_struct(vl, VegaLite) and is_atom(scale) do
+    set_scale(vl, :y, scale, opts)
   end
 
-  defp set_scale(vl, channel, scale) do
+  @doc """
+  Sets the scale for the given encoding channel.
+
+  Notice that only continuous scales are supported.
+
+  > #### Continuous Scales {: .neutral}
+  >
+  > Continuous scales map a continuous domain (numbers or dates) to a continuous
+  > output range (pixel locations, sizes, colors). Supported continuous scale
+  > types for quantitative fields are `:linear`, `:log`, `:pow`, `:sqrt`, and
+  > `:symlog`.
+  >
+  > Meanwhile, supported continuous scale types for temporal fields are `:time`,
+  > `:utc`, and `:symlog`.
+  >
+  > By default, `:linear` scales are used for quantitative fields and `:time`
+  > scales are used for temporal fields for all encoding channels.
+
+  ## Options
+
+  The supported options depend on the selected scale.
+
+  ### `:pow` scale
+
+  * `:exponent` (`t:number/0`) - The exponent to be used, applicable only for `:pow`
+  scale.
+
+  ### `:log` scale
+
+  * `:base` (`t:number/0`) - The logartihm base of the `:log` scale. If not set defaults
+  to 10.
+
+  ### `:symlog` scale
+
+  * `:constant` (`t:number/0`) - A constant determining the slope of the symlog
+  function around zero. If not set defaults to 1.
+
+  ## Examples
+
+  Applying log scale on *x-axis*.
+
+  ```tucan
+  Tucan.scatter(:gapminder, "income", "health", width: 400)
+  |> Tucan.Scale.set_x_scale(:log)
+  ```
+
+  Applying pow scale on *x-axis* with arbitrary exponent.
+
+  ```tucan
+  Tucan.scatter(:gapminder, "income", "health", width: 400)
+  |> Tucan.Scale.set_x_scale(:pow, exponent: 0.2)
+  ```
+  """
+  @spec set_scale(vl :: VegaLite.t(), channel :: atom(), scale :: atom(), opts :: keyword()) ::
+          VegaLite.t()
+  def set_scale(vl, channel, scale, opts \\ []) do
     unless scale in @valid_scales do
       raise ArgumentError,
             "scale can be one of #{inspect(@valid_scales)}, got: #{inspect(scale)}"
     end
+
+    opts = validate_scale_options!(scale, opts)
 
     channel_type =
       vl
@@ -331,9 +392,14 @@ defmodule Tucan.Scale do
                 "valid scales: #{inspect(@continuous_scales)}"
 
       true ->
-        put_options(vl, channel, type: scale)
+        put_options(vl, channel, Keyword.merge(opts, type: scale))
     end
   end
+
+  defp validate_scale_options!(:pow, opts), do: Keyword.validate!(opts, [:exponent])
+  defp validate_scale_options!(:log, opts), do: Keyword.validate!(opts, [:base])
+  defp validate_scale_options!(:symlog, opts), do: Keyword.validate!(opts, [:constant])
+  defp validate_scale_options!(_type, opts), do: Keyword.validate!(opts, [])
 
   @doc """
   Sets the same `[x, y]` domain for _x-axis_ and _y-axis_ at once. 

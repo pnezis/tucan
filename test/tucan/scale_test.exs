@@ -134,16 +134,63 @@ defmodule Tucan.ScaleTest do
       end
     end
 
+    test "raises if invalid scale options set" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:x, "y", type: :quantitative)
+
+      message = "unknown keys [:constant] in [constant: 1], the allowed keys are: [:exponent]"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_x_scale(vl, :pow, constant: 1)
+      end
+
+      message = "unknown keys [:constant] in [constant: 1], the allowed keys are: [:base]"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_y_scale(vl, :log, constant: 1)
+      end
+
+      message = "unknown keys [:base] in [base: 1], the allowed keys are: [:constant]"
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.Scale.set_y_scale(vl, :symlog, base: 1)
+      end
+    end
+
     test "sets the scales" do
       vl =
         Vl.new()
         |> Vl.encode_field(:x, "x", type: :quantitative)
         |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Vl.encode_field(:color, "z", type: :quantitative)
         |> Tucan.Scale.set_x_scale(:log)
         |> Tucan.Scale.set_y_scale(:sqrt)
+        |> Tucan.Scale.set_scale(:color, :symlog)
 
       assert get_in(vl.spec, ["encoding", "x", "scale", "type"]) == "log"
       assert get_in(vl.spec, ["encoding", "y", "scale", "type"]) == "sqrt"
+      assert get_in(vl.spec, ["encoding", "color", "scale", "type"]) == "symlog"
+    end
+
+    test "sets the scales with custom options" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Vl.encode_field(:color, "z", type: :quantitative)
+        |> Tucan.Scale.set_x_scale(:log, base: 2)
+        |> Tucan.Scale.set_y_scale(:pow, exponent: 0.3)
+        |> Tucan.Scale.set_scale(:color, :symlog, constant: 2)
+
+      assert get_in(vl.spec, ["encoding", "x", "scale"]) == %{"base" => 2, "type" => "log"}
+      assert get_in(vl.spec, ["encoding", "y", "scale"]) == %{"exponent" => 0.3, "type" => "pow"}
+
+      assert get_in(vl.spec, ["encoding", "color", "scale"]) == %{
+               "constant" => 2,
+               "type" => "symlog"
+             }
     end
   end
 
