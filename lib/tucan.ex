@@ -981,7 +981,8 @@ defmodule Tucan do
     mode: [
       type: {:in, [:tukey, :min_max]},
       doc: """
-      The type of the box plot. Either a Tukey box plot will be created or a min-max plot.
+      The type of the box plot. Either a Tukey box plot (`:tukey`) or a min-max plot (`:min_max`)
+      will be created.
       """,
       default: :tukey
     ],
