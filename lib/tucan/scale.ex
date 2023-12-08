@@ -287,7 +287,7 @@ defmodule Tucan.Scale do
 
   ## Options
 
-  See `scale/4`.
+  See `set_scale/4`.
   """
   @spec set_x_scale(vl :: VegaLite.t(), scale :: atom(), opts :: keyword()) :: VegaLite.t()
   def set_x_scale(vl, scale, opts \\ []) when is_struct(vl, VegaLite) and is_atom(scale) do
@@ -299,7 +299,7 @@ defmodule Tucan.Scale do
 
   ## Options
 
-  See `scale/4`.
+  See `set_scale/4`.
   """
   @spec set_y_scale(vl :: VegaLite.t(), scale :: atom(), opts :: keyword()) :: VegaLite.t()
   def set_y_scale(vl, scale, opts \\ []) when is_struct(vl, VegaLite) and is_atom(scale) do
@@ -310,6 +310,9 @@ defmodule Tucan.Scale do
   Sets the scale for the given encoding channel.
 
   Notice that only continuous scales are supported.
+
+  See also `set_x_scale/3` and `set_y_scale/3` wrappers for setting the scale
+  directly on *x* and *y* axes.
 
   > #### Continuous Scales {: .neutral}
   >
@@ -349,14 +352,14 @@ defmodule Tucan.Scale do
 
   ```tucan
   Tucan.scatter(:gapminder, "income", "health", width: 400)
-  |> Tucan.Scale.set_x_scale(:log)
+  |> Tucan.Scale.set_scale(:x, :log)
   ```
 
   Applying pow scale on *x-axis* with arbitrary exponent.
 
   ```tucan
   Tucan.scatter(:gapminder, "income", "health", width: 400)
-  |> Tucan.Scale.set_x_scale(:pow, exponent: 0.2)
+  |> Tucan.Scale.set_scale(:x, :pow, exponent: 0.2)
   ```
   """
   @spec set_scale(vl :: VegaLite.t(), channel :: atom(), scale :: atom(), opts :: keyword()) ::
