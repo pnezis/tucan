@@ -3054,7 +3054,7 @@ defmodule Tucan do
   @doc section: :grouping
   @spec facet_by(
           vl :: VegaLite.t(),
-          faceting_mode :: :row | :column,
+          faceting_mode :: :row | :column | :wrapped,
           field :: String.t(),
           opts :: keyword()
         ) :: VegaLite.t()
