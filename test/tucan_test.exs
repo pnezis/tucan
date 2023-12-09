@@ -1850,6 +1850,24 @@ defmodule TucanTest do
     end
   end
 
+  describe "href_by/2" do
+    test "applies href encoding" do
+      expected =
+        Vl.new()
+        |> Vl.encode_field(:href, "field")
+
+      assert Tucan.href_by(Vl.new(), "field") == expected
+    end
+
+    test "raises for non single views" do
+      vl = Vl.layers(Vl.new(), [Vl.new(), Vl.new()])
+
+      assert_raise ArgumentError,
+                   ~r"href_by/2 expects a single view spec, multi view detected: :layer key is defined",
+                   fn -> Tucan.href_by(vl, "field") end
+    end
+  end
+
   describe "facet_by/4" do
     test "facet horizontally" do
       expected =

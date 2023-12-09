@@ -40,6 +40,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 ```
 
 - Add `Tucan.Scale.set_scale/4` and enable passing scale options.
+- Add `Tucan.href_by/2`.
 
 ### Deprecated
 

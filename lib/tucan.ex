@@ -3441,6 +3441,19 @@ defmodule Tucan do
     )
   end
 
+  @doc """
+  Adds a hyperlink encoding.
+
+  The `field` should be the URL that will be loaded upon mouse click.
+  """
+  @doc section: :utilities
+  @spec href_by(vl :: VegaLite.t(), field :: String.t()) :: VegaLite.t()
+  def href_by(vl, field) do
+    Utils.validate_single_view!(vl, "href_by/2")
+
+    Vl.encode_field(vl, :href, field)
+  end
+
   ## Styling functions
 
   @doc """
