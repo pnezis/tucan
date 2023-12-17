@@ -1355,7 +1355,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "y", type: :quantitative)
 
-      assert Tucan.bar(@dataset, "x", "y", orient: :vertical) == expected
+      assert Tucan.bar(@dataset, "x", "y", orient: :horizontal) == expected
     end
 
     test "with color_by set and custom aggregate" do
@@ -1435,7 +1435,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "type", aggregate: :count, type: :quantitative)
 
-      assert Tucan.countplot(@dataset, "type", orient: :vertical) == expected
+      assert Tucan.countplot(@dataset, "type", orient: :horizontal) == expected
     end
 
     test "with color_by set" do
@@ -1463,7 +1463,7 @@ defmodule TucanTest do
       assert Tucan.countplot(@dataset, "type", color_by: "group", mode: :grouped) == expected
     end
 
-    test "with color_by, stacked set to false and vertical orientation" do
+    test "with color_by, stacked set to false and horizontal orientation" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@dataset)
@@ -1476,7 +1476,7 @@ defmodule TucanTest do
       assert Tucan.countplot(@dataset, "type",
                color_by: "group",
                mode: :grouped,
-               orient: :vertical
+               orient: :horizontal
              ) == expected
     end
   end

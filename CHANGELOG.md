@@ -42,6 +42,10 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 - Add `Tucan.Scale.set_scale/4` and enable passing scale options.
 - Add `Tucan.href_by/2`.
 
+### Changed
+
+- Flipped `:orient` semantics for `Tucan.bar/4`
+
 ### Deprecated
 
 - Deprecate `Tucan.circle/4` in favour of `Tucan.Geometry.circle/4`

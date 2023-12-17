@@ -1535,6 +1535,10 @@ defmodule Tucan do
         * `:grouped` - no stacking is applied, a separate bar for each category
       """,
       default: :stacked
+    ],
+    # override default value for orient
+    orient: [
+      default: :vertical
     ]
   ]
 
@@ -1615,7 +1619,7 @@ defmodule Tucan do
       data, "category", "value",
       color_by: "group",
       mode: :grouped,
-      orient: :vertical
+      orient: :horizontal
     )
 
   normalized =
@@ -1651,7 +1655,7 @@ defmodule Tucan do
     |> encode_field(:y, value, opts, y_opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_x_offset(opts[:color_by], opts[:mode] == :grouped, opts)
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> maybe_flip_axes(opts[:orient] == :horizontal)
   end
 
   @doc """
@@ -1694,7 +1698,7 @@ defmodule Tucan do
   You can make the bars horizontal by setting the `:orient` option:
 
   ```tucan
-  Tucan.countplot(:titanic, "Pclass", orient: :vertical)
+  Tucan.countplot(:titanic, "Pclass", orient: :horizontal)
   ```
 
   You can set `:color_by` to group it by a second variable:
@@ -2456,7 +2460,7 @@ defmodule Tucan do
   > ]
   >
   > pie = Tucan.pie(data, "value", "category")
-  > bar = Tucan.bar(data, "category", "value", orient: :vertical)
+  > bar = Tucan.bar(data, "category", "value", orient: :horizontal)
   >
   > Tucan.hconcat([pie, bar])
   > |> Tucan.set_title("Pie vs Bar chart", anchor: :middle, offset: 15)
