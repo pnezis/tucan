@@ -838,6 +838,15 @@ defmodule Tucan do
       type: :boolean,
       doc: "If set ticks will be included to the error bars ends",
       dest: :mark
+    ],
+    points: [
+      type: :boolean,
+      doc: "If set the means of the error bar are also included."
+    ],
+    point_color: [
+      type: :string,
+      doc: "The color of the points if enabled. If not set defaults to the error bars color",
+      section: :style
     ]
   ]
 
@@ -887,10 +896,11 @@ defmodule Tucan do
   Tucan.errorbar(:barley, "yield", group_by: "variety", orient: :vertical)
   ```
 
-  By setting `:ticks` to `true` you can enable errorbar end ticks:
+  By setting `:ticks` to `true` you can enable errorbar end ticks. Also you can overlay the
+  means by setting `:points` to `true`.
 
    ```tucan
-  Tucan.errorbar(:barley, "yield", group_by: "variety", ticks: true)
+  Tucan.errorbar(:barley, "yield", group_by: "variety", ticks: true, points: true)
   ```
 
   You can change the `:extent` value in order to configure how the error bars are extended. Below
@@ -913,17 +923,16 @@ defmodule Tucan do
   You can use `:line_color` and `:stroke_width` to modify the look of the error bars:
 
   ```tucan
-  Tucan.errorbar(:barley, "yield", group_by: "variety", line_color: "red", stroke_width: 3, ticks: true)
+  Tucan.errorbar(:barley, "yield", group_by: "variety", line_color: "red", stroke_width: 3, ticks: true, points: true)
   ```
 
   You can color categories by combining it with `Tucan.color_by/3`.
 
   ```tucan
-  Tucan.errorbar(:barley, "yield", group_by: "variety")
+  Tucan.errorbar(:barley, "yield", group_by: "variety", points: true)
   |> Tucan.color_by("variety")
   ```
   """
-  # TODO: add :points option to support points
   # TODO: options for configuring tick color and width
   @doc section: :plots
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
@@ -939,14 +948,40 @@ defmodule Tucan do
       end)
       |> Keyword.delete(:stroke_width)
 
+    errorbar_layer =
+      Vl.new()
+      |> Vl.mark(:errorbar, mark_opts)
+      |> encode_field(:x, field, opts, type: :quantitative, scale: [zero: false])
+      |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+        type: :nominal
+      )
+      |> maybe_flip_axes(opts[:orient] == :vertical)
+
+    points_layer =
+      if opts[:points] do
+        points_spec_opts =
+          Tucan.Keyword.put_not_nil(
+            [filled: true],
+            :color,
+            opts[:point_color] || opts[:line_color]
+          )
+
+        [
+          Vl.new()
+          |> Vl.mark(:point, points_spec_opts)
+          |> Vl.encode_field(:x, field, type: :quantitative, aggregate: "mean")
+          |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+            type: :nominal
+          )
+          |> maybe_flip_axes(opts[:orient] == :vertical)
+        ]
+      else
+        []
+      end
+
     plotdata
-    |> new(spec_opts)
-    |> Vl.mark(:errorbar, mark_opts)
-    |> encode_field(:x, field, opts, type: :quantitative, scale: [zero: false])
-    |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
-      type: :nominal
-    )
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> new(spec_opts ++ [tucan: [multilayer: true]])
+    |> layers([errorbar_layer] ++ points_layer)
   end
 
   boxplot_opts = [

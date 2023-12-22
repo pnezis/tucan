@@ -7,7 +7,7 @@
 - Add `Tucan.errorbar/3` plot
 
 ```tucan
-Tucan.errorbar(:barley, "yield", group_by: "variety")
+Tucan.errorbar(:barley, "yield", group_by: "variety", points: true, ticks: true)
 |> Tucan.color_by("variety")
 ```
 

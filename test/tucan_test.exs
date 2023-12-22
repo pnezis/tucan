@@ -700,43 +700,82 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@barley_dataset)
-        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
-        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        ])
 
-      assert Tucan.errorbar(@barley_dataset, "yield") == expected
+      assert_plot(Tucan.errorbar(@barley_dataset, "yield"), expected)
     end
 
     test "with ticks" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@barley_dataset)
-        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1, ticks: true)
-        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1, ticks: true)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        ])
 
-      assert Tucan.errorbar(@barley_dataset, "yield", ticks: true) == expected
+      assert_plot(Tucan.errorbar(@barley_dataset, "yield", ticks: true), expected)
+    end
+
+    test "with ticks and points" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1, ticks: true)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false]),
+          Vl.new()
+          |> Vl.mark(:point, filled: true)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, aggregate: :mean)
+        ])
+
+      assert_plot(Tucan.errorbar(@barley_dataset, "yield", ticks: true, points: true), expected)
     end
 
     test "with grouping" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@barley_dataset)
-        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
-        |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
-        |> Vl.encode_field(:y, "variety", type: :nominal)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+          |> Vl.encode_field(:y, "variety", type: :nominal)
+        ])
 
-      assert Tucan.errorbar(@barley_dataset, "yield", group_by: "variety") == expected
+      assert_plot(Tucan.errorbar(@barley_dataset, "yield", group_by: "variety"), expected)
     end
 
     test "with grouping and vertical orientation" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@barley_dataset)
-        |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
-        |> Vl.encode_field(:y, "yield", type: :quantitative, scale: [zero: false])
-        |> Vl.encode_field(:x, "variety", type: :nominal)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1)
+          |> Vl.encode_field(:y, "yield", type: :quantitative, scale: [zero: false])
+          |> Vl.encode_field(:x, "variety", type: :nominal),
+          Vl.new()
+          |> Vl.mark(:point, filled: true, color: "red")
+          |> Vl.encode_field(:y, "yield", type: :quantitative, aggregate: :mean)
+          |> Vl.encode_field(:x, "variety", type: :nominal)
+        ])
 
-      assert Tucan.errorbar(@barley_dataset, "yield", group_by: "variety", orient: :vertical) ==
-               expected
+      assert_plot(
+        Tucan.errorbar(@barley_dataset, "yield",
+          group_by: "variety",
+          orient: :vertical,
+          points: true,
+          point_color: "red"
+        ),
+        expected
+      )
     end
   end
 
