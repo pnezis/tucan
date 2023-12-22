@@ -905,7 +905,7 @@ defmodule TucanTest do
                minsteps: 5,
                maxsteps: 30,
                cumulative: true,
-               groupby: ["species"]
+               group_by: ["species"]
              ) ==
                expected
     end
@@ -956,7 +956,7 @@ defmodule TucanTest do
         )
         |> Vl.encode_field(:color, "species")
 
-      assert Tucan.density(@iris_dataset, "petal_width", groupby: ["other"], color_by: "species") ==
+      assert Tucan.density(@iris_dataset, "petal_width", group_by: ["other"], color_by: "species") ==
                expected
     end
   end

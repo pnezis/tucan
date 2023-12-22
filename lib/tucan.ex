@@ -419,18 +419,18 @@ defmodule Tucan do
       doc: "Whether the density plot will be filled or not, default to `true` if not set",
       section: :style
     ],
-    groupby: [
+    group_by: [
       type: {:list, :string},
       doc: """
       The data fields to group by. If not specified, a single group containing all data
       objects will be used. This is applied only on the density transform.
 
-      In most cases you only need to set `color_by` which will automatically handle the
-      density transform grouping. Use `groupby` only if you want to manually post-process
+      In most cases you only need to set `:color_by` which will automatically handle the
+      density transform grouping. Use `:group_by` only if you want to manually post-process
       the generated specification, or if you want to apply grouping by more than one
       variable.
 
-      If both `groupby` and `color_by` are set then only `groupby` is used for grouping
+      If both `:group_by` and `:color_by` are set then only `:group_by` is used for grouping
       the density transform and `color_by` is used for encoding the color.
       """,
       dest: :density_transform
@@ -541,11 +541,11 @@ defmodule Tucan do
   > Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
   > ```
   >
-  > Alternatively you should use the `:groupby` option in order to group the density
+  > Alternatively you should use the `:group_by` option in order to group the density
   > transform by the `Species` field and then apply the `color_by/3` function:
   >
   > ```elixir
-  > Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"], fill_opacity: 0.2)
+  > Tucan.density(:penguins, "Body Mass (g)", group_by: ["Species"], fill_opacity: 0.2)
   > |> Tucan.color_by("Species")
   > ```
 
@@ -570,11 +570,11 @@ defmodule Tucan do
   ```
 
   You can also combine it with `facet_by/4` in order to draw a different plot for each value
-  of the grouping variable. Notice that we need to set the `:groupby` variable in order
+  of the grouping variable. Notice that we need to set the `:group_by` variable in order
   to correctly calculate the density plot per field's value.
 
   ```tucan
-  Tucan.density(:penguins, "Body Mass (g)", groupby: ["Species"])
+  Tucan.density(:penguins, "Body Mass (g)", group_by: ["Species"])
   |> Tucan.color_by("Species")
   |> Tucan.facet_by(:column, "Species")
   ```
@@ -625,7 +625,9 @@ defmodule Tucan do
 
     transform_opts =
       Tucan.Options.take_options(opts, @density_opts, :density_transform)
+      |> Keyword.drop([:group_by])
       |> Keyword.merge(density: field)
+      |> Tucan.Keyword.put_not_nil(:groupby, opts[:group_by])
       |> Tucan.Keyword.put_new_conditionally(:groupby, [opts[:color_by]], fn ->
         opts[:color_by] != nil
       end)
