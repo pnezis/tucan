@@ -130,7 +130,7 @@ A strip plot is another way to explore variations in weather over time. In this 
 ```elixir
 strip =
   Tucan.stripplot(:weather, "date",
-    group: "date",
+    group_by: "date",
     x: [time_unit: :monthdate, type: :temporal],
     y: [time_unit: :year, type: :ordinal],
     width: 700,
@@ -154,7 +154,7 @@ You could also change the `:mode` to `:jitter` to plot jittered points instead o
 
 ```elixir
 Tucan.stripplot(:weather, "date",
-  group: "date",
+  group_by: "date",
   style: :jitter,
   x: [time_unit: :monthdate, type: :temporal],
   y: [time_unit: :year, type: :ordinal],
@@ -173,7 +173,7 @@ Rather than encoding **year** on the `y-axis`, let's encode the **weather**.
 
 ```elixir
 Tucan.stripplot(:weather, "date",
-  group: "weather",
+  group_by: "weather",
   x: [time_unit: :monthdate, type: :temporal],
   width: 700,
   fill_opacity: 1

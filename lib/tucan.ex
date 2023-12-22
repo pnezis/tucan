@@ -645,7 +645,7 @@ defmodule Tucan do
   end
 
   stripplot_opts = [
-    group: [
+    group_by: [
       type: :string,
       doc: """
       A field to be used for grouping the strip plot. If not set the plot will
@@ -700,29 +700,6 @@ defmodule Tucan do
 
   #{Tucan.Options.docs(@stripplot_opts)}
 
-  > ### Internal `VegaLite` representation {: .info}
-  >
-  > If style is set to `:tick` the following `VegaLite` representation is generated:
-  >
-  > ```elixir
-  > Vl.new()
-  > |> Vl.mark(:tick)
-  > |> Vl.encode_field(:x, field, type: :quantitative)
-  > |> Vl.encode_field(:y, opts[:group], type: :nominal)
-  > ```
-  >
-  > If style is set to `:jitter` then a transform is added to generate Gaussian jitter
-  > using the Box-Muller transform, and the `y_offset` is also encoded based on this:
-  >
-  > ```elixir
-  > Vl.new()
-  > |> Vl.mark(:point)
-  > |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
-  > |> Vl.encode_field(:x, field, type: :quantitative)
-  > |> Vl.encode_field(:y, opts[:group], type: :nominal)
-  > |> Vl.encode_field(:y_offset, "jitter", type: :quantitative)
-  > ```
-
   ## Examples
 
   Assigning a single numeric variable shows the univariate distribution. The default
@@ -739,53 +716,53 @@ defmodule Tucan do
   Tucan.stripplot(:tips, "total_bill", style: :jitter, height: 30, width: 300)
   ```
 
-  You can set the `:group` option in order to add a second dimension. Notice that
+  You can set the `:group_by` option in order to add a second dimension. Notice that
   the field must be categorical.
 
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
   ```
 
   The plot would be more clear if you also colored the points with the same field:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
   |> Tucan.color_by("day")
   ```
 
   Or you can color by a distinct variable to show a multi-dimensional relationship:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
   |> Tucan.color_by("sex")
   ```
 
   or you can color by a numerical variable:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
   |> Tucan.color_by("size", type: :ordinal)
   ```
 
   You could draw the same with points but without jittering:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :point)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :point)
   |> Tucan.color_by("sex")
   ```
 
   or with ticks which is the default one:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :tick)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :tick)
   |> Tucan.color_by("sex")
   ```
 
   You can set the `:orient` flag to `:vertical` to change the orientation:
 
   ```tucan
-  Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter, orient: :vertical)
+  Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter, orient: :vertical)
   |> Tucan.color_by("sex")
   ```
   """
@@ -800,7 +777,9 @@ defmodule Tucan do
     |> new(spec_opts)
     |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
     |> encode_field(:x, field, opts, type: :quantitative)
-    |> maybe_encode_field(:y, fn -> opts[:group] != nil end, opts[:group], opts, type: :nominal)
+    |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+      type: :nominal
+    )
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_add_jitter(opts)
     |> maybe_flip_axes(opts[:orient] == :vertical)
@@ -2638,7 +2617,7 @@ defmodule Tucan do
           Tucan.histogram(vl, row_field)
 
         row_index == 2 and col_index == 2 ->
-          Tucan.stripplot(vl, row_field, group: "species", style: :tick)
+          Tucan.stripplot(vl, row_field, group_by: "species", style: :tick)
           |> Tucan.color_by("species")
           |> Tucan.Axes.put_options(:y, labels: false)
 

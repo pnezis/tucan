@@ -16,7 +16,7 @@ defmodule Tucan.Themes do
   density = Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
 
   strip =
-    Tucan.stripplot(:tips, "total_bill", group: "day", style: :jitter)
+    Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
     |> Tucan.color_by("sex")
 
   boxplot = Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species")

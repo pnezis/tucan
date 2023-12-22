@@ -45,6 +45,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 ### Changed
 
 - Flipped `:orient` semantics for `Tucan.bar/4`
+- Rename `:group` option to `:group_by` in `Tucan.stripplot/3` for consistency.
 
 ### Deprecated
 

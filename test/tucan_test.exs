@@ -676,7 +676,7 @@ defmodule TucanTest do
       assert Tucan.stripplot(@tips_dataset, "total_bill",
                style: :jitter,
                orient: :vertical,
-               group: "sex"
+               group_by: "sex"
              ) ==
                expected
     end
@@ -690,7 +690,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "sex", type: :nominal)
         |> Vl.encode_field(:color, "sex")
 
-      assert Tucan.stripplot(@tips_dataset, "total_bill", group: "sex", color_by: "sex") ==
+      assert Tucan.stripplot(@tips_dataset, "total_bill", group_by: "sex", color_by: "sex") ==
                expected
     end
   end
