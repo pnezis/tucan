@@ -11,20 +11,21 @@ Tucan.errorbar(:barley, "yield", group_by: "variety")
 |> Tucan.color_by("variety")
 ```
 
-- Add `Tucan.Geometry.polyline/3` and `Tucan.Geometry.rectangle/4`
+- Add `Tucan.Geometry.polyline/2` and `Tucan.Geometry.rectangle/3`
 
 ```tucan
-Tucan.new()
-|> Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green")
-|> Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2},
-  fill_color: "pink",
-  fill_opacity: 0.3
-)
-|> Tucan.Geometry.polyline([{1, 1}, {2, 7}, {5, 3}],
-  closed: true,
-  fill_color: "green",
-  fill_opacity: 0.3
-)
+Tucan.layers([
+  Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green"),
+  Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2},
+    fill_color: "pink",
+    fill_opacity: 0.3
+  ),
+  Tucan.Geometry.polyline([{1, 1}, {2, 7}, {5, 3}],
+    closed: true,
+    fill_color: "green",
+    fill_opacity: 0.3
+  )
+])
 |> Tucan.Scale.set_xy_domain(-5, 11)
 ```
 
@@ -50,7 +51,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 
 ### Deprecated
 
-- Deprecate `Tucan.circle/4` in favour of `Tucan.Geometry.circle/4`
+- Deprecate `Tucan.circle/4` in favour of `Tucan.Geometry.circle/3`
 
 ## [v0.2.1](https://github.com/pnezis/tucan/tree/v0.2.1) (2023-10-17)
 

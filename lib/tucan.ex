@@ -3252,7 +3252,7 @@ defmodule Tucan do
   end
 
   @doc false
-  @deprecated "Use Tucan.Geometry.circle/4 instead"
+  @deprecated "Use Tucan.Geometry.circle/3 instead"
   @spec circle(
           vl :: VegaLite.t(),
           center :: {number(), number()},
@@ -3261,7 +3261,9 @@ defmodule Tucan do
         ) ::
           VegaLite.t()
   def circle(vl, {x, y}, radius, opts \\ []) do
-    Tucan.Geometry.circle(vl, {x, y}, radius, opts)
+    circle = Tucan.Geometry.circle({x, y}, radius, opts)
+
+    Tucan.Layers.append(vl, circle)
   end
 
   ## Layout plots

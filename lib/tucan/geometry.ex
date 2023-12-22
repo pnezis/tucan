@@ -1,6 +1,33 @@
 defmodule Tucan.Geometry do
   @moduledoc """
-  Helper geometrical plots.
+  An API for drawing common geometrical shapes.
+
+  `Tucan.Geometry` provides an API for drawing common geometrical shapes. These among other include
+  lines, circles and polygons. In contrary to the `Tucan` common API, these functions instead of a
+  dataset, expect the that define the underlying geometrical shapes.
+
+  You can overlay tucan plots with geometrical shapes through the `Tucan.layers/2` function.
+
+  ## Examples
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.circle({3, 3}, 4, line_color: "red", stroke_width: 3),
+    Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green"),
+    Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2},
+      fill_color: "pink",
+      fill_opacity: 0.3
+    ),
+    Tucan.Geometry.polyline([{1, 1}, {2, 7}, {5, 3}],
+      closed: true,
+      fill_color: "green",
+      fill_opacity: 0.3
+    )
+  ])
+  |> Tucan.Scale.set_xy_domain(-5, 11)
+  |> Tucan.set_size(400, 400)
+  |> Tucan.set_title("Tucan.Geometry examples")
+  ```
   """
   alias VegaLite, as: Vl
 
@@ -37,10 +64,11 @@ defmodule Tucan.Geometry do
   ## Examples
 
   ```tucan
-  Tucan.new()
-  |> Tucan.circle({3, 2}, 5)
-  |> Tucan.circle({-1, 6}, 2, line_color: "red")
-  |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5)
+  Tucan.layers([
+    Tucan.Geometry.circle({3, 2}, 5),
+    Tucan.Geometry.circle({-1, 6}, 2, line_color: "red"),
+    Tucan.Geometry.circle({0, 1}, 4, line_color: "green", stroke_width: 5)
+  ])
   |> Tucan.Scale.set_x_domain(-5, 10)
   |> Tucan.Scale.set_y_domain(-5, 10)
   ```
@@ -50,10 +78,11 @@ defmodule Tucan.Geometry do
   `:stroke_opacity`.
 
   ```tucan
-  Tucan.new()
-  |> Tucan.circle({3, 2}, 5, stroke_width: 3, stroke_opacity: 0.4)
-  |> Tucan.circle({-1, 6}, 2, line_color: "red", fill_color: "pink", opacity: 0.3)
-  |> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 5, fill_color: "green", fill_opacity: 0.2)
+  Tucan.layers([
+    Tucan.Geometry.circle({3, 2}, 5, stroke_width: 3, stroke_opacity: 0.4),
+    Tucan.Geometry.circle({-1, 6}, 2, line_color: "red", fill_color: "pink", opacity: 0.3),
+    Tucan.Geometry.circle({0, 1}, 4, line_color: "green", stroke_width: 5, fill_color: "green", fill_opacity: 0.2)
+  ])
   |> Tucan.Scale.set_x_domain(-5, 10)
   |> Tucan.Scale.set_y_domain(-5, 10)
   ```
@@ -65,7 +94,7 @@ defmodule Tucan.Geometry do
   > look like an ellipsis.
   >
   > ```tucan
-  > circle = Tucan.circle(Tucan.new(), {0, 0}, 1)
+  > circle = Tucan.Geometry.circle({0, 0}, 1)
   >
   > Tucan.hconcat([
   >   circle
@@ -82,10 +111,8 @@ defmodule Tucan.Geometry do
   > ])
   > ```
   """
-  @spec circle(vl :: VegaLite.t(), center :: point(), radius :: number(), opts :: keyword()) ::
-          VegaLite.t()
-  def circle(vl, {x, y}, radius, opts \\ [])
-      when is_struct(vl, VegaLite) and is_number(radius) and radius > 0 do
+  @spec circle(center :: point(), radius :: number(), opts :: keyword()) :: VegaLite.t()
+  def circle({x, y}, radius, opts \\ []) when is_number(radius) and radius > 0 do
     opts = NimbleOptions.validate!(opts, @circle_schema)
 
     mark_opts =
@@ -94,17 +121,14 @@ defmodule Tucan.Geometry do
       |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
       |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
-    circle =
-      Vl.new()
-      |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
-      |> Vl.transform(calculate: "#{x} + cos(datum.theta*PI/180) * #{radius}", as: "x")
-      |> Vl.transform(calculate: "#{y} + sin(datum.theta*PI/180) * #{radius}", as: "y")
-      |> Vl.mark(:line, mark_opts)
-      |> Vl.encode_field(:x, "x", type: :quantitative)
-      |> Vl.encode_field(:y, "y", type: :quantitative)
-      |> Vl.encode_field(:order, "theta")
-
-    Tucan.Layers.append(vl, circle)
+    Vl.new()
+    |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+    |> Vl.transform(calculate: "#{x} + cos(datum.theta*PI/180) * #{radius}", as: "x")
+    |> Vl.transform(calculate: "#{y} + sin(datum.theta*PI/180) * #{radius}", as: "y")
+    |> Vl.mark(:line, mark_opts)
+    |> Vl.encode_field(:x, "x", type: :quantitative)
+    |> Vl.encode_field(:y, "y", type: :quantitative)
+    |> Vl.encode_field(:order, "theta")
   end
 
   @doc """
@@ -117,17 +141,17 @@ defmodule Tucan.Geometry do
   ## Examples
 
   ```tucan
-  Tucan.new()
-  |> Tucan.Geometry.rectangle({1, 5}, {5, 1}, line_color: "black", stroke_width: 2, stroke_dash: [5, 5])
-  |> Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green")
-  |> Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2}, fill_color: "pink", fill_opacity: 0.3)
+  Tucan.layers([
+    Tucan.Geometry.rectangle({1, 5}, {5, 1}, line_color: "black", stroke_width: 2, stroke_dash: [5, 5]),
+    Tucan.Geometry.rectangle({-2, 10}, {7, -3}, line_color: "green"),
+    Tucan.Geometry.rectangle({-3.5, 0.1}, {8.1, -4.2}, fill_color: "pink", fill_opacity: 0.3)
+  ])
   |> Tucan.Scale.set_xy_domain(-5, 11)
   |> Tucan.set_size(400, 300)
   ```
   """
-  @spec rectangle(vl :: VegaLite.t(), point1 :: point(), point2 :: point(), opts :: keyword()) ::
-          VegaLite.t()
-  def rectangle(vl, {x1, y1}, {x2, y2}, opts \\ []) do
+  @spec rectangle(point1 :: point(), point2 :: point(), opts :: keyword()) :: VegaLite.t()
+  def rectangle({x1, y1}, {x2, y2}, opts \\ []) do
     if x1 == x2 do
       raise ArgumentError, "the two points must have different x coordinates"
     end
@@ -143,7 +167,6 @@ defmodule Tucan.Geometry do
     y_top = max(y1, y2)
 
     polyline(
-      vl,
       [{x_left, y_bottom}, {x_left, y_top}, {x_right, y_top}, {x_right, y_bottom}],
       Keyword.merge(opts, closed: true)
     )
@@ -187,8 +210,7 @@ defmodule Tucan.Geometry do
   ## Examples
 
   ```tucan
-  Tucan.new()
-  |> Tucan.Geometry.polyline([{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}])
+  Tucan.Geometry.polyline([{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}])
   |> Tucan.Scale.set_x_domain(-3, 10)
   |> Tucan.Scale.set_y_domain(-1, 9)
   ```
@@ -197,8 +219,7 @@ defmodule Tucan.Geometry do
   first point.
 
   ```tucan
-  Tucan.new()
-  |> Tucan.Geometry.polyline([{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}], closed: true)
+  Tucan.Geometry.polyline([{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}], closed: true)
   |> Tucan.Scale.set_x_domain(-3, 10)
   |> Tucan.Scale.set_y_domain(-1, 9)
   ```
@@ -207,8 +228,8 @@ defmodule Tucan.Geometry do
 
   ```tucan
   points = [{-1, 1}, {-2, 4}, {-1, 3}, {4, 7}, {8, 2}]
-  Tucan.new()
-  |> Tucan.Geometry.polyline(points,
+
+  Tucan.Geometry.polyline(points,
     closed: true,
     fill_color: "red",
     line_color: "green",
@@ -220,8 +241,8 @@ defmodule Tucan.Geometry do
   |> Tucan.Scale.set_y_domain(-1, 9)
   ```
   """
-  @spec polyline(vl :: VegaLite.t(), vertices :: [point()], opts :: keyword()) :: VegaLite.t()
-  def polyline(vl, vertices, opts \\ []) do
+  @spec polyline(vertices :: [point()], opts :: keyword()) :: VegaLite.t()
+  def polyline(vertices, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @polyline_schema)
 
     mark_opts =
@@ -239,18 +260,15 @@ defmodule Tucan.Geometry do
 
     {xs, ys} = Enum.reduce(vertices, {[], []}, fn {x, y}, {xs, ys} -> {[x | xs], [y | ys]} end)
 
-    polyline =
-      Vl.new()
-      |> Vl.data_from_values(%{
-        x: Enum.reverse(xs),
-        y: Enum.reverse(ys),
-        order: 0..length(vertices)
-      })
-      |> Vl.mark(:line, mark_opts)
-      |> Vl.encode_field(:x, "x", type: :quantitative)
-      |> Vl.encode_field(:y, "y", type: :quantitative)
-      |> Vl.encode_field(:order, "order")
-
-    Tucan.Layers.append(vl, polyline)
+    Vl.new()
+    |> Vl.data_from_values(%{
+      x: Enum.reverse(xs),
+      y: Enum.reverse(ys),
+      order: 0..length(vertices)
+    })
+    |> Vl.mark(:line, mark_opts)
+    |> Vl.encode_field(:x, "x", type: :quantitative)
+    |> Vl.encode_field(:y, "y", type: :quantitative)
+    |> Vl.encode_field(:order, "order")
   end
 end
