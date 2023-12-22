@@ -1007,7 +1007,7 @@ defmodule Tucan do
 
   By default a one dimensional box plot of the `:field` - which must be a numerical variable - is
   generated. You can add a second dimension across a categorical variable by either setting the
-  `:group` or `:color_by` options.
+  `:group_by` or `:color_by` options.
 
   By default a Tukey box plot will be generated. In the Tukey box plot the whisker spans from
   the smallest data to the largest data within the range `[Q1 - k * IQR, Q3 + k * IQR]` where
@@ -1037,7 +1037,7 @@ defmodule Tucan do
   Tucan.boxplot(:penguins, "Body Mass (g)")
   ```
 
-  You can set `:group` or `:color_by` in order to set a second dimension:
+  You can set `:group_by` or `:color_by` in order to set a second dimension:
 
   ```tucan
   Tucan.boxplot(:penguins, "Body Mass (g)", color_by: "Species")
