@@ -39,8 +39,7 @@ defmodule Tucan.Scale.Utils do
         )
       end
 
-    Vl.new(columns: 2)
-    |> Tucan.concat(plots)
+    Tucan.concat(plots, columns: 2)
     |> Vl.resolve(:scale, color: :independent)
     |> Vl.to_spec()
     |> Jason.encode!()
@@ -405,7 +404,7 @@ defmodule Tucan.Scale do
   defp validate_scale_options!(_type, opts), do: Keyword.validate!(opts, [])
 
   @doc """
-  Sets the same `[x, y]` domain for _x-axis_ and _y-axis_ at once. 
+  Sets the same `[x, y]` domain for _x-axis_ and _y-axis_ at once.
   """
   @spec set_xy_domain(vl :: VegaLite.t(), min :: number(), max :: number()) :: VegaLite.t()
   def set_xy_domain(vl, min, max) do

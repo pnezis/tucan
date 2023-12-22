@@ -32,7 +32,6 @@ defmodule Tucan.View do
 
   ```tucan
   Tucan.hconcat(
-    Tucan.new(),
     [
       Tucan.scatter(:iris, "sepal_width", "sepal_length")
       |> Tucan.View.set_view_background("#e6fae1"),

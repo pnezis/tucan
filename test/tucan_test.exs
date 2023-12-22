@@ -1532,10 +1532,13 @@ defmodule TucanTest do
       expected =
         Vl.new(bounds: :flush, spacing: 15)
         |> Vl.data_from_url(@iris_dataset)
-        |> Tucan.vconcat([
-          marginal_x,
-          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
-        ])
+        |> Vl.concat(
+          [
+            marginal_x,
+            Vl.concat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y], :horizontal)
+          ],
+          :vertical
+        )
 
       assert(Tucan.jointplot(:iris, "petal_width", "petal_length") == expected)
     end
@@ -1559,10 +1562,13 @@ defmodule TucanTest do
       expected =
         Vl.new(bounds: :flush, spacing: 10)
         |> Vl.data_from_url(@iris_dataset)
-        |> Tucan.vconcat([
-          marginal_x,
-          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 10), [joint, marginal_y])
-        ])
+        |> Vl.concat(
+          [
+            marginal_x,
+            Vl.concat(Vl.new(bounds: :flush, spacing: 10), [joint, marginal_y], :horizontal)
+          ],
+          :vertical
+        )
 
       assert(
         Tucan.jointplot(:iris, "petal_width", "petal_length",
@@ -1594,10 +1600,13 @@ defmodule TucanTest do
       expected =
         Vl.new(bounds: :flush, spacing: 15)
         |> Vl.data_from_url(@iris_dataset)
-        |> Tucan.vconcat([
-          marginal_x,
-          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
-        ])
+        |> Vl.concat(
+          [
+            marginal_x,
+            Vl.concat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y], :horizontal)
+          ],
+          :vertical
+        )
 
       assert(
         Tucan.jointplot(:iris, "petal_width", "petal_length",
@@ -1627,10 +1636,13 @@ defmodule TucanTest do
       expected =
         Vl.new(bounds: :flush, spacing: 15)
         |> Vl.data_from_url(@iris_dataset)
-        |> Tucan.vconcat([
-          marginal_x,
-          Tucan.hconcat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y])
-        ])
+        |> Vl.concat(
+          [
+            marginal_x,
+            Vl.concat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y], :horizontal)
+          ],
+          :vertical
+        )
 
       assert(
         Tucan.jointplot(:iris, "petal_width", "petal_length",
@@ -1935,24 +1947,13 @@ defmodule TucanTest do
   end
 
   describe "concat and friends" do
-    test "with no input plot" do
+    test "with default options" do
       plot1 = Tucan.scatter(@dataset, "x", "y")
       plot2 = Tucan.scatter(@dataset, "x", "y")
 
       assert Tucan.concat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :wrappable)
       assert Tucan.hconcat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :horizontal)
       assert Tucan.vconcat([plot1, plot2]) == Vl.concat(Vl.new(), [plot1, plot2], :vertical)
-    end
-
-    test "with input plot" do
-      vl = VegaLite.new(width: 400, height: 300)
-
-      plot1 = Tucan.scatter(@dataset, "x", "y")
-      plot2 = Tucan.scatter(@dataset, "x", "y")
-
-      assert Tucan.concat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :wrappable)
-      assert Tucan.hconcat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :horizontal)
-      assert Tucan.vconcat(vl, [plot1, plot2]) == Vl.concat(vl, [plot1, plot2], :vertical)
     end
   end
 

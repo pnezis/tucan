@@ -917,7 +917,7 @@ defmodule Tucan do
       |> Tucan.set_size(160, 160)
     end
 
-  Tucan.hconcat(Tucan.new(), plots)
+  Tucan.hconcat(plots)
   ```
 
   You can use `:line_color` and `:stroke_width` to modify the look of the error bars:
@@ -2165,8 +2165,7 @@ defmodule Tucan do
       |> Tucan.set_title(interpolation)
     end
 
-  VegaLite.new(columns: 2)
-  |> Tucan.concat(plots)
+  Tucan.concat(plots, columns: 2)
   ```
   """
   @doc section: :plots
@@ -3307,18 +3306,18 @@ defmodule Tucan do
   Concatenates horizontally the given plots.
   """
   @doc section: :layout
-  @spec hconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
-  def hconcat(vl \\ Vl.new(), plots) when is_list(plots) do
-    VegaLite.concat(vl, plots, :horizontal)
+  @spec hconcat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
+  def hconcat(plots, opts \\ []) when is_list(plots) do
+    VegaLite.concat(Vl.new(opts), plots, :horizontal)
   end
 
   @doc """
   Concatenates vertically the given plots.
   """
   @doc section: :layout
-  @spec vconcat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
-  def vconcat(vl \\ Vl.new(), plots) when is_list(plots) do
-    VegaLite.concat(vl, plots, :vertical)
+  @spec vconcat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
+  def vconcat(plots, opts \\ []) when is_list(plots) do
+    VegaLite.concat(Vl.new(opts), plots, :vertical)
   end
 
   @doc """
@@ -3327,9 +3326,9 @@ defmodule Tucan do
   This corresponds to the general concatenation of vega-lite (wrappable).
   """
   @doc section: :layout
-  @spec concat(vl :: VegaLite.t(), plots :: [VegaLite.t()]) :: VegaLite.t()
-  def concat(vl \\ Vl.new(), plots) when is_list(plots) do
-    VegaLite.concat(vl, plots, :wrappable)
+  @spec concat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
+  def concat(plots, opts \\ []) when is_list(plots) do
+    VegaLite.concat(Vl.new(opts), plots, :wrappable)
   end
 
   @doc """
