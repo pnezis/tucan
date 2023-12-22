@@ -147,7 +147,7 @@ defmodule Tucan do
   """
   @doc section: :utilities
   @spec new() :: VegaLite.t()
-  def new, do: VegaLite.new()
+  def new, do: Vl.new()
 
   @doc """
   Creates if needed a `VegaLite` plot and adds data to it.
@@ -3255,7 +3255,7 @@ defmodule Tucan do
   Multiple annotations on the same plot
 
   ```tucan
-  VegaLite.new()
+  Tucan.new()
   |> Tucan.annotate(15, 45, "Dennis", size: 25, font: "Courier New")
   |> Tucan.annotate(40, 35, "José", size: 30, color: :purple, font_weight: :bold)
   |> Tucan.annotate(20, 25, "Joe", size: 25, color: :red)
@@ -3360,7 +3360,7 @@ defmodule Tucan do
                   """
 
           true ->
-            vl = VegaLite.new()
+            vl = Vl.new()
 
             layers =
               for layer <- plot.spec["layer"] do
