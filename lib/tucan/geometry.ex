@@ -136,7 +136,7 @@ defmodule Tucan.Geometry do
 
   ## Options
 
-  See `polyline/3`
+  See `polyline/2`
 
   ## Examples
 
