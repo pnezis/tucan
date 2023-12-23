@@ -3302,32 +3302,56 @@ defmodule Tucan do
 
   ## Layout plots
 
+  @hv_concat_opts Tucan.Options.take!([:width, :height, :title, :align, :bounds, :spacing])
+  @hv_concat_schema Tucan.Options.to_nimble_schema!(@hv_concat_opts)
+
   @doc """
   Concatenates horizontally the given plots.
+
+  ## Options
+
+  #{Tucan.Options.docs(@hv_concat_opts)}
   """
   @doc section: :layout
   @spec hconcat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
   def hconcat(plots, opts \\ []) when is_list(plots) do
+    opts = NimbleOptions.validate!(opts, @hv_concat_schema)
+
     VegaLite.concat(Vl.new(opts), plots, :horizontal)
   end
 
   @doc """
   Concatenates vertically the given plots.
+
+  ## Options
+
+  #{Tucan.Options.docs(@hv_concat_opts)}
   """
   @doc section: :layout
   @spec vconcat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
   def vconcat(plots, opts \\ []) when is_list(plots) do
+    opts = NimbleOptions.validate!(opts, @hv_concat_schema)
+
     VegaLite.concat(Vl.new(opts), plots, :vertical)
   end
+
+  @concat_opts Tucan.Options.take!([:width, :height, :title, :align, :bounds, :spacing, :columns])
+  @concat_schema Tucan.Options.to_nimble_schema!(@concat_opts)
 
   @doc """
   Concatenates the given plots.
 
   This corresponds to the general concatenation of vega-lite (wrappable).
+
+  ## Options
+
+  #{Tucan.Options.docs(@concat_opts)}
   """
   @doc section: :layout
   @spec concat(plots :: [VegaLite.t()], opts :: keyword()) :: VegaLite.t()
   def concat(plots, opts \\ []) when is_list(plots) do
+    opts = NimbleOptions.validate!(opts, @concat_schema)
+
     VegaLite.concat(Vl.new(opts), plots, :wrappable)
   end
 

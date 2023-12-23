@@ -274,6 +274,49 @@ defmodule Tucan.Options do
       section: :style
     ],
 
+    ## Concat options
+    align: [
+      type: {:in, [:none, :each, :all]},
+      doc: """
+      The alignment to apply to grid rows and columns. The supported values are `:all`,
+      `:each`, and `:none`.
+
+      * For `:none`, a flow layout will be used, in which adjacent subviews are simply
+      placed one after the other.
+      * For `:each`, subviews will be aligned into a clean grid structure, but each row or
+      column may be of variable size.
+      * For `:all`, subviews will be aligned and each row or column will be sized identically
+      based on the maximum observed size. String values for this property will be applied to
+      both grid rows and columns.
+
+      Defaults to `:all` if not set.
+      """
+    ],
+    bounds: [
+      type: {:in, [:full, :flush]},
+      doc: """
+      The bounds calculation method to use for determining the extent of a sub-plot. One
+      of `:full` (the default) or `:flush`.
+
+      * If set to `:full`, the entire calculated bounds (including axes, title, and legend)
+      will be used.
+      * If set to `:flush`, only the specified width and height values for the sub-view
+      will be used. The `:flush` setting can be useful when attempting to place sub-plots
+      without axes or legends into a uniform grid structure.
+      """
+    ],
+    spacing: [
+      type: :pos_integer,
+      doc: """
+      The spacing in pixels between sub-views of the composition operator. If not set defaults
+      to 20.
+      """
+    ],
+    columns: [
+      type: :pos_integer,
+      doc: "The number of columns to include in the view composition layout."
+    ],
+
     ## Other options
     stacked: [
       type: :boolean,
