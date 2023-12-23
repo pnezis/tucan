@@ -51,6 +51,8 @@ defmodule Tucan do
   >
   > Tucan.lineplot([x: x, y: y], "x", "y", width: 400)
   > ```
+  >
+  > For more details check `Tucan.new/2`.
 
   You can apply semantic grouping by a third variable by modifying the color, the
   shape or the size of the points:
@@ -157,7 +159,7 @@ defmodule Tucan do
 
   This is a simple wrapper around `VegaLite.new/0`.
   """
-  @doc section: :utilities
+  @doc section: :construction
   @spec new() :: VegaLite.t()
   def new, do: Vl.new()
 
@@ -268,7 +270,7 @@ defmodule Tucan do
   > For all other tensor shapes an `ArgumentError` will be raised.
 
   """
-  @doc section: :utilities
+  @doc section: :construction
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
   def new(plotdata, opts \\ []),
     do: to_vega_plot(plotdata, opts)

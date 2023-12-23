@@ -67,6 +67,7 @@ defmodule Tucan.MixProject do
       source_url_pattern: "#{@scm_url}/blob/v#{@version}/%{path}#L%{line}",
       skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       groups_for_docs: [
+        Construction: &(&1[:section] == :construction),
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
         "Auxiliary Plots": &(&1[:section] == :auxiliary_plots),
