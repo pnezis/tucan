@@ -40,6 +40,7 @@ defmodule Tucan.MixProject do
       {:nimble_options, "~> 1.0"},
       {:vega_lite, "~> 0.1.8"},
       {:jason, "~> 1.4"},
+      {:nx, "~> 0.6", optional: true},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:fancy_fences, "~> 0.3.0", only: :dev, runtime: false}
     ] ++ dev_deps()

@@ -132,6 +132,32 @@ defmodule TucanTest do
       vl = Tucan.new(:iris, width: 100, height: 100, foo: 2, tucan: [plot: true])
       assert get_in(vl.spec, ["__tucan__"]) == %{"plot" => true}
     end
+
+    test "with nx tensors" do
+      x = Nx.linspace(0, 4, n: 5)
+      y = Nx.add(x, 1)
+
+      expected =
+        Vl.new(width: 100, height: 100)
+        |> Vl.data_from_values(x: [0, 1, 2, 3, 4], y: [1, 2, 3, 4, 5])
+
+      assert Tucan.new([x: x, y: y], width: 100, height: 100) == expected
+
+      x = Nx.reshape(x, {5, 1})
+      y = Nx.reshape(y, {1, 5})
+
+      assert Tucan.new([x: x, y: y], width: 100, height: 100) == expected
+
+      assert Tucan.new([x: x, y: 1..5], width: 100, height: 100) == expected
+    end
+
+    test "raises with invalid nx shape" do
+      x = Nx.linspace(0, 10, n: 10) |> Nx.reshape({2, 5})
+
+      assert_raise ArgumentError,
+                   "invalid shape for x tensor, expected a 1-d tensor, got a {2, 5} tensor",
+                   fn -> Tucan.new(x: x) end
+    end
   end
 
   describe "histogram/3" do

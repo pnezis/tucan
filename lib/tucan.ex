@@ -40,6 +40,18 @@ defmodule Tucan do
   Tucan.scatter(:iris, "petal_width", "petal_length")
   ```
 
+  > #### `Nx` support {: .neutral}
+  >
+  > If `:nx` is installed as a dependency you can additionally pass directly the data
+  > columns as tensors. For example:
+  >
+  > ```tucan
+  > x = Nx.linspace(-20, 20, n: 200)
+  > y = Nx.pow(x, 2)
+  >
+  > Tucan.lineplot([x: x, y: y], "x", "y", width: 400)
+  > ```
+
   You can apply semantic grouping by a third variable by modifying the color, the
   shape or the size of the points:
 
@@ -160,7 +172,101 @@ defmodule Tucan do
   * if it is an atom then it is considered a `Tucan.Dataset` and it is translated to
     the dataset's url. If the dataset name is invalid an exception is raised.
   * in any other case it is considered a set of data values and the values are set
-    as data to a newly created `VegaLite` struct.
+    as data to a newly created `VegaLite` struct. Any tabular data is accepted, as
+    long as it adheres to the `Table.Reader` protocol.
+
+  ## Examples
+
+  Passing a URL to some dataset
+
+  ```elixir
+  Tucan.new("https://vega.github.io/editor/data/penguins.json")
+  |> ...
+
+  Tucan.new("https://vega.github.io/editor/data/stocks.csv", format: :csv)
+  |> ...
+  ```
+
+  Using a pre-defined `Tucan.Dataset`
+
+  ```elixir
+  Tucan.new(:penguins)
+  |> ...
+
+  Tucan.new(:Lris)
+  |> ...
+  ```
+
+  Passing directly tabular data
+
+  ```elixir
+  data = [
+    %{"category" => "A", "score" => 28},
+    %{"category" => "B", "score" => 55}
+  ]
+
+  Tucan.new(data)
+  |> ...
+  ```
+
+  You can also pass individual series:
+
+  ```elixir
+  xs = 1..100
+  ys = 1..100
+
+  Tucan.new(x: xs, y: ys)
+  |> ...
+  ```
+
+  Any data that adheres to the `Table.Reader` protocol is accepted, for example
+  you could pass an [`Explorer.DataFrame`](https://hexdocs.pm/explorer/Explorer.DataFrame.html)
+
+  ```elixir
+  mountains = Explorer.DataFrame.new(
+    name: ["Everest", "K2", "Aconcagua"],
+    elevation: [8848, 8611, 6962]
+  )
+
+  Tucan.new(mountains)
+  |> ...
+  ```
+
+  Additionally you can pass `Nx.Tensor`s as series. These will be implicitly
+  transformed to lists.
+
+  ```elixir
+  xs = Nx.linspace(0, 10, n: 100)
+  ys = Nx.sin(xs)
+
+  Tucan.new([x: xs, y: ys])
+  |> ...
+  ```
+
+  > #### Valid `Nx.Tensor` shapes {: .info}
+  >
+  > 1-dimensional tensors are expected when you pass `Nx` tensors as series.
+  > Additionally for convenience 2-dimensional tensors where one of the two
+  > dimensions are `1` are also supported.
+  >
+  > For example the following are equivalent
+  >
+  > ```elixir
+  > x = Nx.linspace(0, 10, n: 10)
+  > y = Nx.pow(x, 2)
+  >
+  > plot1 = Tucan.new(x: x, y: y)
+  >
+  > x = Nx.reshape(x, {10, 1})
+  > y = Nx.reshape(y, {1, 10})
+  >
+  > plot2 = Tucan.new(x: x, y: y)
+  >
+  > assert plot1 == plot2
+  > ```
+  >
+  > For all other tensor shapes an `ArgumentError` will be raised.
+
   """
   @doc section: :utilities
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
@@ -184,10 +290,44 @@ defmodule Tucan do
   defp to_vega_plot(data, opts) do
     {data_opts, spec_opts} = Keyword.split(opts, [:only])
 
+    data = maybe_transform_data(data)
+
     spec_opts
     |> new_tucan_plot()
     |> Vl.data_from_values(data, data_opts)
   end
+
+  defp maybe_transform_data(data) do
+    case Keyword.keyword?(data) do
+      false ->
+        data
+
+      true ->
+        for {key, column} <- data do
+          {key, maybe_nx_to_list(column, key)}
+        end
+    end
+  end
+
+  @compile {:no_warn_undefined, Nx}
+
+  defp maybe_nx_to_list(column, name) when is_struct(column, Nx.Tensor) do
+    shape = Nx.shape(column)
+
+    unless valid_shape?(shape) do
+      raise ArgumentError,
+            "invalid shape for #{name} tensor, expected a 1-d tensor, got a #{inspect(shape)} tensor"
+    end
+
+    Nx.to_flat_list(column)
+  end
+
+  defp maybe_nx_to_list(column, _name), do: column
+
+  defp valid_shape?({_x}), do: true
+  defp valid_shape?({1, _x}), do: true
+  defp valid_shape?({_x, 1}), do: true
+  defp valid_shape?(_shape), do: false
 
   defp new_tucan_plot(opts) do
     {tucan_opts, opts} = Keyword.pop(opts, :tucan)
