@@ -2694,6 +2694,19 @@ defmodule Tucan do
     pie(plotdata, field, category, opts)
   end
 
+  ## Image
+
+  @doc """
+  Display data as an image.
+
+  The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
+  rendered as a pseudocolor image.
+  """
+  @spec imshow(data :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
+  def imshow(data, opts) do
+    Tucan.Image.show(data, opts)
+  end
+
   ## Composite plots
 
   pairplot_opts = [
