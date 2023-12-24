@@ -2702,6 +2702,7 @@ defmodule Tucan do
   The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
   rendered as a pseudocolor image.
   """
+  @doc section: :images
   @spec imshow(data :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
   def imshow(data, opts) do
     Tucan.Image.show(data, opts)

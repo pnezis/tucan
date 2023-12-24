@@ -70,6 +70,7 @@ defmodule Tucan.MixProject do
         Construction: &(&1[:section] == :construction),
         Plots: &(&1[:section] == :plots),
         "Composite Plots": &(&1[:section] == :composite),
+        Images: &(&1[:section] == :images),
         "Auxiliary Plots": &(&1[:section] == :auxiliary_plots),
         Layout: &(&1[:section] == :layout),
         Grouping: &(&1[:section] == :grouping),
