@@ -2701,6 +2701,28 @@ defmodule Tucan do
 
   The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
   rendered as a pseudocolor image.
+
+  ## Examples
+
+  > In the following examples we use a subset of the [MNIST dataset](https://en.wikipedia.org/wiki/MNIST_database).
+  > The data are stored as a serialized `Nx.Tensor` with shape `{images, height, width, 1}`.
+
+  Plotting a grid of 40 images of the MNIST dataset:
+
+  ```tucan
+  mnist_path = Path.expand("../../assets/mnist_sample.bin", __DIR__)
+  images =
+     File.read!(mnist_path)
+     |> Nx.deserialize()
+
+  images =
+    for i <- 1..40 do
+      image = images[[images: i]]
+      Tucan.imshow(image, width: 60, height: 60)
+    end
+
+  Tucan.concat(images, columns: 10)
+  ```
   """
   @doc section: :images
   @spec imshow(data :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
