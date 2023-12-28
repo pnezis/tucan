@@ -1716,7 +1716,7 @@ defmodule Tucan do
   @bar_schema Tucan.Options.to_nimble_schema!(@bar_opts)
 
   @doc """
-  Returns the specification of a bar chart.
+  Draws a bar chart.
 
   A bar chart is consisted by a categorical `field` and a numerical `value` field that
   defines the height of the bars. You can create a grouped bar chart by setting
@@ -1724,6 +1724,8 @@ defmodule Tucan do
 
   Additionally you should specify the aggregate for the `y` values, if your dataset contains
   more than one values per category.
+
+  See also `lollipop/4`.
 
   ## Options
 
@@ -1816,6 +1818,186 @@ defmodule Tucan do
     |> maybe_flip_axes(opts[:orient] == :horizontal)
   end
 
+  lollipop_opts = [
+    group_by: [
+      type: :string,
+      doc: """
+      A categorical field to group the lollipops by. It is used for adding a second dimension to
+      the plot. When set, the groups are also color coded by the same categorical variable.
+      """,
+      section: :grouping
+    ],
+    line_color: [default: "black"],
+    point_color: [default: "black"],
+    point_size: [default: 60],
+    orient: [default: :vertical]
+  ]
+
+  @lollipop_opts Tucan.Options.take!(
+                   [
+                     @global_opts,
+                     :tooltip,
+                     :color_by,
+                     :orient,
+                     :x,
+                     :y,
+                     :x_offset,
+                     :color,
+                     :point_color,
+                     :point_shape,
+                     :point_size,
+                     :line_color
+                   ],
+                   lollipop_opts
+                 )
+  @lollipop_schema Tucan.Options.to_nimble_schema!(@lollipop_opts)
+
+  @doc """
+  Draws a lollipop plot.
+
+  A lollipop plot is nothing more than a barplot, where the bar is transformed in a line and a dot. It shows
+  the relationship between a numeric and a categoric variable.
+
+  > #### Comparison to `bar/4` {: .tip}
+  >
+  > The lollipop plot is used exactly in the same situation as a barplot. However it is somewhat more
+  > appealing and convey as well the information. It is especially useful when you have several bars of the
+  > same height.
+  >
+  > ```tucan
+  > data = [
+  >   category: ["A", "B", "C", "D", "E"],
+  >   value: [99, 97, 94, 90, 88]
+  > ]
+  >
+  > bar = Tucan.bar(data, "category", "value", orient: :horizontal)
+  > lollipop = Tucan.lollipop(data, "category", "value", orient: :horizontal)
+  >
+  > Tucan.hconcat([bar, lollipop])
+  > ```
+
+  See also `bar/4`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@lollipop_opts)}
+
+  ## Examples
+
+  A lollipop chart for some synthetic data:
+
+  ```tucan
+  data =
+    for category <- ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"] do
+      %{category: category, value: 9 + :rand.uniform(90)}
+    end
+
+  Tucan.lollipop(data, "category", "value", width: 400)
+  ```
+
+  You can make the lollipops horizontal by setting the `:orient` flag:
+
+  ```tucan
+  data =
+    for category <- ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"] do
+      %{category: category, value: 9 + :rand.uniform(90)}
+    end
+
+  Tucan.lollipop(data, "category", "value", width: 400, orient: :horizontal)
+  ```
+
+  You can change the points shape and the default colors if needed:
+
+  ```tucan
+  data =
+    for category <- ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"] do
+      %{category: category, value: 9 + :rand.uniform(90)}
+    end
+
+  Tucan.lollipop(data, "category", "value",
+    point_color: "red",
+    point_shape: "square",
+    point_size: 80,
+    line_color: "blue",
+    width: 400
+  )
+  ```
+
+  If you need to group by a second categorical variable you can use the `:group_by` option:
+
+  ```tucan
+  data =
+    for category <- ["A", "B", "C", "D", "E", "F", "G"],
+        country <- ["US", "GR", "UK", "IT"] do
+      %{category: category, country: country, value: 9 + :rand.uniform(90)}
+    end
+
+  Tucan.lollipop(data, "category", "value", group_by: "country", orient: :horizontal)
+  |> Tucan.set_size(400, 300)
+  ```
+  """
+  @doc section: :plots
+  @spec lollipop(
+          plotdata :: plotdata(),
+          field :: String.t(),
+          value :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def lollipop(plotdata, field, value, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @lollipop_schema)
+
+    spec_opts = Tucan.Options.take_options(opts, @lollipop_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @lollipop_opts, :mark)
+
+    y_opts = [type: :quantitative]
+
+    rule_mark_opts = Tucan.Keyword.put_not_nil(mark_opts, :color, opts[:line_color])
+
+    rule_layer =
+      Vl.new()
+      |> Vl.mark(:rule, rule_mark_opts)
+      |> encode_field(:x, field, opts, type: :nominal, axis: [label_angle: 0])
+      |> encode_field(:y, value, opts, y_opts)
+      |> maybe_encode_field(:color, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+        type: :nominal
+      )
+      |> maybe_encode_field(
+        :x_offset,
+        fn -> opts[:group_by] != nil end,
+        opts[:group_by],
+        opts,
+        type: :nominal
+      )
+      |> maybe_flip_axes(opts[:orient] == :horizontal)
+
+    point_mark_opts =
+      mark_opts
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+      |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
+
+    points_layer =
+      Vl.new()
+      |> Vl.mark(:point, point_mark_opts ++ [filled: true, opacity: 1])
+      |> encode_field(:x, field, opts, type: :nominal, axis: [label_angle: 0])
+      |> encode_field(:y, value, opts, y_opts)
+      |> maybe_encode_field(:color, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
+        type: :nominal
+      )
+      |> maybe_encode_field(
+        :x_offset,
+        fn -> opts[:group_by] != nil end,
+        opts[:group_by],
+        opts,
+        type: :nominal
+      )
+      |> maybe_flip_axes(opts[:orient] == :horizontal)
+
+    plotdata
+    |> new(spec_opts ++ [tucan: [multilayer: true]])
+    |> layers([rule_layer, points_layer])
+  end
+
   @doc """
   Plot the counts of observations for a categorical variable.
 
@@ -1888,54 +2070,22 @@ defmodule Tucan do
   defp maybe_x_offset(vl, _field, false, _opts), do: vl
   defp maybe_x_offset(vl, field, true, opts), do: encode_field(vl, :x_offset, field, opts)
 
-  scatter_opts = [
-    point_color: [
-      type: :string,
-      doc: "The color of the points",
-      section: :style
-    ],
-    point_shape: [
-      type:
-        {:in,
-         [
-           "circle",
-           "square",
-           "cross",
-           "diamond",
-           "triangle-up",
-           "triangle-down",
-           "triangle-right",
-           "triangle-left"
-         ]},
-      doc: "Shape of the point marks. Circle by default.",
-      section: :style
-    ],
-    point_size: [
-      type: :pos_integer,
-      doc: """
-      The pixel area of the marks. Note that this value sets the area of the symbol;
-      the side lengths will increase with the square root of this value.
-      """,
-      section: :style
-    ]
-  ]
-
-  @scatter_opts Tucan.Options.take!(
-                  [
-                    @global_opts,
-                    @global_mark_opts,
-                    :filled,
-                    :color_by,
-                    :shape_by,
-                    :size_by,
-                    :x,
-                    :y,
-                    :color,
-                    :shape,
-                    :size
-                  ],
-                  scatter_opts
-                )
+  @scatter_opts Tucan.Options.take!([
+                  @global_opts,
+                  @global_mark_opts,
+                  :filled,
+                  :color_by,
+                  :shape_by,
+                  :size_by,
+                  :x,
+                  :y,
+                  :color,
+                  :shape,
+                  :size,
+                  :point_color,
+                  :point_size,
+                  :point_shape
+                ])
   @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
 
   @doc """

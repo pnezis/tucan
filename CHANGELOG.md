@@ -11,6 +11,22 @@ Tucan.errorbar(:barley, "yield", group_by: "variety", points: true, ticks: true)
 |> Tucan.color_by("variety")
 ```
 
+- Add `Tucan.lollipop/4` plot
+
+```tucan
+data = [
+  category: ["A", "B", "C", "D"],
+  value: [90, 72, 81, 50, 64]
+]
+
+Tucan.lollipop(data, "category", "value",
+  orient: :horizontal,
+  point_color: "red",
+  width: 300
+)
+|> Tucan.Scale.set_x_domain(30, 100)
+```
+
 - Add `Tucan.Geometry.polyline/2` and `Tucan.Geometry.rectangle/3`
 
 ```tucan

@@ -1472,6 +1472,93 @@ defmodule TucanTest do
     end
   end
 
+  describe "lollipop/4" do
+    test "with default options" do
+      data = [
+        %{category: "A"},
+        %{category: "B"},
+        %{category: "A"},
+        %{category: "C"},
+        %{category: "B"}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rule, color: :black)
+          |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:y, "y", type: :quantitative),
+          Vl.new()
+          |> Vl.mark(:point, color: :black, filled: true, opacity: 1, size: 60)
+          |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:y, "y", type: :quantitative)
+        ])
+
+      assert_plot(Tucan.lollipop(data, "x", "y"), expected)
+    end
+
+    test "with custom options" do
+      data = [
+        %{category: "A"},
+        %{category: "B"},
+        %{category: "A"},
+        %{category: "C"},
+        %{category: "B"}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rule, color: :green)
+          |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:y, "y", type: :quantitative),
+          Vl.new()
+          |> Vl.mark(:point, color: :red, filled: true, opacity: 1, size: 70, shape: :diamond)
+          |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:y, "y", type: :quantitative)
+        ])
+
+      assert_plot(
+        Tucan.lollipop(data, "x", "y",
+          point_size: 70,
+          point_color: "red",
+          line_color: "green",
+          point_shape: "diamond"
+        ),
+        expected
+      )
+    end
+
+    test "with group_by and orient flag set" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:rule, color: :black)
+          |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:x, "y", type: :quantitative)
+          |> Vl.encode_field(:color, "group", type: :nominal)
+          |> Vl.encode_field(:y_offset, "group", type: :nominal),
+          Vl.new()
+          |> Vl.mark(:point, color: :black, filled: true, opacity: 1, size: 60)
+          |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
+          |> Vl.encode_field(:x, "y", type: :quantitative)
+          |> Vl.encode_field(:color, "group", type: :nominal)
+          |> Vl.encode_field(:y_offset, "group", type: :nominal)
+        ])
+
+      assert_plot(
+        Tucan.lollipop(@dataset, "x", "y", group_by: "group", orient: :horizontal),
+        expected
+      )
+    end
+  end
+
   describe "countplot/3" do
     test "with default options" do
       data = [

@@ -273,6 +273,35 @@ defmodule Tucan.Options do
       doc: "The fill color of the marks. This will override the `color` encoding if set.",
       section: :style
     ],
+    point_color: [
+      type: :string,
+      doc: "The color of the points",
+      section: :style
+    ],
+    point_shape: [
+      type:
+        {:in,
+         [
+           "circle",
+           "square",
+           "cross",
+           "diamond",
+           "triangle-up",
+           "triangle-down",
+           "triangle-right",
+           "triangle-left"
+         ]},
+      doc: "Shape of the point marks. Circle by default.",
+      section: :style
+    ],
+    point_size: [
+      type: :pos_integer,
+      doc: """
+      The pixel area of the marks. Note that this value sets the area of the symbol;
+      the side lengths will increase with the square root of this value.
+      """,
+      section: :style
+    ],
 
     ## Concat options
     align: [
