@@ -195,7 +195,7 @@ defmodule Tucan do
   Tucan.new(:penguins)
   |> ...
 
-  Tucan.new(:Lris)
+  Tucan.new(:iris)
   |> ...
   ```
 
@@ -1855,12 +1855,12 @@ defmodule Tucan do
   @doc """
   Draws a lollipop plot.
 
-  A lollipop plot is nothing more than a barplot, where the bar is transformed in a line and a dot. It shows
+  A lollipop plot is nothing more than a bar plot, where the bar is transformed in a line and a dot. It shows
   the relationship between a numeric and a categoric variable.
 
   > #### Comparison to `bar/4` {: .tip}
   >
-  > The lollipop plot is used exactly in the same situation as a barplot. However it is somewhat more
+  > The lollipop plot is used exactly in the same situation as a bar plot. However it is somewhat more
   > appealing and convey as well the information. It is especially useful when you have several bars of the
   > same height.
   >
@@ -2850,7 +2850,7 @@ defmodule Tucan do
   Display data as an image.
 
   The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
-  rendered as a pseudocolor image.
+  rendered as a pseudo-color image.
 
   ## Examples
 

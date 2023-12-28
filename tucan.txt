@@ -26,6 +26,7 @@ heatmaps
 hline
 hruler
 imdb
+imshow
 joinaggregate
 jointplot
 josé
@@ -37,11 +38,13 @@ lightmulti
 lightorange
 lighttealblue
 lineplot
+linspace
 livebook
 matplotlib
 maxbins
 maxsteps
 minsteps
+mnist
 monthdate
 nezis
 orangered
@@ -62,12 +65,15 @@ redgrey
 redpurple
 redyellowblue
 redyellowgreen
+rgba
 scatterplot
 seaborn
 sinebow
 stdev
 streamgraph
 stripplot
+subview
+subviews
 symlog
 tealblues
 tucan

@@ -337,7 +337,7 @@ defmodule Tucan.Scale do
 
   ### `:log` scale
 
-  * `:base` (`t:number/0`) - The logartihm base of the `:log` scale. If not set defaults
+  * `:base` (`t:number/0`) - The logarithm base of the `:log` scale. If not set defaults
   to 10.
 
   ### `:symlog` scale
