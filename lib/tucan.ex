@@ -1288,6 +1288,24 @@ defmodule Tucan do
 
   Tucan.layers([errorband, trendline])
   ```
+
+  Similar to other Tucan plots you can apply semantic grouping:
+
+  ```tucan
+  errorband = Tucan.errorband(:cars, "Year", "Miles_per_Gallon",
+    extent: :ci,
+    x: [time_unit: "year", type: :temporal]
+  )
+
+  trendline = Tucan.lineplot(:cars, "Year", "Miles_per_Gallon",
+    x: [time_unit: "year", type: :temporal],
+    y: [aggregate: :mean]
+  )
+
+  Tucan.layers([errorband, trendline])
+  |> Tucan.color_by("Origin")
+  |> Tucan.set_width(400)
+  ```
   """
   @doc section: :plots
   @spec errorband(plotdata :: plotdata(), x :: String.t(), y :: String.t(), opts :: keyword()) ::
