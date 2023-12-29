@@ -249,7 +249,7 @@ defmodule Tucan do
   >
   > 1-dimensional tensors are expected when you pass `Nx` tensors as series.
   > Additionally for convenience 2-dimensional tensors where one of the two
-  > dimensions are `1` are also supported.
+  > dimensions is `1` are also supported.
   >
   > For example the following are equivalent
   >
