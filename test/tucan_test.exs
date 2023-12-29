@@ -823,6 +823,43 @@ defmodule TucanTest do
     end
   end
 
+  describe "errorband/4" do
+    test "with default settings" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1)
+        |> Vl.encode_field(:x, "Year",
+          type: :quantitative,
+          scale: [zero: false],
+          time_unit: :year
+        )
+        |> Vl.encode_field(:y, "Miles_per_Gallon", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.errorband(@cars_dataset, "Year", "Miles_per_Gallon", x: [time_unit: :year]) ==
+               expected
+    end
+
+    test "with borders enabled and different styling options" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@cars_dataset)
+        |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1, borders: true, color: "red")
+        |> Vl.encode_field(:x, "Year",
+          type: :quantitative,
+          scale: [zero: false],
+          time_unit: :year
+        )
+        |> Vl.encode_field(:y, "Miles_per_Gallon", type: :quantitative, scale: [zero: false])
+
+      assert Tucan.errorband(@cars_dataset, "Year", "Miles_per_Gallon",
+               x: [time_unit: :year],
+               borders: true,
+               fill_color: "red"
+             ) == expected
+    end
+  end
+
   describe "boxplot/3" do
     test "with default options" do
       expected =

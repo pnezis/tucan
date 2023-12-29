@@ -1189,6 +1189,105 @@ defmodule Tucan do
     |> layers([errorbar_layer] ++ points_layer)
   end
 
+  errorband_opts = [
+    borders: [
+      type: :boolean,
+      doc: """
+      If set to `true` the error band's border will be added.
+      """,
+      dest: :mark
+    ],
+    extent: [
+      type: {:in, [:ci, :stderr, :stdev, :iqr]},
+      doc: """
+      The extent of the rule. Can be one of the following:
+
+      * `:ci` - Extend the rule to the confidence interval of the mean.
+      * `:stderr` - The size of rule are set to the value of standard error, extending from the mean.
+      * `:stdev` - The size of rule are set to the value of standard deviation, extending from the
+      mean.
+      * `:iqr` - Extend the rule to the q1 and q3.
+      """,
+      default: :stderr,
+      dest: :mark
+    ]
+  ]
+
+  @errorband_opts Tucan.Options.take!(
+                    [
+                      @global_opts,
+                      @global_mark_opts,
+                      :x,
+                      :y,
+                      :interpolate,
+                      :fill_color
+                    ],
+                    errorband_opts
+                  )
+  @errorband_schema Tucan.Options.to_nimble_schema!(@errorband_opts)
+
+  @doc """
+  Draws an error band (confidence interval).
+
+  An error band summarizes an error range of quantitative values using a set of summary statistics,
+  represented by area. Both `x` and `y` should be quantitative variables.
+
+  ## Options
+
+  #{Tucan.Options.docs(@errorband_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.errorband(:cars, "Year", "Miles_per_Gallon", x: [time_unit: "year", type: :temporal])
+  ```
+
+  You can modify the look of the error band, change the `:extent` and include the borders if needed.
+
+  ```tucan
+  Tucan.errorband(:cars, "Year", "Miles_per_Gallon",
+    extent: :ci,
+    fill_color: "red",
+    borders: true,
+    x: [time_unit: "year", type: :temporal]
+  )
+  ```
+
+  Usually you want to combine the errorband with the mean trend line. You can use
+  `Tucan.layers/2` to combine it with a lineplot.
+
+  ```tucan
+  errorband = Tucan.errorband(:cars, "Year", "Miles_per_Gallon",
+    extent: :ci,
+    fill_color: "green",
+    x: [time_unit: "year", type: :temporal]
+  )
+
+  trendline = Tucan.lineplot(:cars, "Year", "Miles_per_Gallon",
+    x: [time_unit: "year", type: :temporal],
+    y: [aggregate: :mean]
+  )
+
+  Tucan.layers([errorband, trendline])
+  ```
+  """
+  @doc section: :plots
+  @spec errorband(plotdata :: plotdata(), x :: String.t(), y :: String.t(), opts :: keyword()) ::
+          VegaLite.t()
+  def errorband(plotdata, x, y, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @errorband_schema)
+    spec_opts = Tucan.Options.take_options(opts, @errorband_opts, :spec)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @errorband_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+
+    new(plotdata, spec_opts)
+    |> Vl.mark(:errorband, mark_opts)
+    |> encode_field(:x, x, opts, type: :quantitative, scale: [zero: false])
+    |> encode_field(:y, y, opts, type: :quantitative, scale: [zero: false])
+  end
+
   boxplot_opts = [
     group_by: [
       type: :string,

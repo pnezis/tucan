@@ -11,6 +11,17 @@ Tucan.errorbar(:barley, "yield", group_by: "variety", points: true, ticks: true)
 |> Tucan.color_by("variety")
 ```
 
+- Add `Tucan.errorband/4` plot
+
+```tucan
+Tucan.errorband(:cars, "Year", "Miles_per_Gallon",
+  extent: :ci,
+  fill_color: "black",
+  borders: true,
+  x: [time_unit: "year", type: :temporal]
+)
+```
+
 - Add `Tucan.lollipop/4` plot
 
 ```tucan
