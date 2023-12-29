@@ -895,7 +895,7 @@ defmodule Tucan do
     Tucan.stripplot(:movies, "IMDB Rating",
       group_by: "Major Genre",
       style: :jitter,
-      point_size: 4,
+      point_size: 2,
       width: 300
     )
     |> Tucan.color_by("Major Genre", type: :nominal)
@@ -907,7 +907,7 @@ defmodule Tucan do
       group_by: "Major Genre",
       style: :jitter,
       jitter_mode: :uniform,
-      point_size: 4,
+      point_size: 2,
       width: 300
     )
     |> Tucan.color_by("Major Genre", type: :nominal)
