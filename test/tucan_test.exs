@@ -828,7 +828,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@cars_dataset)
-        |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1)
+        |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1, borders: false)
         |> Vl.encode_field(:x, "Year",
           type: :quantitative,
           scale: [zero: false],
@@ -844,7 +844,12 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@cars_dataset)
-        |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1, borders: true, color: "red")
+        |> Vl.mark(:errorband,
+          extent: :stderr,
+          fill_opacity: 1,
+          borders: [color: "green", stroke_width: 5, stroke_dash: [5, 5]],
+          color: "red"
+        )
         |> Vl.encode_field(:x, "Year",
           type: :quantitative,
           scale: [zero: false],
@@ -855,7 +860,10 @@ defmodule TucanTest do
       assert Tucan.errorband(@cars_dataset, "Year", "Miles_per_Gallon",
                x: [time_unit: :year],
                borders: true,
-               fill_color: "red"
+               fill_color: "red",
+               line_color: "green",
+               stroke_width: 5,
+               stroke_dash: [5, 5]
              ) == expected
     end
   end

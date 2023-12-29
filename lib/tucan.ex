@@ -1195,6 +1195,7 @@ defmodule Tucan do
       doc: """
       If set to `true` the error band's border will be added.
       """,
+      default: false,
       dest: :mark
     ],
     extent: [
@@ -1220,7 +1221,10 @@ defmodule Tucan do
                       :x,
                       :y,
                       :interpolate,
-                      :fill_color
+                      :fill_color,
+                      :line_color,
+                      :stroke_width,
+                      :stroke_dash
                     ],
                     errorband_opts
                   )
@@ -1253,6 +1257,20 @@ defmodule Tucan do
   )
   ```
 
+  You can also change the look of the borders:
+
+  ```tucan
+  Tucan.errorband(:cars, "Year", "Miles_per_Gallon",
+    extent: :ci,
+    fill_color: "black",
+    borders: true,
+    line_color: "red",
+    stroke_width: 3,
+    stroke_dash: [7, 5],
+    x: [time_unit: "year", type: :temporal]
+  )
+  ```
+
   Usually you want to combine the errorband with the mean trend line. You can use
   `Tucan.layers/2` to combine it with a lineplot.
 
@@ -1278,9 +1296,23 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @errorband_schema)
     spec_opts = Tucan.Options.take_options(opts, @errorband_opts, :spec)
 
+    border_opts =
+      case opts[:borders] do
+        true ->
+          []
+          |> Tucan.Keyword.put_not_nil(:stroke_width, opts[:stroke_width])
+          |> Tucan.Keyword.put_not_nil(:stroke_dash, opts[:stroke_dash])
+          |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+        false ->
+          false
+      end
+
     mark_opts =
       Tucan.Options.take_options(opts, @errorband_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Keyword.merge(borders: border_opts)
+      |> Keyword.drop([:stroke_width, :stroke_dash])
 
     new(plotdata, spec_opts)
     |> Vl.mark(:errorband, mark_opts)
