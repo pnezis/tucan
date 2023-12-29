@@ -960,7 +960,7 @@ defmodule TucanTest do
                expected
     end
 
-    test "with area_color, filled set" do
+    test "with fill_color, filled set" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
@@ -979,7 +979,7 @@ defmodule TucanTest do
           axis: [title: "petal_width"]
         )
 
-      assert Tucan.density(@iris_dataset, "petal_width", area_color: "green", filled: true) ==
+      assert Tucan.density(@iris_dataset, "petal_width", fill_color: "green", filled: true) ==
                expected
     end
 

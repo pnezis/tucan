@@ -551,11 +551,6 @@ defmodule Tucan do
   end
 
   density_opts = [
-    area_color: [
-      type: :string,
-      doc: "The color of the density area plot",
-      section: :style
-    ],
     filled: [
       type: :boolean,
       doc: "Whether the density plot will be filled or not, default to `true` if not set",
@@ -648,6 +643,7 @@ defmodule Tucan do
                     :x,
                     :y,
                     :orient,
+                    :fill_color,
                     :color
                   ],
                   density_opts
@@ -741,12 +737,12 @@ defmodule Tucan do
   |> Tucan.facet_by(:column, "Species")
   ```
 
-  You can change the color of the plot by setting the `:area_color` option and/or specify if it
+  You can change the color of the plot by setting the `:fill_color` option and/or specify if it
   will be filled or not:
 
   ```tucan
   Tucan.hconcat([
-    Tucan.density(:penguins, "Body Mass (g)", area_color: "red"),
+    Tucan.density(:penguins, "Body Mass (g)", fill_color: "red"),
     Tucan.density(:penguins, "Body Mass (g)", filled: false)
   ])
   ```
@@ -762,7 +758,7 @@ defmodule Tucan do
     mark_opts =
       Tucan.Options.take_options(opts, @histogram_opts, :mark)
       |> Keyword.merge(orient: :vertical)
-      |> Tucan.Keyword.put_not_nil(:color, opts[:area_color])
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
       |> Tucan.Keyword.put_not_nil(:filled, opts[:filled])
 
     transform_opts =

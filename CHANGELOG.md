@@ -80,6 +80,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 - Flipped `:orient` semantics for `Tucan.bar/4`
 - Rename `:group` option to `:group_by` in `Tucan.stripplot/3` for consistency.
 - Rename `:groupby` option to `:group_by` in `Tucan.density/3` for consistency.
+- Rename `:area_color` option to `:fill_color` in `Tucan.density/3` for consistency.
 
 ### Deprecated
 
