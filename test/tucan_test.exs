@@ -676,6 +676,24 @@ defmodule TucanTest do
       assert Tucan.stripplot(@tips_dataset, "total_bill", style: :jitter) == expected
     end
 
+    test "with uniform jitter style" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@tips_dataset)
+        |> Vl.transform(calculate: "random()", as: "jitter")
+        |> Vl.mark(:point, size: 8, color: :red, shape: :square)
+        |> Vl.encode_field(:x, "total_bill", type: :quantitative)
+        |> Vl.encode_field(:y_offset, "jitter", type: :quantitative, axis: nil)
+
+      assert Tucan.stripplot(@tips_dataset, "total_bill",
+               style: :jitter,
+               jitter_mode: :uniform,
+               point_size: 8,
+               point_color: "red",
+               point_shape: "square"
+             ) == expected
+    end
+
     test "with jitter and vertical orient" do
       expected =
         Vl.new()

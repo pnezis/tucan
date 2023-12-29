@@ -59,6 +59,11 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 - Add `Tucan.Scale.set_scale/4` and enable passing scale options.
 - Add `Tucan.href_by/2`.
 
+### Added plot options
+
+- Support `:point_shape`, `:point_size` and `:point_color` in `Tucan.stripplot/3`.
+- Support uniform jittering through `:jitter_mode` in `Tucan.Stripplot/3`.
+
 ### Changed
 
 - Flipped `:orient` semantics for `Tucan.bar/4`
@@ -111,8 +116,7 @@ Tucan.new()
 
 ### Added plot options
 
-- Support `:only` in all plots. Using `:only` you can select only a subset of the input
-  dataset for the current plot.
+- Support `:only` in all plots. Using `:only` you can select only a subset of the input dataset for the current plot.
 - Support `:point_color` in `Tucan.lineplot/4`
 - Support `:area_color` and `:filled` in density plot
 - Support `:stroke_dash` in `Tucan.ruler/4`, `Tucan.hruler/3` and `Tucan.vruler/3`

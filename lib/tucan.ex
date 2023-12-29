@@ -808,7 +808,16 @@ defmodule Tucan do
       Use `:jitter` in case of many data points in order to avoid overlaps.
       """,
       default: :tick
-    ]
+    ],
+    jitter_mode: [
+      type: {:in, [:uniform, :normal]},
+      doc: """
+      The distribution from which the jitter (random offset) will be generated. One of
+      `:uniform`, `:normal`. Applicable only when the `:style` is set to `:jitter`.
+      """,
+      default: :normal
+    ],
+    point_size: [default: 16]
   ]
 
   @stripplot_opts Tucan.Options.take!(
@@ -820,7 +829,10 @@ defmodule Tucan do
                       :y,
                       :y_offset,
                       :color_by,
-                      :color
+                      :color,
+                      :point_size,
+                      :point_shape,
+                      :point_color
                     ],
                     stripplot_opts
                   )
@@ -875,7 +887,39 @@ defmodule Tucan do
   |> Tucan.color_by("day")
   ```
 
-  Or you can color by a distinct variable to show a multi-dimensional relationship:
+  You can use `:uniform` distribution instead of the default (`:normal`). Below
+  you can see both side by side:
+
+  ```tucan
+  normal =
+    Tucan.stripplot(:movies, "IMDB Rating",
+      group_by: "Major Genre",
+      style: :jitter,
+      point_size: 4,
+      width: 300
+    )
+    |> Tucan.color_by("Major Genre", type: :nominal)
+    |> Tucan.set_title("Gaussian jittering")
+    |> Tucan.Legend.set_enabled(:color, false)
+
+  uniform =
+    Tucan.stripplot(:movies, "IMDB Rating",
+      group_by: "Major Genre",
+      style: :jitter,
+      jitter_mode: :uniform,
+      point_size: 4,
+      width: 300
+    )
+    |> Tucan.color_by("Major Genre", type: :nominal)
+    |> Tucan.set_title("Uniform jittering")
+    |> Tucan.Legend.set_enabled(:color, false)
+    |> Tucan.Axes.set_enabled(:y, false)
+
+  Tucan.hconcat([normal, uniform])
+  |> VegaLite.resolve(:scale, y_offset: :independent, y: :shared)
+  ```
+
+  You can also color by a distinct variable to show a multi-dimensional relationship:
 
   ```tucan
   Tucan.stripplot(:tips, "total_bill", group_by: "day", style: :jitter)
@@ -919,7 +963,7 @@ defmodule Tucan do
 
     plotdata
     |> new(spec_opts)
-    |> stripplot_mark(opts[:style], Keyword.take(opts, [:tooltip]))
+    |> stripplot_mark(opts[:style], opts)
     |> encode_field(:x, field, opts, type: :quantitative)
     |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
       type: :nominal
@@ -929,8 +973,17 @@ defmodule Tucan do
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end
 
-  defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, opts)
-  defp stripplot_mark(vl, _other, opts), do: Vl.mark(vl, :point, [size: 16] ++ opts)
+  defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, Keyword.take(opts, [:tooltip]))
+
+  defp stripplot_mark(vl, _other, opts) do
+    opts =
+      Keyword.take(opts, [:tooltip])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
+      |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+
+    Vl.mark(vl, :point, opts)
+  end
 
   defp maybe_encode_field(vl, channel, condition_fn, field, opts, extra_opts) do
     case condition_fn.() do
@@ -946,11 +999,21 @@ defmodule Tucan do
     case opts[:style] do
       :jitter ->
         vl
-        |> Vl.transform(calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+        |> jitter_transform(opts)
         |> encode_field(:y_offset, "jitter", opts, type: :quantitative, axis: nil)
 
       _other ->
         vl
+    end
+  end
+
+  defp jitter_transform(vl, opts) do
+    case opts[:jitter_mode] do
+      :normal ->
+        Vl.transform(vl, calculate: "sqrt(-2*log(random()))*cos(2*PI*random())", as: "jitter")
+
+      :uniform ->
+        Vl.transform(vl, calculate: "random()", as: "jitter")
     end
   end
 
