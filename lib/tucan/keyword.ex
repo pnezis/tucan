@@ -23,6 +23,7 @@ defmodule Tucan.Keyword do
     end
   end
 
+  @doc false
   @spec merge_conditionally(config1 :: keyword(), config2 :: keyword(), fun :: (-> boolean())) ::
           keyword()
   def merge_conditionally(config1, config2, fun) do

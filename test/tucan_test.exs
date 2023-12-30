@@ -949,7 +949,7 @@ defmodule TucanTest do
           minsteps: 25
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
-        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
           scale: [zero: false],
@@ -972,7 +972,7 @@ defmodule TucanTest do
           minsteps: 25
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical, color: "green", filled: true)
-        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
           scale: [zero: false],
@@ -980,6 +980,29 @@ defmodule TucanTest do
         )
 
       assert Tucan.density(@iris_dataset, "petal_width", fill_color: "green", filled: true) ==
+               expected
+    end
+
+    test "fill_opacity is overriden if filled is set to false" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(
+          density: "petal_width",
+          counts: false,
+          cumulative: false,
+          maxsteps: 200,
+          minsteps: 25
+        )
+        |> Vl.mark(:area, fill_opacity: 0.0, orient: :vertical, filled: false)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
+        |> Vl.encode_field(:x, "value",
+          type: :quantitative,
+          scale: [zero: false],
+          axis: [title: "petal_width"]
+        )
+
+      assert Tucan.density(@iris_dataset, "petal_width", fill_opacity: 0.2, filled: false) ==
                expected
     end
 
@@ -995,7 +1018,7 @@ defmodule TucanTest do
           minsteps: 25
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :horizontal)
-        |> Vl.encode_field(:x, "density", type: :quantitative)
+        |> Vl.encode_field(:x, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:y, "value",
           type: :quantitative,
           scale: [zero: false],
@@ -1020,7 +1043,7 @@ defmodule TucanTest do
           minsteps: 5
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
-        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
           scale: [zero: false],
@@ -1038,7 +1061,7 @@ defmodule TucanTest do
                expected
     end
 
-    test "with color_by set" do
+    test "with color_by and stacked set set" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
@@ -1051,7 +1074,7 @@ defmodule TucanTest do
           groupby: ["species"]
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
-        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: :zero)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
           scale: [zero: false],
@@ -1059,7 +1082,7 @@ defmodule TucanTest do
         )
         |> Vl.encode_field(:color, "species")
 
-      assert Tucan.density(@iris_dataset, "petal_width", color_by: "species") ==
+      assert Tucan.density(@iris_dataset, "petal_width", color_by: "species", stacked: true) ==
                expected
     end
 
@@ -1076,7 +1099,7 @@ defmodule TucanTest do
           groupby: ["other"]
         )
         |> Vl.mark(:area, fill_opacity: 1.0, orient: :vertical)
-        |> Vl.encode_field(:y, "density", type: :quantitative)
+        |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
           scale: [zero: false],

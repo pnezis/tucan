@@ -632,6 +632,13 @@ defmodule Tucan do
       for stacked densities.
       """,
       dest: :density_transform
+    ],
+    stacked: [
+      type: :boolean,
+      doc: """
+      Whether the density plots will be stacked or not.
+      """,
+      default: false
     ]
   ]
 
@@ -702,10 +709,23 @@ defmodule Tucan do
 
   It is a common use case to compare the density of several groups in a dataset. Several
   options exist to do so. You can plot all items on the same chart, using transparency and
-  annotation to make the comparison possible.
+  annotation to make the comparison possible. You can stack overlapping densities by
+  setting the `:stacked` property.
 
   ```tucan
-  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.5)
+  unstacked =
+    Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", fill_opacity: 0.2)
+    |> Tucan.set_title("Unstacked")
+
+  stacked =
+    Tucan.density(:penguins, "Body Mass (g)",
+      color_by: "Species",
+      fill_opacity: 0.8,
+      stacked: true
+    )
+    |> Tucan.set_title("Stacked")
+
+  Tucan.hconcat([unstacked, stacked])
   ```
 
   You can also combine it with `facet_by/4` in order to draw a different plot for each value
@@ -722,7 +742,11 @@ defmodule Tucan do
   automatically calculated by vega lite):
 
   ```tucan
-  Tucan.density(:penguins, "Body Mass (g)", color_by: "Species", bandwidth: 20.0, fill_opacity: 0.5)
+  Tucan.density(:penguins, "Body Mass (g)",
+    color_by: "Species",
+    bandwidth: 50.0,
+    fill_opacity: 0.5
+  )
   ```
 
   You can plot a cumulative density distribution by setting the `:cumulative` option to `true`:
@@ -773,6 +797,12 @@ defmodule Tucan do
         opts[:color_by] != nil
       end)
 
+    stack =
+      case opts[:stacked] do
+        false -> nil
+        true -> "zero"
+      end
+
     plotdata
     |> new(spec_opts)
     |> Vl.transform(transform_opts)
@@ -782,7 +812,7 @@ defmodule Tucan do
       scale: [zero: false],
       axis: [title: field]
     )
-    |> encode_field(:y, "density", opts, type: :quantitative)
+    |> encode_field(:y, "density", opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(opts[:orient] == :vertical)
   end

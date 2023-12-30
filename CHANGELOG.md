@@ -74,6 +74,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length")
 
 - Support `:point_shape`, `:point_size` and `:point_color` in `Tucan.stripplot/3`.
 - Support uniform jittering through `:jitter_mode` in `Tucan.Stripplot/3`.
+- Support stacked mode in `Tucan.density/3`.
 
 ### Changed
 
