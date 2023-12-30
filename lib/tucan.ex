@@ -781,6 +781,12 @@ defmodule Tucan do
 
     spec_opts = Tucan.Options.take_options(opts, @density_opts, :spec)
 
+    mark =
+      case opts[:filled] do
+        false -> :line
+        _other -> :area
+      end
+
     mark_opts =
       Tucan.Options.take_options(opts, @density_opts, :mark)
       |> Keyword.merge(orient: :vertical)
@@ -806,7 +812,7 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts)
     |> Vl.transform(transform_opts)
-    |> Vl.mark(:area, mark_opts)
+    |> Vl.mark(mark, mark_opts)
     |> encode_field(:x, "value", opts,
       type: :quantitative,
       scale: [zero: false],

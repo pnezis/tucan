@@ -983,7 +983,7 @@ defmodule TucanTest do
                expected
     end
 
-    test "fill_opacity is overriden if filled is set to false" do
+    test "line mark if filled is set to false" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
@@ -994,7 +994,7 @@ defmodule TucanTest do
           maxsteps: 200,
           minsteps: 25
         )
-        |> Vl.mark(:area, fill_opacity: 0.0, orient: :vertical, filled: false)
+        |> Vl.mark(:line, fill_opacity: 0.0, orient: :vertical, filled: false)
         |> Vl.encode_field(:y, "density", type: :quantitative, stack: nil)
         |> Vl.encode_field(:x, "value",
           type: :quantitative,
