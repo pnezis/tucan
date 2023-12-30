@@ -23,6 +23,15 @@ defmodule Tucan.Keyword do
     end
   end
 
+  @spec merge_conditionally(config1 :: keyword(), config2 :: keyword(), fun :: (-> boolean())) ::
+          keyword()
+  def merge_conditionally(config1, config2, fun) do
+    case fun.() do
+      false -> config1
+      true -> Keyword.merge(config1, config2)
+    end
+  end
+
   @doc false
   @spec put_not_nil(keywords :: keyword(), key :: atom(), value :: term()) :: keyword()
   def put_not_nil(keywords, _key, nil), do: keywords

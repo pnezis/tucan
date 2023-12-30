@@ -746,6 +746,7 @@ defmodule Tucan do
     Tucan.density(:penguins, "Body Mass (g)", fill_color: "red"),
     Tucan.density(:penguins, "Body Mass (g)", filled: false)
   ])
+  |> Tucan.set_theme(:ggplot2)
   ```
   """
   # TODO: if filled is set to false we could use a line mark instead
@@ -761,6 +762,7 @@ defmodule Tucan do
       |> Keyword.merge(orient: :vertical)
       |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
       |> Tucan.Keyword.put_not_nil(:filled, opts[:filled])
+      |> Tucan.Keyword.merge_conditionally([fill_opacity: 0], fn -> opts[:filled] == false end)
 
     transform_opts =
       Tucan.Options.take_options(opts, @density_opts, :density_transform)
