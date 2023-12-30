@@ -644,6 +644,7 @@ defmodule Tucan do
                     :y,
                     :orient,
                     :fill_color,
+                    :interpolate,
                     :color
                   ],
                   density_opts
@@ -753,10 +754,10 @@ defmodule Tucan do
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
-    spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
+    spec_opts = Tucan.Options.take_options(opts, @density_opts, :spec)
 
     mark_opts =
-      Tucan.Options.take_options(opts, @histogram_opts, :mark)
+      Tucan.Options.take_options(opts, @density_opts, :mark)
       |> Keyword.merge(orient: :vertical)
       |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
       |> Tucan.Keyword.put_not_nil(:filled, opts[:filled])
