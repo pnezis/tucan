@@ -28,6 +28,7 @@ features, enabling you to examine patterns and trends within subgroups of your d
 plot dimensions, titles, and **themes**.
 - **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used seamlessly with
 `Tucan` in order to enhance/customize your plots.
+- **`Nx` support** - You can pass directly `Nx` tensors in all plot functions.
 - **Low level API** - A low level API with helper functions is provided for modifying
 `VegaLite` specifications.
 
