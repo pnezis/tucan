@@ -3093,29 +3093,76 @@ defmodule Tucan do
 
   ## Image
 
+  imshow_opts = [
+    color_scheme: [
+      type: :atom,
+      doc: """
+      The color scheme to be used for the image. Should be one of the supported
+      color schemes of `Tucan.Scale.set_color_scheme/3`.
+      """,
+      default: :viridis
+    ],
+    reverse: [
+      type: :boolean,
+      doc: "Whether the color scheme will be reversed or not.",
+      default: false
+    ],
+    origin: [
+      type: {:in, [:upper, :lower]},
+      doc: """
+      Place the `[0, 0]` index of the array in the upper left or lower left corner of the Axes. The
+      convention (the default) `:upper` is typically used for matrices and images.
+
+      Note that the vertical axis points upward for `:lower` but downward for `:upper`.
+      """
+    ]
+  ]
+
+  @imshow_opts Tucan.Options.take!(
+               [
+                 :width,
+                 :height,
+                 :tooltip
+               ],
+               imshow_opts
+             )
+  @imshow_schema Tucan.Options.to_nimble_schema!(@imshow_opts)
+
   @doc """
   Display data as an image.
 
   The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
-  rendered as a pseudo-color image.
+  rendered as a pseudo-color image. The origin is set at the upper left hand corner and
+  rows (first dimension of the array) are displayed horizontally. By setting `:origin`
+  to `:lower` you can set the origin to the lower left hand corner.
+
+  ## Options
+
+  #{Tucan.Options.docs(@imshow_opts)}
 
   ## Examples
 
   > In the following examples we use a subset of the [MNIST dataset](https://en.wikipedia.org/wiki/MNIST_database).
   > The data are stored as a serialized `Nx.Tensor` with shape `{images, height, width, 1}`.
 
-  Plotting a grid of 40 images of the MNIST dataset:
+  ```tucan
+  mnist_path = Path.expand("../../assets/mnist_sample.bin", __DIR__)
+  images = File.read!(mnist_path) |> Nx.deserialize()
+
+  Tucan.imshow(images[[images: 5]], width: 200, height: 200)
+  ```
+
+  Below we use `Tucan.concat/2` to plot a grid of 40 images of the MNIST dataset. We
+  also set a grayscale color scheme.
 
   ```tucan
   mnist_path = Path.expand("../../assets/mnist_sample.bin", __DIR__)
-  images =
-     File.read!(mnist_path)
-     |> Nx.deserialize()
+  images = File.read!(mnist_path) |> Nx.deserialize()
 
   images =
     for i <- 1..40 do
       image = images[[images: i]]
-      Tucan.imshow(image, width: 60, height: 60)
+      Tucan.imshow(image, width: 60, height: 60, color_scheme: :greys, reverse: true)
     end
 
   Tucan.concat(images, columns: 10)
@@ -3124,6 +3171,8 @@ defmodule Tucan do
   @doc section: :images
   @spec imshow(data :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
   def imshow(data, opts) do
+    opts = NimbleOptions.validate!(opts, @imshow_schema)
+
     Tucan.Image.show(data, opts)
   end
 
