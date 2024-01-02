@@ -3114,18 +3114,37 @@ defmodule Tucan do
       convention (the default) `:upper` is typically used for matrices and images.
 
       Note that the vertical axis points upward for `:lower` but downward for `:upper`.
-      """
+
+      ```tucan
+      data = Nx.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], type: {:f, 32})
+
+      Tucan.hconcat([
+        Tucan.imshow(data, width: 200, height: 200, origin: :upper, show_scale: true, tooltip: true)
+        |> Tucan.set_title(":upper origin (default)"),
+        Tucan.imshow(data, width: 200, height: 200, origin: :lower, show_scale: true, tooltip: true)
+        |> Tucan.set_title(":lower origin")
+      ])
+      ```
+      """,
+      default: :upper
+    ],
+    show_scale: [
+      type: :boolean,
+      doc: "If set the color scale is displayed.",
+      default: false,
+      section: :style
     ]
   ]
 
   @imshow_opts Tucan.Options.take!(
-               [
-                 :width,
-                 :height,
-                 :tooltip
-               ],
-               imshow_opts
-             )
+                 [
+                   :width,
+                   :height,
+                   :title,
+                   :tooltip
+                 ],
+                 imshow_opts
+               )
   @imshow_schema Tucan.Options.to_nimble_schema!(@imshow_opts)
 
   @doc """
@@ -3167,10 +3186,74 @@ defmodule Tucan do
 
   Tucan.concat(images, columns: 10)
   ```
+
+  You can use any of the supported color schemes. Below we draw the same image with 10
+  different color schemes with and without `:reverse` set. (Notice how we use `VegaLite.resolve/3`
+  to ensure that each sub-plot will have an independent color scale.)
+
+  ```tucan
+  mnist_path = Path.expand("../../assets/mnist_sample.bin", __DIR__)
+  images = File.read!(mnist_path) |> Nx.deserialize()
+  image = images[[images: 2]]
+
+  schemes = [:viridis, :inferno, :plasma, :turbo, :greenblue, :darkgold, :rainbow, :redblue, :greens, :greys]
+
+  non_reversed =
+    for scheme <- schemes do
+      Tucan.imshow(image, color_scheme: scheme, width: 60, height: 60, title: Atom.to_string(scheme))
+    end
+
+  reversed =
+    for scheme <- schemes do
+      Tucan.imshow(image, color_scheme: scheme, reverse: true, width: 60, height: 60)
+    end
+
+  Tucan.vconcat([
+    Tucan.hconcat(non_reversed)
+    |> VegaLite.resolve(:scale, color: :independent),
+    Tucan.hconcat(reversed)
+    |> VegaLite.resolve(:scale, color: :independent)
+  ])
+  ```
+
+  > #### 3d plots visualization {: .tip}
+  >
+  > You can also use `imshow/2` to "visualize" 3d plots. Below we create a meshgrid
+  > and calculate the value of a function across the grid. We then use `imshow/2` to
+  > visualize `z` using the color:
+  >
+  > ```tucan
+  > nx = 121
+  > ny = 121
+  >
+  > x = Nx.linspace(-20, 20, n: nx)
+  > y = Nx.linspace(-20, 20, n: ny)
+  >
+  > defmodule Foo do
+  >  import Nx.Defn
+  >
+  >  defn f(x, y) do
+  >    Nx.sqrt(Nx.pow(x - 5, 2) + Nx.pow(y - 5, 2))
+  >  end
+  >
+  >  def meshgrid(x, y, nx, ny) do
+  >    xx = Nx.broadcast(x, {ny, nx}, axes: [1])
+  >    yy = Nx.broadcast(y, {ny, nx}, axes: [0])
+  >
+  >    {xx, yy}
+  >  end
+  > end
+  >
+  > {xx, yy} = Foo.meshgrid(x, y, nx, ny)
+  >
+  > zz = Foo.f(xx, yy)
+  >
+  > Tucan.imshow(zz, width: 300, height: 300, origin: :lower, show_scale: true)
+  > ```
   """
   @doc section: :images
   @spec imshow(data :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
-  def imshow(data, opts) do
+  def imshow(data, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @imshow_schema)
 
     Tucan.Image.show(data, opts)

@@ -39,24 +39,32 @@ defmodule Tucan.Image do
       |> Nx.broadcast({height, width}, axes: [1])
       |> Nx.to_flat_list()
 
+    {start_index, end_index} =
+      case opts[:origin] do
+        :upper -> {0, height - 1}
+        :lower -> {height - 1, 0}
+      end
+
     y =
-      Nx.tensor(Enum.to_list(0..(height - 1)))
+      Nx.tensor(Enum.to_list(start_index..end_index))
       |> Nx.broadcast({height, width}, axes: [0])
       |> Nx.to_flat_list()
 
     v = Nx.to_flat_list(tensor)
 
-    Vl.new(Keyword.take(opts, [:width, :height]))
+    spec_opts = Keyword.take(opts, [:width, :height, :title])
+    mark_opts = Keyword.take(opts, [:tooltip])
+
+    Vl.new(spec_opts)
     |> Vl.data_from_values(x: x, y: y, v: v)
-    |> Vl.mark(:rect)
+    |> Vl.mark(:rect, mark_opts)
     |> Vl.encode_field(:x, "x", type: :ordinal)
     |> Vl.encode_field(:y, "y", type: :ordinal)
     |> Vl.encode_field(:color, "v", type: :quantitative)
     |> Tucan.Axes.set_enabled(false)
-    |> Tucan.Scale.set_color_scheme(opts[:color_scheme] || :greys,
-      reverse: Keyword.get(opts, :reverse, true)
-    )
-    |> Tucan.Legend.set_enabled(:color, false)
+    |> Tucan.Scale.set_color_scheme(opts[:color_scheme], reverse: opts[:reverse])
+    |> Tucan.Legend.set_title(:color, nil)
+    |> Tucan.Legend.set_enabled(:color, opts[:show_scale])
   end
 
   defp assert_nx! do

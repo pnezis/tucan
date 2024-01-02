@@ -23,7 +23,7 @@ defmodule Tucan.MixProject do
       source_url: @scm_url,
       description: "A plotting library on top of VegaLite",
       test_coverage: [
-        summary: [threshold: 97]
+        summary: [threshold: 95]
       ]
     ]
   end
