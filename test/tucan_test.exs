@@ -2002,6 +2002,66 @@ defmodule TucanTest do
     end
   end
 
+  describe "imshow/2" do
+    test "with default settings" do
+      data = Nx.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], type: {:f, 32})
+
+      v = Nx.to_flat_list(data)
+      x = [0, 1, 2, 0, 1, 2, 0, 1, 2]
+      y = [0, 0, 0, 1, 1, 1, 2, 2, 2]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(v: v, x: x, y: y)
+        |> Vl.mark(:rect)
+        |> Vl.encode_field(:x, "x", axis: nil, type: :ordinal)
+        |> Vl.encode_field(:y, "y", axis: nil, type: :ordinal)
+        |> Vl.encode_field(:color, "v",
+          legend: nil,
+          type: :quantitative,
+          scale: [reverse: false, scheme: :viridis]
+        )
+
+      assert Tucan.imshow(data) == expected
+
+      # with NxMx1 tensor
+      data_reshaped = Nx.reshape(data, {3, 3, 1})
+      assert Tucan.imshow(data_reshaped) == expected
+
+      # With lower origin
+      y_lower = [2, 2, 2, 1, 1, 1, 0, 0, 0]
+      expected_lower = Vl.data_from_values(expected, v: v, x: x, y: y_lower)
+
+      assert Tucan.imshow(data, origin: :lower) == expected_lower
+
+      # With different color scheme
+      expected_scheme =
+        Vl.encode_field(expected, :color, "v",
+          legend: nil,
+          type: :quantitative,
+          scale: [reverse: true, scheme: :greys]
+        )
+
+      assert Tucan.imshow(data, color_scheme: :greys, reverse: true) == expected_scheme
+    end
+
+    test "raises with invalid tensor shape" do
+      data = Nx.tensor([[[1, 2, 3]]], type: {:f, 32})
+
+      message =
+        "expected Nx.Tensor to have shape {height, width} or {height, width, 1}, got: {1, 1, 3}"
+
+      assert_raise ArgumentError, message, fn -> Tucan.imshow(data) end
+    end
+
+    test "raises with invalid tensor type" do
+      data = Nx.tensor([[1, 2, 3], [1, 2, 3]], type: {:s, 64})
+
+      message = "expected Nx.Tensor to have type {:u, 8} or {:f, 32}, got: {:s, 64}"
+      assert_raise ArgumentError, message, fn -> Tucan.imshow(data) end
+    end
+  end
+
   describe "color_by/3" do
     test "applies encoding on single view plot" do
       expected =

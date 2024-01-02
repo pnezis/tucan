@@ -70,7 +70,7 @@ defmodule Tucan.Image do
   defp assert_nx! do
     unless Code.ensure_loaded?(Nx) do
       raise RuntimeError, """
-      Tucan.imshow/2 depends on the :kino package.
+      Tucan.imshow/2 depends on the :nx package.
 
       You can install it by adding
 
