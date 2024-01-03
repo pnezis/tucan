@@ -6,7 +6,7 @@
 
 tucan_version =
   case System.get_env("TUCAN_DEV") do
-    nil -> "~> 0.2.1"
+    nil -> "~> 0.3.0"
     _other -> [path: Path.expand("..", __DIR__)]
   end
 
@@ -184,6 +184,38 @@ Tucan.stripplot(:weather, "date",
 |> Tucan.Axes.put_options(:x, format: "%b")
 ```
 
+## Distribution plots
+
+Tucan provides several plot types for displaying the distribution of a numerical variable. Let's start by plotting the boxplots of the `temp_max` for the various `weather` types.
+
+```elixir
+Tucan.boxplot(:weather, "temp_max", group_by: "weather")
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.set_width(500)
+```
+
+We could also use `Tucan.errorbar/3`.
+
+```elixir
+Tucan.errorbar(:weather, "temp_max",
+  group_by: "weather",
+  points: true,
+  ticks: true,
+  extent: :ci
+)
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.set_width(500)
+```
+
+Similarly we could use `Tucan.stripplot/3` this time encoding the `temp_max` on the *x-axis*. Notice that we use `uniform` jittering.
+
+```elixir
+Tucan.stripplot(:weather, "temp_max", group_by: "weather", style: :jitter, jitter_mode: :uniform)
+|> Tucan.color_by("weather", scale: [range: color_palette])
+|> Tucan.set_width(500)
+|> Tucan.set_height(300)
+```
+
 ## Weather heatmaps
 
 A heatmap uses color to encode the magnitude of a value.
@@ -345,5 +377,17 @@ Tucan.lineplot(:weather, "date", "temp_max",
 |> Tucan.Scale.set_color_scheme(color_palette)
 |> Tucan.stroke_dash_by("weather")
 |> Tucan.set_title("Average Daily Max Temperatures in Seattle (2012-2015) by Month & Weather")
+|> Tucan.set_size(700, 350)
+```
+
+### Showing the confidence interval
+
+We can use `Tucan.errorband/4` to plot the confidence interval. We also color by the weather type in order to display the max temperatures intervals by weather type.
+
+```elixir
+Tucan.errorband(:weather, "date", "temp_max", x: [time_unit: :month, type: :temporal])
+|> Tucan.color_by("weather")
+|> Tucan.Scale.set_color_scheme(color_palette)
+|> Tucan.set_title("Daily Max Temperatures in Seattle (2012-2015) by Month & Weather")
 |> Tucan.set_size(700, 350)
 ```
