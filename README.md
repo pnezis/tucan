@@ -76,7 +76,7 @@ in which case you can call `Mix.install/2`:
 
 ```elixir
 Mix.install([
-  {:tucan, "~> 0.2.1"},
+  {:tucan, "~> 0.3.0"},
   {:kino_vega_lite, "~> 0.1.8"}
 ])
 ```
@@ -91,7 +91,7 @@ You can add the `:tucan` dependency to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:tucan, "~> 0.2.1"}
+    {:tucan, "~> 0.3.0"}
   ]
 end
 ```

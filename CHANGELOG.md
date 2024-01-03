@@ -1,8 +1,25 @@
 # Changelog
 
-## [Unreleased]
+## [v0.3.0](https://github.com/pnezis/tucan/tree/v0.3.0) (2024-01-03)
 
 ### Added
+
+- `Nx` support, you can pass directly tensors as data series.
+
+```tucan
+x = Nx.linspace(-20, 20, n: 200)
+y = Nx.pow(x, 2)
+
+Tucan.lineplot([x: x, y: y], "x", "y", width: 400)
+```
+
+- Add `Tucan.imshow/2` for rendering pseudo-color images
+
+```tucan
+image = Nx.tensor([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]], type: {:f, 32})
+
+Tucan.imshow(image, show_scale: true, width: 200, height: 150)
+```
 
 - Add `Tucan.errorbar/3` plot
 
