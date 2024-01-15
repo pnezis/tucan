@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added plot options
+
+- Support `:fill_color` in `Tucan.bar/4`
+
 ## [v0.3.0](https://github.com/pnezis/tucan/tree/v0.3.0) (2024-01-03)
 
 ### Added

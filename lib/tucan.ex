@@ -1956,6 +1956,7 @@ defmodule Tucan do
                 :x,
                 :y,
                 :color,
+                :fill_color,
                 :x_offset
               ],
               bar_opts
@@ -1989,7 +1990,7 @@ defmodule Tucan do
     %{"a" => "G", "b" => 19}, %{"a" => "H", "b" => 87}, %{"a" => "I", "b" => 52}
   ]
 
-  Tucan.bar(data, "a", "b")
+  Tucan.bar(data, "a", "b", fill_color: "#33245A")
   ```
 
   You can set a `color_by` option that will create a stacked bar chart:
@@ -2046,7 +2047,10 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @bar_schema)
 
     spec_opts = Tucan.Options.take_options(opts, @bar_opts, :spec)
-    mark_opts = Tucan.Options.take_options(opts, @bar_opts, :mark)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @bar_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
 
     y_opts =
       case opts[:mode] do
