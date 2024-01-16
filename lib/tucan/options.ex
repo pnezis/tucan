@@ -204,6 +204,16 @@ defmodule Tucan.Options do
       section: :style,
       dest: :mark
     ],
+    corner_radius: [
+      type: :non_neg_integer,
+      doc: """
+      The radius in pixels of rounded rectangles. The end radius is affected:
+
+      - For vertical bars, top-left and top-right corner radius.
+      - For horizontal bars, top-right and bottom-right corner radius.
+      """,
+      section: :style
+    ],
     filled: [
       type: :boolean,
       doc: "Whether the mark will be filled or not",

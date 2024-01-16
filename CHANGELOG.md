@@ -4,7 +4,8 @@
 
 ### Added plot options
 
-- Support `:fill_color` in `Tucan.bar/4`
+- Support `:fill_color` and `:corner_radius` in `Tucan.bar/4`
+- Support `:fill_color` and `:corner_radius` in `Tucan.histogram/3`
 
 ## [v0.3.0](https://github.com/pnezis/tucan/tree/v0.3.0) (2024-01-03)
 

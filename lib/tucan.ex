@@ -402,7 +402,16 @@ defmodule Tucan do
   ]
 
   @histogram_opts Tucan.Options.take!(
-                    [@global_opts, @global_mark_opts, :x, :x2, :y, :color],
+                    [
+                      @global_opts,
+                      @global_mark_opts,
+                      :x,
+                      :x2,
+                      :y,
+                      :color,
+                      :fill_color,
+                      :corner_radius
+                    ],
                     histogram_opts
                   )
   @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
@@ -428,6 +437,12 @@ defmodule Tucan do
 
   ```tucan
   Tucan.histogram(:cars, "Horsepower", orient: :vertical)
+  ```
+
+  You can also modify the default color and add a radius to the histogram bars:
+
+  ```tucan
+  Tucan.histogram(:cars, "Horsepower", orient: :vertical, fill_color: "red", corner_radius: 5)
   ```
 
   By setting the `:relative` flag you can get a relative frequency histogram:
@@ -476,7 +491,11 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
     spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
-    mark_opts = Tucan.Options.take_options(opts, @histogram_opts, :mark)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @histogram_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Tucan.Keyword.put_not_nil(:corner_radius_end, opts[:corner_radius])
 
     plotdata
     |> new(spec_opts ++ [tucan: [plot: :histogram]])
@@ -1957,6 +1976,7 @@ defmodule Tucan do
                 :y,
                 :color,
                 :fill_color,
+                :corner_radius,
                 :x_offset
               ],
               bar_opts
@@ -1990,7 +2010,7 @@ defmodule Tucan do
     %{"a" => "G", "b" => 19}, %{"a" => "H", "b" => 87}, %{"a" => "I", "b" => 52}
   ]
 
-  Tucan.bar(data, "a", "b", fill_color: "#33245A")
+  Tucan.bar(data, "a", "b", fill_color: "#33245A", corner_radius: 5)
   ```
 
   You can set a `color_by` option that will create a stacked bar chart:
@@ -2051,6 +2071,7 @@ defmodule Tucan do
     mark_opts =
       Tucan.Options.take_options(opts, @bar_opts, :mark)
       |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Tucan.Keyword.put_not_nil(:corner_radius_end, opts[:corner_radius])
 
     y_opts =
       case opts[:mode] do
