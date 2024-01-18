@@ -2840,7 +2840,10 @@ defmodule Tucan do
                  :color_by,
                  :x,
                  :y,
-                 :color
+                 :color,
+                 :fill_color,
+                 :point_color,
+                 :line_color
                ],
                area_opts
              )
@@ -2864,10 +2867,19 @@ defmodule Tucan do
   |> VegaLite.transform(filter: "datum.symbol==='GOOG'")
   ```
 
-  You can overlay the points and/or the line:
+  You can overlay the points and/or the line, you can change the colors of the points,
+  the line and the area if needed:
 
   ```tucan
-  Tucan.area(:stocks, "date", "price", x: [type: :temporal], points: true, line: true)
+  Tucan.area(:stocks, "date", "price",
+    x: [type: :temporal],
+    points: true,
+    line: true,
+    fill_color: "#fa3456",
+    point_color: "orange",
+    line_color: "green",
+    width: 400
+  )
   |> VegaLite.transform(filter: "datum.symbol==='GOOG'")
   ```
 
@@ -2933,7 +2945,9 @@ defmodule Tucan do
 
     mark_opts =
       Tucan.Options.take_options(opts, @area_opts, :mark)
-      |> Keyword.put(:point, Keyword.get(opts, :points, false))
+      |> maybe_add_point_opts(Keyword.get(opts, :points, false), opts ++ [filled: true])
+      |> maybe_add_line_opts(Keyword.get(opts, :line, false), opts)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
 
     stack =
       case opts[:mode] do
@@ -2949,6 +2963,15 @@ defmodule Tucan do
     |> encode_field(:x, x, opts, type: :quantitative)
     |> encode_field(:y, y, opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+  end
+
+  defp maybe_add_line_opts(mark_opts, false, _opts), do: mark_opts
+
+  defp maybe_add_line_opts(mark_opts, true, opts) do
+    case opts[:line_color] do
+      nil -> mark_opts
+      color -> Keyword.put(mark_opts, :line, color: color)
+    end
   end
 
   @doc """

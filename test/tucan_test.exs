@@ -504,7 +504,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
 
@@ -515,18 +515,40 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: true, point: true)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: true, point: [])
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
 
       assert Tucan.area(@stocks_dataset, "date", "price", points: true, line: true) == expected
     end
 
+    test "with different colors" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@stocks_dataset)
+        |> Vl.mark(:area,
+          fill_opacity: 1.0,
+          line: [color: "black"],
+          point: [color: "red"],
+          color: "green"
+        )
+        |> Vl.encode_field(:x, "date", type: :quantitative)
+        |> Vl.encode_field(:y, "price", type: :quantitative, stack: true)
+
+      assert Tucan.area(@stocks_dataset, "date", "price",
+               points: true,
+               line: true,
+               line_color: "black",
+               point_color: "red",
+               fill_color: "green"
+             ) == expected
+    end
+
     test "stacked area charts" do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: true)
         |> Vl.encode_field(:color, "symbol")
@@ -549,7 +571,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :normalize)
         |> Vl.encode_field(:color, "symbol")
@@ -566,7 +588,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: :center)
         |> Vl.encode_field(:color, "symbol")
@@ -583,7 +605,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :temporal, time_unit: :yearmonth)
         |> Vl.encode_field(:y, "price", type: :quantitative, aggregate: :mean, stack: false)
         |> Vl.encode_field(:color, "symbol")
@@ -602,7 +624,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@stocks_dataset)
-        |> Vl.mark(:area, fill_opacity: 1.0, line: false, point: false)
+        |> Vl.mark(:area, fill_opacity: 1.0, line: false)
         |> Vl.encode_field(:x, "date", type: :quantitative)
         |> Vl.encode_field(:y, "price", type: :quantitative, stack: :center)
         |> Vl.encode_field(:color, "symbol")
