@@ -2158,7 +2158,7 @@ defmodule TucanTest do
       assert Tucan.size_by(Vl.new(), "field") == expected
     end
 
-    test "type can be overriden by options" do
+    test "type can be overridden by options" do
       expected =
         Vl.new()
         |> Vl.encode_field(:size, "field", type: :ordinal)
