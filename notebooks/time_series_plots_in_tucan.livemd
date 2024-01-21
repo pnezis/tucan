@@ -30,7 +30,7 @@ We will then show how to use Tucan's functionalities to calculate and plot avera
 
 > Throughout this notebook we will use the `:weather` dataset that comes with `Tucan`.
 
-We can start by using `Tucan.scatter/4 ` to plot all dataset points. Let's encode time on the _x-axis_ and `temp_max` on the _y-axis_. By default `scatter` expects two quantitative variables. We have to specify that the _x-axis_ encodes time by explicitely setting the `type` to `temporal` through the `:x` option.
+We can start by using `Tucan.scatter/4 ` to plot all dataset points. Let's encode time on the _x-axis_ and `temp_max` on the _y-axis_. By default `scatter` expects two quantitative variables. We have to specify that the _x-axis_ encodes time by explicitly setting the `type` to `temporal` through the `:x` option.
 
 We set the `filled` option to `true` in order to have filled points and enable the `tooltip` in order to add some interactivity.
 
