@@ -89,7 +89,7 @@ defmodule TucanTest do
         |> Vl.data_from_url(@iris_dataset)
 
       assert Tucan.new(:iris) == expected
-      assert Tucan.new(:iris, only: [:petal_width]) == expected
+      assert_raise ArgumentError, fn -> Tucan.new(:iris, only: [:petal_width]) == expected end
     end
 
     test "a binary is treated as url" do
@@ -100,6 +100,12 @@ defmodule TucanTest do
         |> Vl.data_from_url(url)
 
       assert Tucan.new(url) == expected
+    end
+
+    test "raises with URL and only set" do
+      assert_raise ArgumentError, "you are not allowed to set :only with a dataset URL", fn ->
+        Tucan.new("http://some/dataset.csv", only: [:x, :y])
+      end
     end
 
     test "with data" do

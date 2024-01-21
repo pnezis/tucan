@@ -281,8 +281,9 @@ defmodule Tucan do
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
 
   defp to_vega_plot(dataset, opts) when is_binary(dataset) do
-    # TODO: maybe raise if set
-    opts = Keyword.drop(opts, [:only])
+    if opts[:only] do
+      raise ArgumentError, "you are not allowed to set :only with a dataset URL"
+    end
 
     opts
     |> new_tucan_plot()
