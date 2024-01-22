@@ -12,13 +12,16 @@ darkgold
 darkgreen
 darkmulti
 darkred
+defn
 enlayer
+errorband
 errorbar
 gapminder
 ggplot
 goldgreen
 goldorange
 goldred
+grayscale
 greenblue
 groupby
 hconcat
@@ -43,6 +46,7 @@ livebook
 matplotlib
 maxbins
 maxsteps
+meshgrid
 minsteps
 mnist
 monthdate
@@ -76,6 +80,7 @@ subview
 subviews
 symlog
 tealblues
+trendline
 tucan
 tukey
 vconcat
