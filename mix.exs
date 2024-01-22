@@ -93,6 +93,9 @@ defmodule Tucan.MixProject do
           Tucan.Themes,
           Tucan.View
         ],
+        Utilities: [
+          Tucan.Export
+        ],
         Datasets: [
           Tucan.Datasets
         ]

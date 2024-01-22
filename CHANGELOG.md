@@ -1,5 +1,11 @@
 # Changelog
 
+## [UNRELEASED]
+
+### Added
+
+- Add `Tucan.Export` wrapper aroung `VegaLite.Export`
+
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)
 
 ### Added plot options
