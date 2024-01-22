@@ -391,3 +391,42 @@ Tucan.errorband(:weather, "date", "temp_max", x: [time_unit: :month, type: :temp
 |> Tucan.set_title("Daily Max Temperatures in Seattle (2012-2015) by Month & Weather")
 |> Tucan.set_size(700, 350)
 ```
+
+Usually you want to overlay the confidence intervals with the trend lines. You can achieve this by using the `Tucan.layers/2` helper.
+
+```elixir
+errorbands =
+  Tucan.errorband(:weather, "date", "temp_max", x: [time_unit: :month, type: :temporal])
+
+trend_lines =
+  Tucan.lineplot(:weather, "date", "temp_max",
+    x: [time_unit: :month, type: :temporal],
+    y: [aggregate: :mean],
+    points: true,
+    tooltip: true
+  )
+
+Tucan.layers([errorbands, trend_lines])
+|> Tucan.set_title("Daily Max Temperatures in Seattle (2012-2015) by Month & Weather")
+|> Tucan.set_size(700, 350)
+|> Tucan.color_by("weather", recursive: true)
+|> Tucan.Scale.set_color_scheme(color_palette)
+```
+
+## Composite Plots
+
+```elixir
+Tucan.jointplot(:weather, "temp_max", "precipitation",
+  color_by: "weather",
+  ratio: 0.3,
+  fill_opacity: 0.5
+)
+```
+
+```elixir
+Tucan.pairplot(:weather, ["temp_min", "temp_max", "precipitation", "wind"], diagonal: :histogram)
+|> Tucan.color_by("weather", recursive: true)
+|> Tucan.Legend.set_orientation(:color, "top")
+
+# |> Tucan.Scale.set_color_scheme(color_palette)
+```
