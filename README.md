@@ -1,13 +1,13 @@
 # Tucan
 
 [![Actions Status](https://github.com/pnezis/tucan/actions/workflows/elixir.yml/badge.svg)](https://github.com/pnezis/tucan/actions)
-[![Package](https://img.shields.io/badge/-Package-important)](https://hex.pm/packages/tucan)
+[![Hex.pm](https://img.shields.io/hexpm/v/tucan.svg)](https://hex.pm/packages/tucan)
 [![Documentation](https://img.shields.io/badge/-Documentation-blueviolet)](https://hexdocs.pm/tucan/Tucan.html)
 
 `Tucan` is an Elixir plotting library built on top of `VegaLite`, designed to simplify
 the creation of interactive and visually stunning plots. With `Tucan`, you can effortlessly
-generate a wide range of plots, from simple bar charts to complex composite plots, all
-while enjoying the power and flexibility of a clean composable functional API.
+generate a wide range of plots, from simple bar charts to complex composite plots,
+all while enjoying the power and flexibility of a clean composable functional API.
 
 `Tucan` offers a simple API for creating most common plot types similarly to `matplotlib`
 and `seaborn` without requiring the end user to be familiar with the Vega Lite grammar.
@@ -16,21 +16,23 @@ and `seaborn` without requiring the end user to be familiar with the Vega Lite g
 
 ## Features
 
-- **Versatile Plot Types** - `Tucan` provides an array of plot types, including bar charts,
-line plots, scatter plots, histograms, and more, allowing you to effectively represent
-diverse data sets.
+- **Versatile Plot Types** - `Tucan` provides an array of plot types, including
+  bar charts, line plots, scatter plots, histograms, and more, allowing you to
+  effectively represent diverse data sets.
 - **Clean and consistent API** - A clean and consistent plotting API similar to `matplotlib`
-or `seaborn` is provided. You should be able to create most common plots with a single
-function call and minimal configuration.
+  or `seaborn` is provided. You should be able to create most common plots with
+  a single function call and minimal configuration.
 - **Grouping and Faceting** - Enhance your visualizations with grouping and faceting
-features, enabling you to examine patterns and trends within subgroups of your data.
-- **Customization** - Customize your plots with ease using Tucan's utilities for adjusting
-plot dimensions, titles, and **themes**.
-- **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used seamlessly with
-`Tucan` in order to enhance/customize your plots.
+  features, enabling you to examine patterns and trends within subgroups of your
+  data.
+- **Customization** - Customize your plots with ease using Tucan's utilities for
+  adjusting
+  plot dimensions, titles, and **themes**.
+- **Thin wrapper on top of VegaLite** - All `VegaLite` functions can be used
+  seamlessly with `Tucan` in order to enhance/customize your plots.
 - **`Nx` support** - You can pass directly `Nx` tensors in all plot functions.
 - **Low level API** - A low level API with helper functions is provided for modifying
-`VegaLite` specifications.
+  `VegaLite` specifications.
 
 ## Basic usage
 
@@ -96,22 +98,24 @@ def deps do
 end
 ```
 
-**NOTE:** While I will try to maintain backwards compatibility as much as possible, since this
-is still a 0.x.x project the API is not considered stable and thus subject to possible breaking
-changes up until v1.0.0.
+**NOTE:** While I will try to maintain backwards compatibility as much as possible,
+since this is still a 0.x.x project the API is not considered stable and thus
+subject to possible breaking changes up until v1.0.0.
 
 ## Acknowledgements
 
-- [vega-lite](https://vega.github.io/vega-lite/) and the awesome docs of it, many examples
-and most of the datasets used are based on it.
+- [vega-lite](https://vega.github.io/vega-lite/) and the awesome docs of it, many
+  examples and most of the datasets used are based on it.
 - The elixir [VegaLite](https://github.com/livebook-dev/vega_lite) bindings
 - [seaborn](https://seaborn.pydata.org/), [matplotlib](https://matplotlib.org/) and
-[ggplot2](https://ggplot2.tidyverse.org/) upon which the high level API is partially based.
-- [vega-themes](https://github.com/vega/vega-themes) from which the existing themes are
-ported.
+  [ggplot2](https://ggplot2.tidyverse.org/) upon which the high level API is partially
+  based.
+- [vega-themes](https://github.com/vega/vega-themes) from which the existing themes
+  are ported.
 
 ## License
 
 Copyright (c) 2023 Panagiotis Nezis
 
-Tucan is released under the MIT License. See the [LICENSE](LICENSE) file for more details.
+Tucan is released under the MIT License. See the [LICENSE](LICENSE) file for more
+details.
