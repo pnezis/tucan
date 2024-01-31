@@ -203,6 +203,47 @@ defmodule Tucan.Utils do
   end
 
   @doc """
+  Override of `VegaLite.encode_field/4`.
+
+  we use encode_field and encode instead of Vl.encode_field and Vl.encode in all
+  tucan plots for the following reason:
+
+  - we want to support setting custom vega-lite options on each encoding
+    that may be included in the specification.
+  - these options are passed in the options of the plots as encoding: [options]
+    e.g. x: [...], y: []
+  - by having this custom function we can ensure that:
+     - the encoding options are extracted by the opts on each call and merged
+    with the extra_opts the function call may set
+     - if they are missing the tests will raise ensuring that we have properly
+     set all possible options for each plot type
+     - they are set with the proper precedence and deep merged with the extra
+  """
+  @spec encode_field(
+          vl :: VegaLite.t(),
+          encoding :: atom(),
+          field :: String.t(),
+          opts :: keyword(),
+          extra_opts :: keyword()
+        ) :: VegaLite.t()
+  def encode_field(vl, encoding, field, opts, extra_opts \\ []) do
+    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, Keyword.fetch!(opts, encoding))
+
+    VegaLite.encode_field(vl, encoding, field, encoding_opts)
+  end
+
+  @doc """
+  Similar override to `encode_field/5`
+  """
+  @spec encode(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword(), extra_opts :: keyword()) ::
+          VegaLite.t()
+  def encode(vl, encoding, opts, extra_opts) do
+    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, Keyword.fetch!(opts, encoding))
+
+    VegaLite.encode(vl, encoding, encoding_opts)
+  end
+
+  @doc """
   Similar to `VegaLite.encode_field/4` but handles also plain maps.
 
   Accepts as input either a `VegaLite` struct or a plain map that is assumed to be
