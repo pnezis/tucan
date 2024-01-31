@@ -28,6 +28,7 @@ defmodule Tucan.Datasets do
           | :glue
           | :iris
           | :movies
+          | :ohlc
           | :penguins
           | :stocks
           | :tips
@@ -69,7 +70,7 @@ defmodule Tucan.Datasets do
       url: "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/flights.csv",
       columns: ~w[year month passengers],
       doc: """
-      Monthly airline passengers from 1949 to 1960. 
+      Monthly airline passengers from 1949 to 1960.
       """
     ],
     gapminder: [
@@ -121,6 +122,22 @@ defmodule Tucan.Datasets do
       Movies dataset including IMDB scores. The dataset has well known and intentionally included
       errors. This dataset is used for instructional purposes, including the need to reckon with
       dirty data.
+      """
+    ],
+    ohlc: [
+      url: "https://vega.github.io/editor/data/ohlc.json",
+      columns: [
+        "date",
+        "open",
+        "high",
+        "low",
+        "close",
+        "signal",
+        "short"
+      ],
+      doc: """
+      The dataset contains the performance of the Chicago Board Options Exchange Volatility Index (VIX) in
+      the summer of 2009.
       """
     ],
     penguins: [

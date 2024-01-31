@@ -12,6 +12,7 @@ defmodule Tucan.DatasetsTest do
     :glue,
     :iris,
     :movies,
+    :ohlc,
     :penguins,
     :stocks,
     :tips,
