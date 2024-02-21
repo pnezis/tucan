@@ -6,6 +6,16 @@
 
 - Add `Tucan.Export` wrapper around `VegaLite.Export`
 
+- Add `Tucan.Finance.candlestick/7` specialized plot
+
+```tucan
+Tucan.Finance.candlestick(:ohlc, "date", "open", "high", "low", "close",
+  width: 400,
+  tooltip: true,
+  fill_opacity: 0.5
+)
+```
+
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)
 
 ### Added plot options

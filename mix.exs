@@ -80,7 +80,8 @@ defmodule Tucan.MixProject do
       groups_for_modules: [
         Plots: [
           Tucan,
-          Tucan.Geometry
+          Tucan.Geometry,
+          Tucan.Finance
         ],
         Layout: [
           Tucan.Layers
