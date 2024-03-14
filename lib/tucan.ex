@@ -287,7 +287,7 @@ defmodule Tucan do
     end
 
     opts
-    |> new_tucan_plot()
+    |> Tucan.Plot.new()
     |> Vl.data_from_url(dataset)
   end
 
@@ -297,7 +297,7 @@ defmodule Tucan do
     data = maybe_transform_data(data)
 
     spec_opts
-    |> new_tucan_plot()
+    |> Tucan.Plot.new()
     |> Vl.data_from_values(data, data_opts)
   end
 
@@ -332,15 +332,6 @@ defmodule Tucan do
   defp valid_shape?({1, _x}), do: true
   defp valid_shape?({_x, 1}), do: true
   defp valid_shape?(_shape), do: false
-
-  defp new_tucan_plot(opts) do
-    {tucan_opts, opts} = Keyword.pop(opts, :tucan)
-
-    case tucan_opts do
-      nil -> Vl.new(opts)
-      tucan_opts -> Vl.new(opts) |> Utils.put_in_spec("__tucan__", tucan_opts)
-    end
-  end
 
   ## Plots
 
