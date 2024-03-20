@@ -146,7 +146,7 @@ defmodule Tucan.AxesTest do
     end
   end
 
-  describe "set_offset/2" do
+  describe "set_offset/3" do
     test "raises if invalid axis" do
       assert_raise ArgumentError,
                    "invalid axis :z set in set_offset/3, only one of [:x, :y] is allowed",
@@ -165,6 +165,32 @@ defmodule Tucan.AxesTest do
 
       assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "offset" => 10}
       assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "offset" => -10}
+    end
+  end
+
+  describe "set_color/3" do
+    test "raises if invalid axis" do
+      assert_raise ArgumentError,
+                   "invalid axis :z set in set_color/3, only one of [:x, :y] is allowed",
+                   fn ->
+                     Tucan.Axes.set_color(Vl.new(), :z, "red")
+                   end
+    end
+
+    test "sets axes colors" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Vl.encode_field(:y, "y", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_color(:x, "red")
+        |> Tucan.Axes.set_color(:y, "#fa2323")
+
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "domainColor" => "red"}
+
+      assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{
+               "foo" => 1,
+               "domainColor" => "#fa2323"
+             }
     end
   end
 end

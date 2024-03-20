@@ -62,6 +62,28 @@ defmodule Tucan.Axes do
     put_options(vl, axis, offset: offset)
   end
 
+  @doc """
+  Set a specific color to the given axis.
+
+  ## Examples
+
+  A scatter plot with the `y-axis` colored red and `x-axis` with a custom RGB color:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_color(:y, "red")
+  |> Tucan.Axes.set_color(:x, "#2A32F4")
+  ```
+  """
+  @spec set_color(vl :: VegaLite.t(), axis :: axis(), color :: String.t()) ::
+          VegaLite.t()
+  def set_color(vl, axis, color)
+      when is_struct(vl, VegaLite) and is_binary(color) do
+    validate_axis!(axis, [:x, :y], "set_color/3")
+
+    put_options(vl, axis, domain_color: color)
+  end
+
   @type orient :: :bottom | :top | :left | :right
 
   @doc """
