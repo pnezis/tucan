@@ -2,9 +2,10 @@ defmodule Tucan.Geometry do
   @moduledoc """
   An API for drawing common geometrical shapes.
 
-  `Tucan.Geometry` provides an API for drawing common geometrical shapes. These among other include
-  lines, circles and polygons. In contrary to the `Tucan` common API, these functions instead of a
-  dataset, expect the that define the underlying geometrical shapes.
+  `Tucan.Geometry` offers an interface for rendering typical geometric forms, such as
+  lines, circles, and polygons. Unlike the general Tucan API, these functions require
+  only the parameters defining the respective geometric shapes, rather than a
+  dataset and data fields.
 
   You can overlay tucan plots with geometrical shapes through the `Tucan.layers/2` function.
 
