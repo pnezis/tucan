@@ -16,6 +16,16 @@ Tucan.Finance.candlestick(:ohlc, "date", "open", "high", "low", "close",
 )
 ```
 
+- Add `Tucan.Geometry.ellipse/5`
+
+```tucan
+Tucan.layers([
+  Tucan.Geometry.ellipse({0, 0}, 5, 3, 0, line_color: "green"),
+  Tucan.Geometry.ellipse({2, 2}, 4, 1, 40, line_color: "red"),
+])
+|> Tucan.Scale.set_xy_domain(-7, 7)
+```
+
 - Add `Tucan.Axes.set_color/3` helper.
 
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)

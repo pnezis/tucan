@@ -56,8 +56,6 @@ defmodule Tucan.Geometry do
   @doc """
   Draws a circle with the given `center` and `radius`.
 
-  The circle will be added as a new layer to the given plot `vl`.
-
   ## Options
 
   #{Tucan.Options.docs(@circle_opts)}
@@ -130,6 +128,85 @@ defmodule Tucan.Geometry do
     |> Vl.encode_field(:x, "x", type: :quantitative)
     |> Vl.encode_field(:y, "y", type: :quantitative)
     |> Vl.encode_field(:order, "theta")
+  end
+
+  ellipse_opts = [
+    stroke_width: [default: 1]
+  ]
+
+  @ellipse_opts Tucan.Options.take!(
+                  [
+                    :stroke_width,
+                    :stroke_dash,
+                    :line_color,
+                    :opacity,
+                    :stroke_opacity,
+                    :fill_color,
+                    :fill_opacity
+                  ],
+                  ellipse_opts
+                )
+  @ellipse_schema Tucan.Options.to_nimble_schema!(@ellipse_opts)
+
+  @doc """
+  Draws an ellipse with the given `center`, `x_radius`, `y_radius`, and `rotation_angle`.
+
+  `x_radius` is expected to be a positive number corresponding to the *major semi-axis* length, `y_radius`
+  a positive number corresponding to the *minor semi-axis* length and `rotation_angle` the ellipse's
+  rotation angle with respect to the *x-axis*.
+
+  ## Options
+
+  #{Tucan.Options.docs(@circle_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.ellipse({0, 0}, 5, 3, 0),
+    Tucan.Geometry.ellipse({3, 4}, 5, 4, 45, line_color: "red"),
+    Tucan.Geometry.ellipse({4, 1}, 7, 2, -30, line_color: "green", stroke_width: 2)
+  ])
+  |> Tucan.Scale.set_x_domain(-5, 10)
+  |> Tucan.Scale.set_y_domain(-5, 10)
+  ```
+  """
+  @spec ellipse(
+          center :: point(),
+          x_radius :: number(),
+          y_radius :: number(),
+          rotation_angle :: number(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def ellipse({x, y}, x_radius, y_radius, rotation_angle, opts \\ [])
+      when is_number(x_radius) and is_number(y_radius) and is_number(rotation_angle) and
+             x_radius > 0 and y_radius > 0 do
+    opts = NimbleOptions.validate!(opts, @ellipse_schema)
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@ellipse_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+      |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
+
+    Vl.new()
+    |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+    |> Vl.transform(calculate: ellipse_x(x, x_radius, y_radius, rotation_angle), as: "x")
+    |> Vl.transform(calculate: ellipse_y(y, x_radius, y_radius, rotation_angle), as: "y")
+    |> Vl.mark(:line, mark_opts)
+    |> Vl.encode_field(:x, "x", type: :quantitative)
+    |> Vl.encode_field(:y, "y", type: :quantitative)
+    |> Vl.encode_field(:order, "theta")
+  end
+
+  defp ellipse_x(x, x_radius, y_radius, angle) do
+    "#{x} + cos(datum.theta*PI/180) * cos(#{angle}*PI/180) * #{x_radius} -" <>
+      "sin(datum.theta*PI/180) * sin(#{angle}*PI/180) * #{y_radius}"
+  end
+
+  defp ellipse_y(y, x_radius, y_radius, angle) do
+    "#{y} + cos(datum.theta*PI/180) * sin(#{angle}*PI/180) * #{x_radius} +" <>
+      "sin(datum.theta*PI/180) * cos(#{angle}*PI/180) * #{y_radius}"
   end
 
   @doc """

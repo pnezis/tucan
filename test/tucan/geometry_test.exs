@@ -52,6 +52,63 @@ defmodule Tucan.GeometryTest do
     end
   end
 
+  describe "ellipse/5" do
+    test "sequence for ellipse with the given center axes and angle" do
+      expected =
+        Vl.new()
+        |> Vl.mark(:line, stroke_width: 1, fill_opacity: 1, stroke_opacity: 1)
+        |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+        |> Vl.transform(
+          calculate:
+            "-1 + cos(datum.theta*PI/180) * cos(32*PI/180) * 2.5 -sin(datum.theta*PI/180) * sin(32*PI/180) * 3",
+          as: "x"
+        )
+        |> Vl.transform(
+          calculate:
+            "3 + cos(datum.theta*PI/180) * sin(32*PI/180) * 2.5 +sin(datum.theta*PI/180) * cos(32*PI/180) * 3",
+          as: "y"
+        )
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Vl.encode_field(:order, "theta")
+
+      assert Tucan.Geometry.ellipse({-1, 3}, 2.5, 3, 32) == expected
+    end
+
+    test "with custom style options" do
+      %VegaLite{spec: ellipse} =
+        Tucan.Geometry.ellipse({-1, 3}, 2.5, 3, -15, line_color: "red", stroke_width: 4)
+
+      assert ellipse["mark"] == %{
+               "strokeWidth" => 4,
+               "type" => "line",
+               "color" => "red",
+               "fillOpacity" => 1,
+               "strokeOpacity" => 1
+             }
+    end
+
+    test "with fill color and opacities" do
+      %VegaLite{spec: ellipse} =
+        Tucan.Geometry.ellipse({-1, 3}, 2.5, 3, 20,
+          line_color: "red",
+          stroke_width: 4,
+          fill_color: "green",
+          fill_opacity: 0.2,
+          stroke_opacity: 0.5
+        )
+
+      assert ellipse["mark"] == %{
+               "strokeWidth" => 4,
+               "type" => "line",
+               "color" => "red",
+               "fillOpacity" => 0.2,
+               "fill" => "green",
+               "strokeOpacity" => 0.5
+             }
+    end
+  end
+
   describe "polyline/3" do
     @points [{1, 2}, {5, 7}, {9, 13}, {-1, 4}]
 
