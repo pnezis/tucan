@@ -130,7 +130,7 @@ defmodule Tucan do
   )
   ```
   """
-  import Tucan.Utils, only: [encode_field: 4, encode_field: 5, encode: 4]
+  import Tucan.Utils, only: [encode_field: 4, encode_field: 5, encode: 4, maybe_encode_field: 6]
   alias Tucan.Utils
   alias VegaLite, as: Vl
 
@@ -273,65 +273,7 @@ defmodule Tucan do
   """
   @doc section: :construction
   @spec new(plotdata :: plotdata(), opts :: keyword()) :: VegaLite.t()
-  def new(plotdata, opts \\ []),
-    do: to_vega_plot(plotdata, opts)
-
-  defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
-
-  defp to_vega_plot(dataset, opts) when is_atom(dataset),
-    do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
-
-  defp to_vega_plot(dataset, opts) when is_binary(dataset) do
-    if opts[:only] do
-      raise ArgumentError, "you are not allowed to set :only with a dataset URL"
-    end
-
-    opts
-    |> Tucan.Plot.new()
-    |> Vl.data_from_url(dataset)
-  end
-
-  defp to_vega_plot(data, opts) do
-    {data_opts, spec_opts} = Keyword.split(opts, [:only])
-
-    data = maybe_transform_data(data)
-
-    spec_opts
-    |> Tucan.Plot.new()
-    |> Vl.data_from_values(data, data_opts)
-  end
-
-  defp maybe_transform_data(data) do
-    case Keyword.keyword?(data) do
-      false ->
-        data
-
-      true ->
-        for {key, column} <- data do
-          {key, maybe_nx_to_list(column, key)}
-        end
-    end
-  end
-
-  @compile {:no_warn_undefined, Nx}
-
-  defp maybe_nx_to_list(column, name) when is_struct(column, Nx.Tensor) do
-    shape = Nx.shape(column)
-
-    unless valid_shape?(shape) do
-      raise ArgumentError,
-            "invalid shape for #{name} tensor, expected a 1-d tensor, got a #{inspect(shape)} tensor"
-    end
-
-    Nx.to_flat_list(column)
-  end
-
-  defp maybe_nx_to_list(column, _name), do: column
-
-  defp valid_shape?({_x}), do: true
-  defp valid_shape?({1, _x}), do: true
-  defp valid_shape?({_x, 1}), do: true
-  defp valid_shape?(_shape), do: false
+  def new(plotdata, opts \\ []), do: Tucan.Plot.new(plotdata, opts)
 
   ## Plots
 
@@ -1031,16 +973,6 @@ defmodule Tucan do
       |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
 
     Vl.mark(vl, :point, opts)
-  end
-
-  defp maybe_encode_field(vl, channel, condition_fn, field, opts, extra_opts) do
-    case condition_fn.() do
-      false ->
-        vl
-
-      true ->
-        encode_field(vl, channel, field, opts, extra_opts)
-    end
   end
 
   defp maybe_add_jitter(vl, opts) do

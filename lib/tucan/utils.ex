@@ -233,6 +233,27 @@ defmodule Tucan.Utils do
   end
 
   @doc """
+  Calls `encode_field/5` if `condition_fn` returns true
+  """
+  @spec maybe_encode_field(
+          vl :: VegaLite.t(),
+          channel :: atom(),
+          condition_fn :: (-> boolean()),
+          field :: String.t(),
+          opts :: keyword(),
+          extra_opts :: keyword()
+        ) :: VegaLite.t()
+  def maybe_encode_field(vl, channel, condition_fn, field, opts, extra_opts) do
+    case condition_fn.() do
+      false ->
+        vl
+
+      true ->
+        encode_field(vl, channel, field, opts, extra_opts)
+    end
+  end
+
+  @doc """
   Similar override to `encode_field/5`
   """
   @spec encode(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword(), extra_opts :: keyword()) ::
