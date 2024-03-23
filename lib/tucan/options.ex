@@ -529,6 +529,18 @@ defmodule Tucan.Options do
   ## Custom validations
 
   @doc false
+  @spec positive_number(value :: term()) :: {:ok, number()} | {:error, Stringl.t()}
+  def positive_number(value) do
+    cond do
+      not is_number(value) -> {:error, "expected a number, got: #{inspect(value)}"}
+
+      value < 0 -> {:error, "expected a positive number, got: #{value}"}
+
+      true -> {:ok, value}
+    end
+  end
+
+  @doc false
   @spec number_between(value :: term(), min :: number(), max :: number()) ::
           {:ok, number()} | {:error, String.t()}
   def number_between(value, min, max) do
