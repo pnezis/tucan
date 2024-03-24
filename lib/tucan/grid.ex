@@ -47,6 +47,27 @@ defmodule Tucan.Grid do
   end
 
   @doc """
+  Set a specific color to the grid for both `x` and `y` axes. 
+
+  This will raise if any of the two x, y channels are not encoded.
+
+  See also `set_color/3`
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Grid.set_color("red")
+  ```
+  """
+  @spec set_color(vl :: VegaLite.t(), color :: String.t()) :: VegaLite.t()
+  def set_color(vl, color) when is_struct(vl, VegaLite) and is_binary(color) do
+    vl
+    |> set_color(:x, color)
+    |> set_color(:y, color)
+  end
+
+  @doc """
   Set a specific color to the grid for the given channel.
 
   This will raise if the `channel` is not encoded.

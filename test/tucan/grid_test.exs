@@ -48,6 +48,17 @@ defmodule Tucan.GridTest do
     end
   end
 
+  test "set_color/2" do
+    vl =
+      Vl.new()
+      |> Vl.encode_field(:x, "x")
+      |> Vl.encode_field(:y, "y")
+      |> Tucan.Grid.set_color("red")
+
+    assert_encoding_value(vl, :x, ["axis", "gridColor"], "red")
+    assert_encoding_value(vl, :y, ["axis", "gridColor"], "red")
+  end
+
   test "set_color/3" do
     vl =
       Vl.new()
