@@ -63,6 +63,18 @@ defmodule Tucan.Axes do
   end
 
   @doc """
+  Sets the `color` of both `:x` and `:y` axes.
+
+  See also `set_color/3`.
+  """
+  @spec set_color(vl :: VegaLite.t(), color :: String.t()) :: VegaLite.t()
+  def set_color(vl, color) when is_struct(vl, VegaLite) and is_binary(color) do
+    vl
+    |> set_color(:x, color)
+    |> set_color(:y, color)
+  end
+
+  @doc """
   Set a specific color to the given axis.
 
   ## Examples
