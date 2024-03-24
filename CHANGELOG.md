@@ -26,7 +26,8 @@ Tucan.layers([
 |> Tucan.Scale.set_xy_domain(-7, 7)
 ```
 
-- Add `Tucan.Axes.set_color/3` helper.
+- Add `Tucan.Axes.set_color/2`, `Tucan.Axes.set_color/3` helpers.
+- Add `Tucan.Grid.set_color/2` helper.
 
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)
 
