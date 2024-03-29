@@ -286,4 +286,18 @@ defmodule Tucan.ScaleTest do
              }
     end
   end
+
+  test "set_clamp/3" do
+    vl =
+      Vl.new()
+      |> Vl.encode_field(:x, "x", type: :quantitative)
+      |> Vl.encode_field(:y, "y", type: :quantitative)
+      |> Tucan.Scale.set_clamp(:x, true)
+      |> Tucan.Scale.set_clamp(:y, false)
+      |> Tucan.Scale.set_clamp(:color, false)
+
+    assert get_in(vl.spec, ["encoding", "x", "scale", "clamp"]) == true
+    assert get_in(vl.spec, ["encoding", "y", "scale", "clamp"]) == false
+    assert get_in(vl.spec, ["encoding", "color", "scale", "clamp"]) == nil
+  end
 end

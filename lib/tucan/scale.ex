@@ -456,6 +456,55 @@ defmodule Tucan.Scale do
   end
 
   @doc """
+  Enables or disables clamping for the given axis.
+
+  If `true`, values that exceed the data domain are clamped to either the minimum or
+  maximum range value.
+
+  This is applicable only on continuous scales.
+
+  ## Examples
+
+  Clamp set to `false` (left) vs `true` (right)
+
+  ```tucan
+  left =
+    Tucan.scatter(:iris, "petal_width", "petal_length")
+    |> Tucan.Scale.set_x_domain(0.5, 2.0)
+    |> Tucan.Scale.set_clamp(:x, false)
+
+  right =
+    Tucan.scatter(:iris, "petal_width", "petal_length")
+    |> Tucan.Scale.set_x_domain(0.5, 2.0)
+    |> Tucan.Scale.set_clamp(:x, true)
+
+  Tucan.hconcat([left, right])
+  ```
+
+  > #### `clamp` vs `clip` {: .tip}
+  >
+  > Notice that `clamp` does not remove the items that exceed the domain. `:clip` on the
+  > other side drops these items.
+  >
+  > ```tucan
+  > clamp =
+  >   Tucan.scatter(:iris, "petal_width", "petal_length")
+  >   |> Tucan.Scale.set_x_domain(0.5, 2.0)
+  >   |> Tucan.Scale.set_clamp(:x, true)
+  >
+  > clip =
+  >   Tucan.scatter(:iris, "petal_width", "petal_length", clip: true)
+  >   |> Tucan.Scale.set_x_domain(0.5, 2.0)
+  >
+  > Tucan.hconcat([clamp, clip])
+  > ```
+  """
+  @spec set_clamp(vl :: VegaLite.t(), channel :: atom(), clamp :: boolean()) :: VegaLite.t()
+  def set_clamp(vl, channel, clamp) when is_boolean(clamp) do
+    put_options(vl, channel, clamp: clamp)
+  end
+
+  @doc """
   Sets an arbitrary set of options to the given `encoding`'s scale object.
 
   Notice that no validation is performed, any option set will be merged with
