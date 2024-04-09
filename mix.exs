@@ -102,10 +102,10 @@ defmodule Tucan.MixProject do
         ]
       ],
       extras: [
-        "README.md",
-        "CHANGELOG.md",
-        "LICENSE",
-        "notebooks/time_series_plots_in_tucan.livemd"
+        "README.md": [title: "Overview"],
+        "CHANGELOG.md": [title: "Changelog"],
+        LICENSE: [title: "License"],
+        "notebooks/time_series_plots_in_tucan.livemd": [title: "Time series plots in Tucan"]
       ],
       groups_for_extras: [
         Guides: [
