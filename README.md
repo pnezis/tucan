@@ -2,7 +2,10 @@
 
 [![Actions Status](https://github.com/pnezis/tucan/actions/workflows/elixir.yml/badge.svg)](https://github.com/pnezis/tucan/actions)
 [![Hex.pm](https://img.shields.io/hexpm/v/tucan.svg)](https://hex.pm/packages/tucan)
+[![hex.pm](https://img.shields.io/hexpm/dt/tucan.svg)](https://hex.pm/packages/tucan)
+[![hex.pm](https://img.shields.io/hexpm/l/tucan.svg)](https://hex.pm/packages/tucan)
 [![Documentation](https://img.shields.io/badge/-Documentation-blueviolet)](https://hexdocs.pm/tucan/Tucan.html)
+[![github.com](https://img.shields.io/github/last-commit/pnezis/tucan.svg)](https://github.com/pnezis/tucan)
 
 `Tucan` is an Elixir plotting library built on top of `VegaLite`, designed to simplify
 the creation of interactive and visually stunning plots. With `Tucan`, you can effortlessly
