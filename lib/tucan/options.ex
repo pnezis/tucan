@@ -43,13 +43,13 @@ defmodule Tucan.Options do
   options = [
     # Global opts
     width: [
-      type: :integer,
+      type: {:or, [:pos_integer, {:in, ["container"]}]},
       doc: "Width of the image",
       section: :style,
       dest: :spec
     ],
     height: [
-      type: :integer,
+      type: {:or, [:pos_integer, {:in, ["container"]}]},
       doc: "Height of the image",
       section: :style,
       dest: :spec
