@@ -29,6 +29,7 @@ Tucan.layers([
 - Add `Tucan.Axes.set_color/2`, `Tucan.Axes.set_color/3` helpers.
 - Add `Tucan.Grid.set_color/2` helper.
 - Add `Tucan.Scale.set_clamp/3`.
+- Support setting `:container` to `width` and `height`.
 
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)
 

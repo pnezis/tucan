@@ -4262,7 +4262,7 @@ defmodule Tucan do
   @doc """
   Sets the plot size.
 
-  This sets both width and height at once.
+  This sets both width and height at once. See also `set_width/2`, `set_height/2`.
   """
   @doc section: :styling
   @spec set_size(
@@ -4271,9 +4271,7 @@ defmodule Tucan do
           height :: pos_integer() | :container
         ) ::
           VegaLite.t()
-  def set_size(vl, width, height)
-      when is_struct(vl, VegaLite) and (is_pos_integer(width) or width == :container) and
-             (is_pos_integer(height) or height == :container) do
+  def set_size(vl, width, height) do
     vl
     |> set_width(width)
     |> set_height(height)
@@ -4281,22 +4279,28 @@ defmodule Tucan do
 
   @doc """
   Sets the width of the plot (in pixels).
+
+  `width` can be either the width in pixels or `:container` to indicate that the width of the
+  plot should be the same as its surrounding container.
   """
   @doc section: :styling
   @spec set_width(vl :: VegaLite.t(), width :: pos_integer() | :container) :: VegaLite.t()
   def set_width(vl, width)
       when is_struct(vl, VegaLite) and (is_pos_integer(width) or width == :container) do
-    update_in(vl.spec, fn spec -> Map.merge(spec, %{"width" => width}) end)
+    Tucan.Utils.put_in_spec(vl, "width", width)
   end
 
   @doc """
   Sets the height of the plot (in pixels).
+
+  `height` can be either the height in pixels or `:container` to indicate that the height of the
+  plot should be the same as its surrounding container.
   """
   @doc section: :styling
   @spec set_height(vl :: VegaLite.t(), height :: pos_integer() | :container) :: VegaLite.t()
   def set_height(vl, height)
       when is_struct(vl, VegaLite) and (is_pos_integer(height) or height == :container) do
-    update_in(vl.spec, fn spec -> Map.merge(spec, %{"height" => height}) end)
+    Tucan.Utils.put_in_spec(vl, "height", height)
   end
 
   @doc """

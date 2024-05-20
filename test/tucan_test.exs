@@ -139,6 +139,13 @@ defmodule TucanTest do
       assert Tucan.new(:iris, width: 100, height: 100, foo: 2) == expected
     end
 
+    test "with width, height set to :container" do
+      vl = Tucan.new(:iris, width: :container, height: :container)
+
+      assert vl.spec["width"] == "container"
+      assert vl.spec["height"] == "container"
+    end
+
     test "with :tucan options set" do
       vl = Tucan.new(:iris, width: 100, height: 100, foo: 2, tucan: [plot: true])
       assert get_in(vl.spec, ["__tucan__"]) == %{"plot" => true}
@@ -2507,8 +2514,8 @@ defmodule TucanTest do
     test "set_size/3 with :container" do
       vl = Tucan.set_size(Vl.new(), :container, :container)
 
-      assert vl.spec["width"] == :container
-      assert vl.spec["height"] == :container
+      assert vl.spec["width"] == "container"
+      assert vl.spec["height"] == "container"
     end
 
     test "sets_width/2 with integer" do
@@ -2520,7 +2527,7 @@ defmodule TucanTest do
     test "sets_width/2 with :container" do
       vl = Tucan.set_width(Vl.new(), :container)
 
-      assert vl.spec["width"] == :container
+      assert vl.spec["width"] == "container"
     end
 
     test "set_height/2" do
@@ -2532,7 +2539,7 @@ defmodule TucanTest do
     test "sets_height/2 with :container" do
       vl = Tucan.set_height(Vl.new(), :container)
 
-      assert vl.spec["height"] == :container
+      assert vl.spec["height"] == "container"
     end
 
     test "can be called multiple times" do
