@@ -2504,11 +2504,11 @@ defmodule TucanTest do
       assert vl.spec["height"] == 120
     end
 
-    test "set_size/3 with \"container\"" do
-      vl = Tucan.set_size(Vl.new(), "container", "container")
+    test "set_size/3 with :container" do
+      vl = Tucan.set_size(Vl.new(), :container, :container)
 
-      assert vl.spec["width"] == "container"
-      assert vl.spec["height"] == "container"
+      assert vl.spec["width"] == :container
+      assert vl.spec["height"] == :container
     end
 
     test "sets_width/2 with integer" do
@@ -2517,10 +2517,10 @@ defmodule TucanTest do
       assert vl.spec["width"] == 100
     end
 
-    test "sets_width/2 with \"container\"" do
-      vl = Tucan.set_width(Vl.new(), "container")
+    test "sets_width/2 with :container" do
+      vl = Tucan.set_width(Vl.new(), :container)
 
-      assert vl.spec["width"] == "container"
+      assert vl.spec["width"] == :container
     end
 
     test "set_height/2" do
@@ -2529,10 +2529,10 @@ defmodule TucanTest do
       assert vl.spec["height"] == 100
     end
 
-    test "sets_height/2 with \"container\"" do
-      vl = Tucan.set_height(Vl.new(), "container")
+    test "sets_height/2 with :container" do
+      vl = Tucan.set_height(Vl.new(), :container)
 
-      assert vl.spec["height"] == "container"
+      assert vl.spec["height"] == :container
     end
 
     test "can be called multiple times" do
