@@ -44,6 +44,7 @@ defmodule Tucan.Options do
     # Global opts
     width: [
       type: {:or, [:pos_integer, {:in, [:container]}]},
+      type_doc: "`t:pos_integer/0` or `:container`",
       doc: """
       Width of the plot. Can either be the width in pixels or `:container` to indicate that
       the width of the plot should be the same as its surrounding container.
@@ -53,6 +54,7 @@ defmodule Tucan.Options do
     ],
     height: [
       type: {:or, [:pos_integer, {:in, [:container]}]},
+      type_doc: "`t:pos_integer/0` or `:container`",
       doc: """
       Height of the plot. Can either be the height in pixels or `:container` to indicate that
       the height of the plot should be the same as its surrounding container.
