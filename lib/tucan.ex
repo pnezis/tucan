@@ -129,6 +129,37 @@ defmodule Tucan do
     y: [aggregate: :count]
   )
   ```
+
+  > #### Custom encoding options and `:orient` flag {: .info}
+  >
+  > Some plots support the `:orient` flag which flips the default orientation.
+  > Keep in mind that the `:orient` flag is set then the custom encoding options
+  > correspond to the final encoding channels and not the default ones.
+  >
+  > For example assume that we want to sort a bar chart by the numerical value.
+  > By default a bar chart has a vertical orientation. So we can achieve the
+  > sorting by passing the `x: [sort: "-y"]` option:
+  >
+  > ```tucan
+  > data = %{
+  >   "letter" => ["A", "B", "C", "D", "E", "F", "G"],
+  >   "count" => [28, 55, 43, 91, 81, 53, 19]
+  > }
+  >
+  > Tucan.bar(data, "letter", "count", x: [sort: "-y"])
+  > ```
+  >
+  > If we want to display the same on a `:horizontal` orientation we need to
+  > pass the sorting options to the `:y` channel:
+  >
+  > ```tucan
+  > data = %{
+  >   "letter" => ["A", "B", "C", "D", "E", "F", "G"],
+  >   "count" => [28, 55, 43, 91, 81, 53, 19]
+  > }
+  >
+  > Tucan.bar(data, "letter", "count", y: [sort: "-x"], orient: :horizontal)
+  > ```
   """
   import Tucan.Utils, only: [encode_field: 4, encode_field: 5, encode: 4]
   alias Tucan.Utils
