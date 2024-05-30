@@ -31,6 +31,14 @@ Tucan.layers([
 - Add `Tucan.Scale.set_clamp/3`.
 - Support setting `:container` to `width` and `height`.
 
+## Fixed
+
+- Do not flip custom encoding options if `:orient` flag is set.
+
+## Removed
+
+- Remove `Tucan.circle/4`
+
 ## [v0.3.1](https://github.com/pnezis/tucan/tree/v0.3.1) (2024-01-20)
 
 ### Added plot options
