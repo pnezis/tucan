@@ -493,6 +493,8 @@ defmodule Tucan do
   def histogram(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
+    flip_axes? = opts[:orient] == :vertical
+
     spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
 
     mark_opts =
@@ -509,7 +511,7 @@ defmodule Tucan do
     |> encode_field(:x2, "bin_#{field}_end", opts)
     |> histogram_y_encoding(field, opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> maybe_flip_axes(flip_axes?)
   end
 
   defp bin_count_transform(vl, field, opts) do
@@ -801,6 +803,7 @@ defmodule Tucan do
   def density(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
+    flip_axes? = opts[:orient] == :vertical
     spec_opts = Tucan.Options.take_options(opts, @density_opts, :spec)
 
     mark =
@@ -842,7 +845,7 @@ defmodule Tucan do
     )
     |> encode_field(:y, "density", opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> maybe_flip_axes(flip_axes?)
   end
 
   stripplot_opts = [
@@ -1016,6 +1019,7 @@ defmodule Tucan do
   def stripplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
+    flip_axes? = opts[:orient] == :vertical
     spec_opts = Tucan.Options.take_options(opts, @stripplot_opts, :spec)
 
     plotdata
@@ -1027,7 +1031,7 @@ defmodule Tucan do
     )
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_add_jitter(opts)
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> maybe_flip_axes(flip_axes?)
   end
 
   defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, Keyword.take(opts, [:tooltip]))
@@ -1200,6 +1204,7 @@ defmodule Tucan do
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def errorbar(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @errorbar_schema)
+    flip_axes? = opts[:orient] == :vertical
     spec_opts = Tucan.Options.take_options(opts, @errorbar_opts, :spec)
 
     mark_opts =
@@ -1217,7 +1222,7 @@ defmodule Tucan do
       |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
         type: :nominal
       )
-      |> maybe_flip_axes(opts[:orient] == :vertical)
+      |> maybe_flip_axes(flip_axes?)
 
     points_layer =
       if opts[:points] do
@@ -1235,7 +1240,7 @@ defmodule Tucan do
           |> maybe_encode_field(:y, fn -> opts[:group_by] != nil end, opts[:group_by], opts,
             type: :nominal
           )
-          |> maybe_flip_axes(opts[:orient] == :vertical)
+          |> maybe_flip_axes(flip_axes?)
         ]
       else
         []
@@ -1486,6 +1491,7 @@ defmodule Tucan do
   @spec boxplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def boxplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @boxplot_schema)
+    flip_axes? = opts[:orient] == :vertical
 
     extent =
       case opts[:mode] do
@@ -1507,7 +1513,7 @@ defmodule Tucan do
     |> encode_field(:x, field, opts, type: :quantitative, scale: [zero: false])
     |> maybe_encode_field(:y, fn -> group_field != nil end, group_field, opts, type: :nominal)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
-    |> maybe_flip_axes(opts[:orient] == :vertical)
+    |> maybe_flip_axes(flip_axes?)
   end
 
   heatmap_opts = [
@@ -2068,6 +2074,7 @@ defmodule Tucan do
           VegaLite.t()
   def bar(plotdata, field, value, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bar_schema)
+    flip_axes? = opts[:orient] == :horizontal
 
     spec_opts = Tucan.Options.take_options(opts, @bar_opts, :spec)
 
@@ -2090,7 +2097,7 @@ defmodule Tucan do
     |> encode_field(:y, value, opts, y_opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_x_offset(opts[:color_by], opts[:mode] == :grouped, opts)
-    |> maybe_flip_axes(opts[:orient] == :horizontal)
+    |> maybe_flip_axes(flip_axes?)
   end
 
   lollipop_opts = [
@@ -2221,6 +2228,7 @@ defmodule Tucan do
   def lollipop(plotdata, field, value, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @lollipop_schema)
 
+    flip_axes? = opts[:orient] == :horizontal
     spec_opts = Tucan.Options.take_options(opts, @lollipop_opts, :spec)
     mark_opts = Tucan.Options.take_options(opts, @lollipop_opts, :mark)
 
@@ -2243,7 +2251,7 @@ defmodule Tucan do
         opts,
         type: :nominal
       )
-      |> maybe_flip_axes(opts[:orient] == :horizontal)
+      |> maybe_flip_axes(flip_axes?)
 
     point_mark_opts =
       mark_opts
@@ -2266,7 +2274,7 @@ defmodule Tucan do
         opts,
         type: :nominal
       )
-      |> maybe_flip_axes(opts[:orient] == :horizontal)
+      |> maybe_flip_axes(flip_axes?)
 
     plotdata
     |> new(spec_opts ++ [tucan: [multilayer: true]])
