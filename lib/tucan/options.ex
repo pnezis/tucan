@@ -137,6 +137,14 @@ defmodule Tucan.Options do
       default: [],
       section: :encodings
     ],
+    y2: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:y2` encoding.
+      """,
+      default: [],
+      section: :encodings
+    ],
     y_offset: [
       type: :keyword_list,
       doc: """

@@ -1764,7 +1764,7 @@ defmodule TucanTest do
       marginal_x = Tucan.histogram(Vl.new(height: 90), "petal_width", x: [axis: nil])
 
       marginal_y =
-        Tucan.histogram(Vl.new(width: 90), "petal_length", orient: :vertical, x: [axis: nil])
+        Tucan.histogram(Vl.new(width: 90), "petal_length", orient: :vertical, y: [axis: nil])
 
       joint = Tucan.scatter(Vl.new(width: 200, height: 200), "petal_width", "petal_length")
 
@@ -1790,7 +1790,7 @@ defmodule TucanTest do
         Tucan.histogram(Vl.new(width: 120), "petal_length",
           orient: :vertical,
           color_by: "species",
-          x: [axis: nil]
+          y: [axis: nil]
         )
 
       joint =
@@ -1831,7 +1831,7 @@ defmodule TucanTest do
       marginal_x = Tucan.density(Vl.new(height: 90), "petal_width", x: [axis: nil])
 
       marginal_y =
-        Tucan.density(Vl.new(width: 90), "petal_length", orient: :vertical, x: [axis: nil])
+        Tucan.density(Vl.new(width: 90), "petal_length", orient: :vertical, y: [axis: nil])
 
       joint =
         Tucan.density_heatmap(Vl.new(width: 200, height: 200), "petal_width", "petal_length")
@@ -1862,7 +1862,7 @@ defmodule TucanTest do
       marginal_y =
         Tucan.histogram(Vl.new(width: 90), "petal_length",
           orient: :vertical,
-          x: [axis: nil, foo: 1],
+          y: [axis: nil, foo: 1],
           tooltip: true
         )
 

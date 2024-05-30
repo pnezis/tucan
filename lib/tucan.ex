@@ -411,6 +411,7 @@ defmodule Tucan do
                       :x,
                       :x2,
                       :y,
+                      :y2,
                       :color,
                       :fill_color,
                       :corner_radius
@@ -494,7 +495,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @histogram_schema)
 
     flip_axes? = opts[:orient] == :vertical
-
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
     spec_opts = Tucan.Options.take_options(opts, @histogram_opts, :spec)
 
     mark_opts =
@@ -804,6 +805,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @density_schema)
 
     flip_axes? = opts[:orient] == :vertical
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
     spec_opts = Tucan.Options.take_options(opts, @density_opts, :spec)
 
     mark =
@@ -888,6 +890,7 @@ defmodule Tucan do
                       :x,
                       :y,
                       :y_offset,
+                      :x_offset,
                       :color_by,
                       :color,
                       :point_size,
@@ -1020,6 +1023,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @stripplot_schema)
 
     flip_axes? = opts[:orient] == :vertical
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
     spec_opts = Tucan.Options.take_options(opts, @stripplot_opts, :spec)
 
     plotdata
@@ -1204,7 +1208,9 @@ defmodule Tucan do
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def errorbar(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @errorbar_schema)
+
     flip_axes? = opts[:orient] == :vertical
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
     spec_opts = Tucan.Options.take_options(opts, @errorbar_opts, :spec)
 
     mark_opts =
@@ -1491,7 +1497,9 @@ defmodule Tucan do
   @spec boxplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def boxplot(plotdata, field, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @boxplot_schema)
+
     flip_axes? = opts[:orient] == :vertical
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
 
     extent =
       case opts[:mode] do
@@ -1983,10 +1991,11 @@ defmodule Tucan do
                 :orient,
                 :x,
                 :y,
+                :x_offset,
+                :y_offset,
                 :color,
                 :fill_color,
-                :corner_radius,
-                :x_offset
+                :corner_radius
               ],
               bar_opts
             )
@@ -2074,7 +2083,9 @@ defmodule Tucan do
           VegaLite.t()
   def bar(plotdata, field, value, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @bar_schema)
+
     flip_axes? = opts[:orient] == :horizontal
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
 
     spec_opts = Tucan.Options.take_options(opts, @bar_opts, :spec)
 
@@ -2124,6 +2135,7 @@ defmodule Tucan do
                      :x,
                      :y,
                      :x_offset,
+                     :y_offset,
                      :color,
                      :point_color,
                      :point_shape,
@@ -2229,6 +2241,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @lollipop_schema)
 
     flip_axes? = opts[:orient] == :horizontal
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
     spec_opts = Tucan.Options.take_options(opts, @lollipop_opts, :spec)
     mark_opts = Tucan.Options.take_options(opts, @lollipop_opts, :mark)
 
@@ -2340,11 +2353,15 @@ defmodule Tucan do
   @doc section: :plots
   @spec countplot(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def countplot(plotdata, field, opts \\ []) do
-    y_opts =
-      Keyword.get(opts, :y, [])
-      |> Keyword.merge(aggregate: :count)
+    flip_axes? = opts[:orient] == :horizontal
 
-    opts = Keyword.put(opts, :y, y_opts)
+    {encoding, updated_opts} =
+      case flip_axes? do
+        true -> {:x, Keyword.merge(opts[:x] || [], aggregate: :count)}
+        false -> {:y, Keyword.merge(opts[:y] || [], aggregate: :count)}
+      end
+
+    opts = Keyword.put(opts, encoding, updated_opts)
 
     bar(plotdata, field, field, opts)
   end
@@ -3552,7 +3569,10 @@ defmodule Tucan do
       default: [],
       doc: """
       Arbitrary options list for the marginal plots. The supported options
-      depend on the selected `:marginal` type.
+      depend on the selected `:marginal` type. Notice that if `:x`, `:y`
+      encodings options are set, they are considered to be defined for the default
+      orientation, and will be flipped to `:y`, `:x` respectively for the
+      vertical marginal plot.
       """
     ],
     spacing: [
@@ -3650,7 +3670,6 @@ defmodule Tucan do
 
     marginal_opts =
       Keyword.take(opts, [:color_by, :fill_opacity])
-      |> Tucan.Keyword.deep_merge(x: [axis: nil])
       |> Tucan.Keyword.deep_merge(opts[:marginal_opts])
 
     {marginal_x, marginal_y} =
@@ -3672,13 +3691,20 @@ defmodule Tucan do
   end
 
   defp marginal_plots(x, y, dimension, type, opts) do
+    horizontal_opts = Tucan.Keyword.deep_merge(opts, x: [axis: nil])
+
     marginal_x =
       Vl.new(height: dimension)
-      |> marginal_plot(x, type, opts)
+      |> marginal_plot(x, type, horizontal_opts)
+
+    vertical_opts =
+      opts
+      |> maybe_flip_encoding_options(true)
+      |> Tucan.Keyword.deep_merge(y: [axis: nil], orient: :vertical)
 
     marginal_y =
       Vl.new(width: dimension)
-      |> marginal_plot(y, type, opts ++ [orient: :vertical])
+      |> marginal_plot(y, type, vertical_opts)
 
     {marginal_x, marginal_y}
   end
@@ -4365,6 +4391,20 @@ defmodule Tucan do
   end
 
   ## Private functions
+
+  defp maybe_flip_encoding_options(opts, false), do: opts
+
+  defp maybe_flip_encoding_options(opts, true) do
+    axis_pairs = [{:x, :y}, {:x2, :y2}, {:x_offset, :y_offset}]
+
+    flipped_opts = Keyword.drop(opts, [:x, :y, :x2, :y2, :x_offset, :y_offset])
+
+    Enum.reduce(axis_pairs, flipped_opts, fn {left, right}, acc ->
+      acc
+      |> Tucan.Keyword.put_not_nil(left, opts[right])
+      |> Tucan.Keyword.put_not_nil(right, opts[left])
+    end)
+  end
 
   defp maybe_flip_axes(vl, false), do: vl
   defp maybe_flip_axes(vl, true), do: flip_axes(vl)
