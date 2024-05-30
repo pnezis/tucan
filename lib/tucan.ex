@@ -4108,21 +4108,6 @@ defmodule Tucan do
     Tucan.Layers.append(vl, annotation)
   end
 
-  @doc false
-  @deprecated "Use Tucan.Geometry.circle/3 instead"
-  @spec circle(
-          vl :: VegaLite.t(),
-          center :: {number(), number()},
-          radius :: number(),
-          opts :: keyword()
-        ) ::
-          VegaLite.t()
-  def circle(vl, {x, y}, radius, opts \\ []) do
-    circle = Tucan.Geometry.circle({x, y}, radius, opts)
-
-    Tucan.Layers.append(vl, circle)
-  end
-
   ## Layout plots
 
   @hv_concat_opts Tucan.Options.take!([:width, :height, :title, :align, :bounds, :spacing])
