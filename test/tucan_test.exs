@@ -338,6 +338,29 @@ defmodule TucanTest do
         expected
       )
     end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.histogram(@dataset, "x", x: [foo: 1], y: [foo: 2], x2: [foo: 3], y2: [foo: 4])
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+      assert get_in(vl.spec, ["encoding", "x2", "foo"]) == 3
+      assert get_in(vl.spec, ["encoding", "y2", "foo"]) == nil
+
+      vl =
+        Tucan.histogram(@dataset, "x",
+          x: [foo: 1],
+          y: [foo: 2],
+          x2: [foo: 3],
+          y2: [foo: 4],
+          orient: :vertical
+        )
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+      assert get_in(vl.spec, ["encoding", "x2", "foo"]) == nil
+      assert get_in(vl.spec, ["encoding", "y2", "foo"]) == 4
+    end
   end
 
   describe "scatter/4" do
@@ -777,6 +800,18 @@ defmodule TucanTest do
       assert Tucan.stripplot(@tips_dataset, "total_bill", group_by: "sex", color_by: "sex") ==
                expected
     end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.stripplot(@dataset, "x", x: [foo: 1], y: [foo: 2])
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == nil
+
+      vl = Tucan.stripplot(@dataset, "x", x: [foo: 1], y: [foo: 2], orient: :vertical)
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == nil
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+    end
   end
 
   describe "errorbar/3" do
@@ -860,6 +895,20 @@ defmodule TucanTest do
         ),
         expected
       )
+    end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.errorbar(@dataset, "x", x: [foo: 1], y: [foo: 2])
+      %{"layer" => [layer]} = vl.spec
+
+      assert get_in(layer, ["encoding", "x", "foo"]) == 1
+      assert get_in(layer, ["encoding", "y", "foo"]) == nil
+
+      vl = Tucan.errorbar(@dataset, "x", x: [foo: 1], y: [foo: 2], orient: :vertical)
+      %{"layer" => [layer]} = vl.spec
+
+      assert get_in(layer, ["encoding", "x", "foo"]) == nil
+      assert get_in(layer, ["encoding", "y", "foo"]) == 2
     end
   end
 
@@ -972,6 +1021,18 @@ defmodule TucanTest do
 
       assert Tucan.boxplot(@iris_dataset, "petal_width", color_by: "species", orient: :vertical) ==
                expected
+    end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.boxplot(@dataset, "x", x: [foo: 1], y: [foo: 2])
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == nil
+
+      vl = Tucan.boxplot(@dataset, "x", x: [foo: 1], y: [foo: 2], orient: :vertical)
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == nil
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
     end
   end
 
@@ -1148,6 +1209,18 @@ defmodule TucanTest do
 
       assert Tucan.density(@iris_dataset, "petal_width", group_by: ["other"], color_by: "species") ==
                expected
+    end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.density(@dataset, "x", x: [foo: 1], y: [foo: 2])
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+
+      vl = Tucan.density(@dataset, "x", x: [foo: 1], y: [foo: 2], orient: :vertical)
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
     end
   end
 
@@ -1595,6 +1668,39 @@ defmodule TucanTest do
              ) ==
                expected
     end
+
+    test "encoding channel options with orient flag" do
+      vl =
+        Tucan.bar(@dataset, "x", "y",
+          color_by: "group",
+          mode: :grouped,
+          x: [foo: 1],
+          y: [foo: 2],
+          x_offset: [foo: 3],
+          y_offset: [foo: 4]
+        )
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+      assert get_in(vl.spec, ["encoding", "xOffset", "foo"]) == 3
+      assert get_in(vl.spec, ["encoding", "yOffset", "foo"]) == nil
+
+      vl =
+        Tucan.bar(@dataset, "x", "y",
+          color_by: "group",
+          mode: :grouped,
+          x: [foo: 1],
+          y: [foo: 2],
+          x_offset: [foo: 3],
+          y_offset: [foo: 4],
+          orient: :horizontal
+        )
+
+      assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
+      assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+      assert get_in(vl.spec, ["encoding", "xOffset", "foo"]) == nil
+      assert get_in(vl.spec, ["encoding", "yOffset", "foo"]) == 4
+    end
   end
 
   describe "lollipop/4" do
@@ -1681,6 +1787,24 @@ defmodule TucanTest do
         Tucan.lollipop(@dataset, "x", "y", group_by: "group", orient: :horizontal),
         expected
       )
+    end
+
+    test "encoding channel options with orient flag" do
+      vl = Tucan.lollipop(@dataset, "x", "y", x: [foo: 1], y: [foo: 2])
+      %{"layer" => layers} = vl.spec
+
+      for layer <- layers do
+        assert get_in(layer, ["encoding", "x", "foo"]) == 1
+        assert get_in(layer, ["encoding", "y", "foo"]) == 2
+      end
+
+      vl = Tucan.lollipop(@dataset, "x", "y", x: [foo: 1], y: [foo: 2], orient: :vertical)
+      %{"layer" => layers} = vl.spec
+
+      for layer <- layers do
+        assert get_in(layer, ["encoding", "x", "foo"]) == 1
+        assert get_in(layer, ["encoding", "y", "foo"]) == 2
+      end
     end
   end
 
