@@ -41,7 +41,7 @@ defmodule Tucan.MixProject do
       {:vega_lite, "~> 0.1.9"},
       {:jason, "~> 1.4"},
       {:nx, "~> 0.6", optional: true},
-      {:ex_doc, "~> 0.32", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.33", only: :dev, runtime: false},
       {:fancy_fences, "~> 0.3.1", only: :dev, runtime: false}
     ] ++ dev_deps()
   end
