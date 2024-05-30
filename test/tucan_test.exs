@@ -871,12 +871,11 @@ defmodule TucanTest do
         |> Vl.mark(:errorband, extent: :stderr, fill_opacity: 1, borders: false)
         |> Vl.encode_field(:x, "Year",
           type: :quantitative,
-          scale: [zero: false],
-          time_unit: :year
+          scale: [zero: false]
         )
         |> Vl.encode_field(:y, "Miles_per_Gallon", type: :quantitative, scale: [zero: false])
 
-      assert Tucan.errorband(@cars_dataset, "Year", "Miles_per_Gallon", x: [time_unit: :year]) ==
+      assert Tucan.errorband(@cars_dataset, "Year", "Miles_per_Gallon") ==
                expected
     end
 
