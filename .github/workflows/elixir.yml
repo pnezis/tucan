@@ -23,28 +23,49 @@ jobs:
     name: Build and test
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: "1.17.0"
+            otp: "27.0"
+          - elixir: "1.16.2"
+            otp: "26.1"
+            lint: true
+          - elixir: "1.15.6"
+            otp: "26.1"
+
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Elixir
-      uses: erlef/setup-beam@61e01a43a562a89bfc54c7f9a378ff67b03e4a21 # v1.16.0
+
+    - uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.15.2' # [Required] Define the Elixir version
-        otp-version: '26.0'      # [Required] Define the Erlang/OTP version
+        otp-version: ${{matrix.otp}}
+        elixir-version: ${{matrix.elixir}}
+
     - name: Restore dependencies cache
       uses: actions/cache@v3
       with:
         path: deps
-        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        key: ${{ runner.os }}-mix-${{matrix.elixir}}-${{matrix.otp}}-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
+
     - name: Install dependencies
       run: mix deps.get
+    - name: Compile with warnings enabled
+      run: mix compile --force --warnings-as-errors
     - name: Format
       run: mix format --check-formatted
+      if: ${{ matrix.lint }}
     - name: Credo
       run: mix credo --strict
+      if: ${{ matrix.lint }}
     - name: Doctor
       run: mix doctor --failed
+      if: ${{ matrix.lint }}
     - name: Run tests
       run: mix test --cover
+      if: ${{ matrix.lint }}
     - name: Dialyzer
       run: mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns
+      if: ${{ matrix.lint }}
