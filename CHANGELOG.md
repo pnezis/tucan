@@ -27,6 +27,7 @@ Tucan.layers([
 ```
 
 - Add `Tucan.Axes.set_color/2`, `Tucan.Axes.set_color/3` helpers.
+- Add `Tucan.Axes.set_title_color/3` helpers.
 - Add `Tucan.Grid.set_color/2` helper.
 - Add `Tucan.Scale.set_clamp/3`.
 - Support setting `:container` to `width` and `height`.
@@ -179,15 +180,6 @@ Tucan.new()
 - Add `Tucan.background_image/2` helper function.
 
 - Add `Tucan.circle/4` helper function
-
-```tucan
-Tucan.new()
-|> Tucan.circle({3, 2}, 5, line_color: "purple")
-|> Tucan.circle({-1, 6}, 2, line_color: "red")
-|> Tucan.circle({0, 1}, 4, line_color: "green", stroke_width: 3)
-|> Tucan.Scale.set_xy_domain(-4, 8)
-```
-
 - Add `Tucan.Scale.set_xy_domain/3`
 - Support setting multi-line string in `Tucan.set_title/3`
 

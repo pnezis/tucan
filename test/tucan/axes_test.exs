@@ -168,7 +168,7 @@ defmodule Tucan.AxesTest do
     end
   end
 
-  describe "set_color" do
+  describe "colors" do
     test "raises if invalid axis" do
       assert_raise ArgumentError,
                    "invalid axis :z set in set_color/3, only one of [:x, :y] is allowed",
@@ -192,17 +192,37 @@ defmodule Tucan.AxesTest do
                "domainColor" => "#fa2323"
              }
     end
-  end
 
-  test "set_color/2 sets both axes colors" do
-    vl =
-      Vl.new()
-      |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
-      |> Vl.encode_field(:y, "y", type: :quantitative, axis: [foo: 1])
-      |> Tucan.Axes.set_color("red")
+    test "set_color/2 sets both axes colors" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative, axis: [foo: 1])
+        |> Vl.encode_field(:y, "y", type: :quantitative, axis: [foo: 1])
+        |> Tucan.Axes.set_color("red")
 
-    assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "domainColor" => "red"}
+      assert get_in(vl.spec, ["encoding", "x", "axis"]) == %{"foo" => 1, "domainColor" => "red"}
 
-    assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "domainColor" => "red"}
+      assert get_in(vl.spec, ["encoding", "y", "axis"]) == %{"foo" => 1, "domainColor" => "red"}
+    end
+
+    test "set_title_color/3 raises with invalid axis" do
+      assert_raise ArgumentError,
+                   "invalid axis :z set in set_title_color/3, only one of [:x, :y] is allowed",
+                   fn ->
+                     Tucan.Axes.set_title_color(Vl.new(), :z, "red")
+                   end
+    end
+
+    test "set_title_color/3 sets the title_color of the given axis" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x")
+        |> Vl.encode_field(:y, "y")
+        |> Tucan.Axes.set_title_color(:x, "red")
+        |> Tucan.Axes.set_title_color(:y, "#FFCCEE")
+
+      assert get_in(vl.spec, ["encoding", "x", "axis", "titleColor"]) == "red"
+      assert get_in(vl.spec, ["encoding", "y", "axis", "titleColor"]) == "#FFCCEE"
+    end
   end
 end

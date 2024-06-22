@@ -42,6 +42,24 @@ defmodule Tucan.Axes do
   end
 
   @doc """
+  Sets the title color of the given `axis`
+
+  ## Examples
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_title_color(:x, "red")
+  |> Tucan.Axes.set_title_color(:y, "#F3B212")
+  ```
+  """
+  @spec set_title_color(vl :: VegaLite.t(), axis :: axis(), color :: String.t()) :: VegaLite.t()
+  def set_title_color(vl, axis, color) when is_struct(vl, VegaLite) and is_binary(color) do
+    validate_axis!(axis, [:x, :y], "set_title_color/3")
+
+    put_options(vl, axis, title_color: color)
+  end
+
+  @doc """
   Sets the axis offset (in pixels).
 
   The offset indicates the amount in pixels by which the axis will be  displaces from the
