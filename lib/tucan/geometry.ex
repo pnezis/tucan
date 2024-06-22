@@ -111,7 +111,7 @@ defmodule Tucan.Geometry do
   > ```
   """
   @spec circle(center :: point(), radius :: number(), opts :: keyword()) :: VegaLite.t()
-  def circle({x, y}, radius, opts \\ []) when is_number(radius) and radius > 0 do
+  def circle({x, y} = _center, radius, opts \\ []) when is_number(radius) and radius > 0 do
     opts = NimbleOptions.validate!(opts, @circle_schema)
 
     mark_opts =
@@ -178,7 +178,7 @@ defmodule Tucan.Geometry do
           rotation_angle :: number(),
           opts :: keyword()
         ) :: VegaLite.t()
-  def ellipse({x, y}, x_radius, y_radius, rotation_angle, opts \\ [])
+  def ellipse({x, y} = _radius, x_radius, y_radius, rotation_angle, opts \\ [])
       when is_number(x_radius) and is_number(y_radius) and is_number(rotation_angle) and
              x_radius > 0 and y_radius > 0 do
     opts = NimbleOptions.validate!(opts, @ellipse_schema)
@@ -228,8 +228,9 @@ defmodule Tucan.Geometry do
   |> Tucan.set_size(400, 300)
   ```
   """
-  @spec rectangle(point1 :: point(), point2 :: point(), opts :: keyword()) :: VegaLite.t()
-  def rectangle({x1, y1}, {x2, y2}, opts \\ []) do
+  @spec rectangle(upper_left :: point(), bottom_right :: point(), opts :: keyword()) ::
+          VegaLite.t()
+  def rectangle({x1, y1} = _upper_left, {x2, y2} = _bottom_right, opts \\ []) do
     if x1 == x2 do
       raise ArgumentError, "the two points must have different x coordinates"
     end
