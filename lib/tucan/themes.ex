@@ -43,6 +43,34 @@ defmodule Tucan.Themes do
   @moduledoc """
   Helper functions for `Tucan` theme.
 
+  You can apply any of the supported themes through the `Tucan.set_theme/2` helper:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.color_by("species")
+  |> Tucan.shape_by("species")
+  |> Tucan.set_theme(:latimes)  
+  ```
+
+  > #### Themes and `livebook` {: .warning}
+  >
+  > If you are using `Tucan` with `livebook` notice that
+  > [`kino_vega_lite`](https://github.com/livebook-dev/kino_vega_lite) applies by default
+  > a theme that may override `Tucan` theme settings. You can disable the default
+  > theme though `Kino.VegaLite.configure/1`:
+  >
+  > ```elixir
+  > # disable default livebook theme
+  > Kino.VegaLite.configure(theme: nil)
+  >
+  > Tucan.scatter(:iris, "petal_width", "petal_length")
+  > |> Tucan.color_by("species")
+  > |> Tucan.shape_by("species")
+  > |> Tucan.set_theme(:dark)
+  > ```
+
+  ## About themes
+
   A `Tucan` theme is nothing more than a keyword list with a `VegaLite` configuration
   object with some styles applied and some metadata. Every theme must have the
   following format:
