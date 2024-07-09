@@ -2441,6 +2441,7 @@ defmodule TucanTest do
         |> Vl.layers([
           base_plot,
           Vl.new()
+          |> Vl.data_from_values([%{}])
           |> Vl.mark(:rule, color: "black", stroke_width: 1)
           |> Vl.encode(:y, datum: 5)
         ])
@@ -2456,6 +2457,7 @@ defmodule TucanTest do
         |> Vl.layers([
           base_plot,
           Vl.new()
+          |> Vl.data_from_values([%{}])
           |> Vl.mark(:rule, color: "red", stroke_width: 3)
           |> Vl.encode(:x, datum: 5)
         ])

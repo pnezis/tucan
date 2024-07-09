@@ -4005,6 +4005,17 @@ defmodule Tucan do
   |> Tucan.ruler(:x, "petal_width", color_by: "species", stroke_width: 3)
   |> Tucan.ruler(:y, "petal_length", color_by: "species", stroke_dash: [5, 5])
   ```
+
+  You can also use `ruler/4`, `hruler/3` and `vruler/3` independently in a
+  layered plot:
+
+  ```tucan
+  Tucan.layers([
+    Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species"),
+    Tucan.hruler(Tucan.new(), 3.2, line_color: "red"),
+    Tucan.vruler(Tucan.new(), 1.6, line_color: "green", stroke_width: 2)
+  ])
+  ```
   """
   @doc section: :auxiliary_plots
   @spec ruler(
@@ -4039,6 +4050,26 @@ defmodule Tucan do
   Adds a vertical line at the given `x` position.
 
   For supported options check `ruler/4`.
+
+  ## Examples
+
+  You can use `vruler/3` to plot the means of some data points across the
+  _x axis_:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
+  |> Tucan.vruler("petal_width", color_by: "species", stroke_width: 2)
+  ```
+
+  Additionally you can use it to plot a vertical ruler to an arbitrary
+  position:
+
+  ```tucan
+  Tucan.new()
+  |> Tucan.vruler(5)
+  |> Tucan.vruler(11)
+  |> Tucan.Scale.set_x_domain(3, 15)
+  ```
   """
   @doc section: :auxiliary_plots
   @spec vruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
@@ -4051,6 +4082,26 @@ defmodule Tucan do
   Adds a horizontal line at the given `h` position.
 
   For supported options check `ruler/4`.
+
+  ## Examples
+
+  You can use `hruler/3` to plot the means of some data points across the
+  _y axis_:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species")
+  |> Tucan.hruler("petal_length", color_by: "species", stroke_width: 2)
+  ```
+
+  Additionally you can use it to plot a horizontal ruler to an arbitrary
+  position:
+
+  ```tucan
+  Tucan.new()
+  |> Tucan.hruler(13)
+  |> Tucan.hruler(11)
+  |> Tucan.Scale.set_y_domain(10, 15)
+  ```
   """
   @doc section: :auxiliary_plots
   @spec hruler(vl :: VegaLite.t(), position :: number() | String.t(), opts :: keyword()) ::
@@ -4059,8 +4110,11 @@ defmodule Tucan do
     ruler(vl, :y, y, opts)
   end
 
-  defp encode_ruler(vl, channel, number, _opts) when is_number(number),
-    do: Vl.encode(vl, channel, datum: number)
+  defp encode_ruler(vl, channel, number, _opts) when is_number(number) do
+    vl
+    |> Vl.data_from_values([%{}])
+    |> Vl.encode(channel, datum: number)
+  end
 
   defp encode_ruler(vl, channel, field, opts) when is_binary(field) do
     Vl.encode_field(vl, channel, field, type: :quantitative, aggregate: opts[:aggregate])

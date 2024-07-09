@@ -35,6 +35,17 @@ Tucan.layers([
 ## Fixed
 
 - Do not flip custom encoding options if `:orient` flag is set.
+- `Tucan.ruler/4`, `Tucan.hruler/3` and `Tucan.vruler/3` can now be used
+independently:
+
+```tucan
+Tucan.layers([
+  Tucan.hruler(Tucan.new(), 10),
+  Tucan.hruler(Tucan.new(), 15, stroke_width: 2),
+  Tucan.vruler(Tucan.new(), 1),
+  Tucan.vruler(Tucan.new(), 4.3, line_color: "red")
+])
+```
 
 ## Removed
 
