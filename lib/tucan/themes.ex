@@ -49,7 +49,7 @@ defmodule Tucan.Themes do
   Tucan.scatter(:iris, "petal_width", "petal_length")
   |> Tucan.color_by("species")
   |> Tucan.shape_by("species")
-  |> Tucan.set_theme(:latimes)  
+  |> Tucan.set_theme(:latimes)
   ```
 
   > #### Themes and `livebook` {: .warning}
@@ -57,7 +57,7 @@ defmodule Tucan.Themes do
   > If you are using `Tucan` with `livebook` notice that
   > [`kino_vega_lite`](https://github.com/livebook-dev/kino_vega_lite) applies by default
   > a theme that may override `Tucan` theme settings. You can disable the default
-  > theme though `Kino.VegaLite.configure/1`:
+  > theme through `Kino.VegaLite.configure/1`:
   >
   > ```elixir
   > # disable default livebook theme
@@ -79,7 +79,7 @@ defmodule Tucan.Themes do
          theme: [],          # the actual theme configuration
          name: :name,        # an atom with a unique name
          doc: "description", # a description of the theme,
-         source: "url"       # a url to the source of the theme if any for attribution 
+         source: "url"       # a url to the source of the theme if any for attribution
       ]
 
   ## Default themes
