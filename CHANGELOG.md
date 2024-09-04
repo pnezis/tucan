@@ -40,6 +40,13 @@ Tucan.layers([
 
 #### Other
 
+- Support zoom and pan with mouse in all plots. You can use your mouse to zoom and pan
+any plot if `:zoomable` option is set to `true`. You can also reset the view with a double click.
+
+```tucan
+Tucan.scatter(:iris, "petal_width", "petal_length", zoomable: true)
+```
+
 - Add `Tucan.Export` wrapper around `VegaLite.Export`
 - Add `Tucan.Axes.set_color/2`, `Tucan.Axes.set_color/3` helpers.
 - Add `Tucan.Axes.set_title_color/3` helpers.

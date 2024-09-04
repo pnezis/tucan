@@ -176,6 +176,22 @@ defmodule TucanTest do
                    "invalid shape for x tensor, expected a 1-d tensor, got a {2, 5} tensor",
                    fn -> Tucan.new(x: x) end
     end
+
+    test "with zoomable option" do
+      vl = Tucan.new(:iris, zoomable: true)
+
+      assert get_in(vl.spec, ["params"]) == [
+               %{"bind" => "scales", "name" => "_grid", "select" => "interval"}
+             ]
+
+      # explicitly set to false
+      vl = Tucan.new(:iris, zoomable: false)
+      assert get_in(vl.spec, ["params"]) == nil
+
+      # no zoomable option sanity check
+      vl = Tucan.new(:iris)
+      assert get_in(vl.spec, ["params"]) == nil
+    end
   end
 
   describe "histogram/3" do

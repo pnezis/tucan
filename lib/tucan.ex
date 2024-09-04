@@ -160,6 +160,22 @@ defmodule Tucan do
   >
   > Tucan.bar(data, "letter", "count", y: [sort: "-x"], orient: :horizontal)
   > ```
+
+  ## Interactive plots
+
+  Tucan plots support zooming and panning. In order to activate them you can set the
+  `:zoomable` option to `true`. Use your mouse to zoom and pan the following plot. You
+  can also reset the view with a double click.
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length", zoomable: true)
+  ```
+
+  Additionally tooltips can be added to the plot by setting the `:tooltip` option.
+
+  ```tucan
+  Tucan.histogram(:cars, "Horsepower", tooltip: true, zoomable: true)
+  ```
   """
   import Tucan.Utils, only: [encode_field: 4, encode_field: 5, encode: 4]
   alias Tucan.Utils
@@ -365,19 +381,28 @@ defmodule Tucan do
   defp valid_shape?(_shape), do: false
 
   defp new_tucan_plot(opts) do
-    {tucan_opts, opts} = Keyword.pop(opts, :tucan)
+    {custom_opts, spec_opts} = Keyword.split(opts, [:tucan, :zoomable])
 
-    case tucan_opts do
-      nil -> Vl.new(opts)
-      tucan_opts -> Vl.new(opts) |> Utils.put_in_spec("__tucan__", tucan_opts)
-    end
+    spec_opts
+    |> Vl.new()
+    |> maybe_add_tucan_metadata(custom_opts[:tucan])
+    |> maybe_zoomable(custom_opts[:zoomable])
   end
+
+  defp maybe_add_tucan_metadata(vl, nil), do: vl
+
+  defp maybe_add_tucan_metadata(vl, tucan_opts),
+    do: Utils.put_in_spec(vl, "__tucan__", tucan_opts)
+
+  defp maybe_zoomable(vl, false), do: vl
+  defp maybe_zoomable(vl, nil), do: vl
+  defp maybe_zoomable(vl, true), do: Vl.param(vl, "_grid", select: "interval", bind: "scales")
 
   ## Plots
 
   # TODO: move it to helper module for reusability
   # global_opts should be applicable in all plot types
-  @global_opts [:width, :height, :title, :only]
+  @global_opts [:width, :height, :title, :only, :zoomable]
   @global_mark_opts [:clip, :fill_opacity, :tooltip]
 
   histogram_opts = [
