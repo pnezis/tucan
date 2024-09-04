@@ -1703,6 +1703,67 @@ defmodule TucanTest do
     end
   end
 
+  describe "range_bar/4" do
+    test "with default options" do
+      data = [
+        %{category: "A", min: 28, max: 55},
+        %{category: "B", min: 43, max: 91},
+        %{category: "C", min: 13, max: 61}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
+        |> Vl.encode_field(:y, "category", type: :nominal, axis: [label_angle: 0])
+        |> Vl.encode_field(:x, "min", type: :quantitative)
+        |> Vl.encode_field(:x2, "max", type: :quantitative)
+
+      assert Tucan.range_bar(data, "category", "min", "max") == expected
+    end
+
+    test "with orient flag set" do
+      data = [
+        %{category: "A", min: 28, max: 55},
+        %{category: "B", min: 43, max: 91},
+        %{category: "C", min: 13, max: 61}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.mark(:bar, fill_opacity: 1.0)
+        |> Vl.encode_field(:x, "category", type: :nominal, axis: [label_angle: 0])
+        |> Vl.encode_field(:y, "min", type: :quantitative)
+        |> Vl.encode_field(:y2, "max", type: :quantitative)
+
+      assert Tucan.range_bar(data, "category", "min", "max", orient: :vertical) == expected
+    end
+
+    test "with color_by set and custom options" do
+      data = [
+        %{category: "A", min: 28, max: 55},
+        %{category: "B", min: 43, max: 91},
+        %{category: "C", min: 13, max: 61}
+      ]
+
+      expected =
+        Vl.new()
+        |> Vl.data_from_values(data)
+        |> Vl.mark(:bar, fill_opacity: 1.0, color: "red")
+        |> Vl.encode_field(:y, "category", type: :nominal, axis: [label_angle: 0])
+        |> Vl.encode_field(:x, "min", type: :quantitative)
+        |> Vl.encode_field(:x2, "max", type: :quantitative)
+        |> Vl.encode_field(:y_offset, "category")
+        |> Vl.encode_field(:color, "category")
+
+      assert Tucan.range_bar(data, "category", "min", "max",
+               color_by: "category",
+               fill_color: "red"
+             ) == expected
+    end
+  end
+
   describe "lollipop/4" do
     test "with default options" do
       data = [

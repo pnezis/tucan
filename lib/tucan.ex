@@ -2142,6 +2142,113 @@ defmodule Tucan do
     |> maybe_flip_axes(flip_axes?)
   end
 
+  @range_bar_opts Tucan.Options.take!([
+                    @global_opts,
+                    @global_mark_opts,
+                    :color_by,
+                    :orient,
+                    :x,
+                    :x2,
+                    :y,
+                    :y2,
+                    :x_offset,
+                    :y_offset,
+                    :color,
+                    :fill_color,
+                    :corner_radius
+                  ])
+  @range_bar_schema Tucan.Options.to_nimble_schema!(@range_bar_opts)
+
+  @doc """
+  Draws a range bar chart.
+
+  A range bar chart is a bar chart where the bar is not a single value, but a range defined by a
+  `min` and `max` value. It is used for showing intervals or ranges of data.
+
+  ## Options
+
+  #{Tucan.Options.docs(@range_bar_opts)}
+
+  ## Examples
+
+  A simple ranged bar chart:
+
+  ```tucan
+  data = [
+    %{"id" => "A", "min" => 28, "max" => 55},
+    %{"id" => "B", "min" => 43, "max" => 91},
+    %{"id" => "C", "min" => 13, "max" => 61}
+  ]
+
+  Tucan.range_bar(data, "id", "min", "max")
+  ```
+
+  You can set a `color_by` option that will create a stacked ranged bar chart:
+
+  ```tucan
+  data = [
+    %{"product" => "Laptop", "category" => "Basic", "min_price" => 499, "max_price" => 799},
+    %{"product" => "Laptop", "category" => "Regular", "min_price" => 999, "max_price" => 1799},
+    %{"product" => "Laptop", "category" => "Premium", "min_price" => 1499, "max_price" => 2499},
+    %{"product" => "Smartphone", "category" => "Basic", "min_price" => 199, "max_price" => 399},
+    %{"product" => "Smartphone", "category" => "Regular", "min_price" => 399, "max_price" => 699},
+    %{"product" => "Smartphone", "category" => "Premium", "min_price" => 699, "max_price" => 1299},
+    %{"product" => "Tablet", "category" => "Basic", "min_price" => 299, "max_price" => 499},
+    %{"product" => "Tablet", "category" => "Regular", "min_price" => 399, "max_price" => 699},
+    %{"product" => "Tablet", "category" => "Premium", "min_price" => 599, "max_price" => 1990}
+  ]
+
+  Tucan.range_bar(data, "product", "min_price", "max_price",
+    color_by: "category",
+    tooltip: true
+  )
+  ```
+
+  You can tweak the look of the chart using the supported options:
+
+  ```tucan
+  data = [
+    %{"id" => "A", "min" => 28, "max" => 55},
+    %{"id" => "B", "min" => 43, "max" => 91},
+    %{"id" => "C", "min" => 13, "max" => 61}
+  ]
+
+  Tucan.range_bar(data, "id", "min", "max", orient: :vertical, fill_color: "#33245A", corner_radius: 5)
+  ```
+  """
+  @doc section: :plots
+  @spec range_bar(
+          plotdata :: plotdata(),
+          field :: String.t(),
+          min :: String.t(),
+          max :: String.t(),
+          opts :: keyword()
+        ) ::
+          VegaLite.t()
+  def range_bar(plotdata, field, min, max, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @range_bar_schema)
+
+    flip_axes? = opts[:orient] == :vertical
+    opts = maybe_flip_encoding_options(opts, flip_axes?)
+
+    spec_opts = Tucan.Options.take_options(opts, @range_bar_opts, :spec)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @range_bar_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Tucan.Keyword.put_not_nil(:corner_radius_end, opts[:corner_radius])
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:bar, mark_opts)
+    |> encode_field(:y, field, opts, type: :nominal, axis: [label_angle: 0])
+    |> encode_field(:x, min, opts, type: :quantitative)
+    |> encode_field(:x2, max, opts, type: :quantitative)
+    |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_encode_field(:y_offset, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> maybe_flip_axes(flip_axes?)
+  end
+
   lollipop_opts = [
     group_by: [
       type: :string,

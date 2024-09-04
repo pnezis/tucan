@@ -4,7 +4,19 @@
 
 ### Added
 
-- Add `Tucan.Export` wrapper around `VegaLite.Export`
+#### Plots
+
+- Add `Tucan.range_bar/4` plot
+
+```tucan
+data = [
+  %{category: "A", min: 28, max: 55},
+  %{category: "B", min: 43, max: 91},
+  %{category: "C", min: 13, max: 61}
+]
+
+Tucan.range_bar(data, "category", "min", "max", fill_color: "red")
+``` 
 
 - Add `Tucan.Finance.candlestick/7` specialized plot
 
@@ -26,6 +38,9 @@ Tucan.layers([
 |> Tucan.Scale.set_xy_domain(-7, 7)
 ```
 
+#### Other
+
+- Add `Tucan.Export` wrapper around `VegaLite.Export`
 - Add `Tucan.Axes.set_color/2`, `Tucan.Axes.set_color/3` helpers.
 - Add `Tucan.Axes.set_title_color/3` helpers.
 - Add `Tucan.Grid.set_color/2` helper.
