@@ -54,7 +54,7 @@ Tucan.scatter(:iris, "petal_width", "petal_length", zoomable: true)
 - Add `Tucan.Scale.set_clamp/3`.
 - Support setting `:container` to `width` and `height`.
 
-## Fixed
+### Fixed
 
 - Do not flip custom encoding options if `:orient` flag is set.
 - `Tucan.ruler/4`, `Tucan.hruler/3` and `Tucan.vruler/3` can now be used
@@ -69,7 +69,7 @@ Tucan.layers([
 ])
 ```
 
-## Removed
+### Removed
 
 - Remove `Tucan.circle/4`
 
