@@ -96,7 +96,7 @@ You can add the `:tucan` dependency to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:tucan, "~> 0.3.0"}
+    {:tucan, "~> 0.4.0"}
   ]
 end
 ```
