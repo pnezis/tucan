@@ -17,7 +17,10 @@ defmodule Tucan.MixProject do
           "Panagiotis Nezis"
         ],
         licenses: ["MIT"],
-        links: %{"GitHub" => @scm_url},
+        links: %{
+          "GitHub" => @scm_url,
+          "Changelog" => @scm_url <> "/blob/main/CHANGELOG.md"
+        },
         files: ~w(lib themes mix.exs README.md)
       ],
       source_url: @scm_url,
