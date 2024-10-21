@@ -6,7 +6,7 @@ defmodule Tucan.Finance do
   """
   alias VegaLite, as: Vl
 
-  @global_opts [:width, :height, :title, :only]
+  @global_opts [:width, :height, :title, :only, :zoomable]
   @global_mark_opts [:clip, :fill_opacity, :tooltip]
 
   @candlestick_opts Tucan.Options.take!([@global_opts, @global_mark_opts])
