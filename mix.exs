@@ -125,9 +125,9 @@ defmodule Tucan.MixProject do
       before_closing_body_tag: fn
         :html ->
           """
-          <script src="https://cdn.jsdelivr.net/npm/vega@5.26.1"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.16.3"></script>
-          <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.24.0"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0"></script>
+          <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0"></script>
           <script>
             document.addEventListener("DOMContentLoaded", function () {
               for (const codeEl of document.querySelectorAll("pre code.vega-lite")) {
