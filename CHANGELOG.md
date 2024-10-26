@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Properly handle `:zoomable` option in `Tucan.Finance.candlestic/7` and other multi-layer
+plots.
+
 ## [v0.4.0](https://github.com/pnezis/tucan/tree/v0.4.0) (2024-10-21)
 
 ### Added
@@ -41,7 +48,7 @@ Tucan.layers([
 #### Other
 
 - Support zoom and pan with mouse in all plots. You can use your mouse to zoom and pan
-any plot if `:zoomable` option is set to `true`. You can also reset the view with a double click.
+most plots if `:zoomable` option is set to `true`. You can also reset the view with a double click.
 
 ```tucan
 Tucan.scatter(:iris, "petal_width", "petal_length", zoomable: true)
