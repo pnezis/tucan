@@ -382,4 +382,13 @@ defmodule Tucan.Utils do
 
   # We must keep the right part in every other case
   defp do_deep_merge(_left, right), do: right
+
+  @doc """
+  If enabled adds a param for making the plot zoomable
+  """
+  @spec maybe_zoomable(vl :: VegaLite.t(), enable :: boolean()) :: VegaLite.t()
+  def maybe_zoomable(vl, false), do: vl
+
+  def maybe_zoomable(vl, true),
+    do: VegaLite.param(vl, "_grid", select: "interval", bind: "scales")
 end

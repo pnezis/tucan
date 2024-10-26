@@ -52,6 +52,7 @@ defmodule Tucan.Finance do
       |> Vl.encode_field(:x, timestamp, type: :temporal)
       |> Vl.encode_field(:y, low, type: :quantitative, scale: [zero: false])
       |> Vl.encode_field(:y2, high, type: :quantitative)
+      |> Tucan.Utils.maybe_zoomable(opts[:zoomable])
 
     bar_layer =
       Vl.new()

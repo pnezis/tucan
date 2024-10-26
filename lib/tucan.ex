@@ -163,7 +163,7 @@ defmodule Tucan do
 
   ## Interactive plots
 
-  Tucan plots support zooming and panning. In order to activate them you can set the
+  Most tucan plots support zooming and panning. In order to activate them you can set the
   `:zoomable` option to `true`. Use your mouse to zoom and pan the following plot. You
   can also reset the view with a double click.
 
@@ -381,12 +381,11 @@ defmodule Tucan do
   defp valid_shape?(_shape), do: false
 
   defp new_tucan_plot(opts) do
-    {custom_opts, spec_opts} = Keyword.split(opts, [:tucan, :zoomable])
+    {custom_opts, spec_opts} = Keyword.split(opts, [:tucan])
 
     spec_opts
     |> Vl.new()
     |> maybe_add_tucan_metadata(custom_opts[:tucan])
-    |> maybe_zoomable(custom_opts[:zoomable])
   end
 
   defp maybe_add_tucan_metadata(vl, nil), do: vl
@@ -394,15 +393,11 @@ defmodule Tucan do
   defp maybe_add_tucan_metadata(vl, tucan_opts),
     do: Utils.put_in_spec(vl, "__tucan__", tucan_opts)
 
-  defp maybe_zoomable(vl, false), do: vl
-  defp maybe_zoomable(vl, nil), do: vl
-  defp maybe_zoomable(vl, true), do: Vl.param(vl, "_grid", select: "interval", bind: "scales")
-
   ## Plots
 
   # TODO: move it to helper module for reusability
   # global_opts should be applicable in all plot types
-  @global_opts [:width, :height, :title, :only, :zoomable]
+  @global_opts [:width, :height, :title, :only]
   @global_mark_opts [:clip, :fill_opacity, :tooltip]
 
   histogram_opts = [
@@ -470,6 +465,7 @@ defmodule Tucan do
                       :y2,
                       :color,
                       :fill_color,
+                      :zoomable,
                       :corner_radius
                     ],
                     histogram_opts
@@ -569,6 +565,7 @@ defmodule Tucan do
     |> histogram_y_encoding(field, opts)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(flip_axes?)
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   defp bin_count_transform(vl, field, opts) do
@@ -733,7 +730,8 @@ defmodule Tucan do
                     :orient,
                     :fill_color,
                     :interpolate,
-                    :color
+                    :color,
+                    :zoomable
                   ],
                   density_opts
                 )
@@ -904,6 +902,7 @@ defmodule Tucan do
     |> encode_field(:y, "density", opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(flip_axes?)
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   stripplot_opts = [
@@ -951,7 +950,8 @@ defmodule Tucan do
                       :color,
                       :point_size,
                       :point_shape,
-                      :point_color
+                      :point_color,
+                      :zoomable
                     ],
                     stripplot_opts
                   )
@@ -1092,6 +1092,7 @@ defmodule Tucan do
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_add_jitter(opts)
     |> maybe_flip_axes(flip_axes?)
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   defp stripplot_mark(vl, :tick, opts), do: Vl.mark(vl, :tick, Keyword.take(opts, [:tooltip]))
@@ -1491,7 +1492,15 @@ defmodule Tucan do
   ]
 
   @boxplot_opts Tucan.Options.take!(
-                  [@global_opts, @global_mark_opts, :orient, :color_by, :x, :y, :color],
+                  [
+                    @global_opts,
+                    @global_mark_opts,
+                    :orient,
+                    :color_by,
+                    :x,
+                    :y,
+                    :color
+                  ],
                   boxplot_opts
                 )
   @boxplot_schema Tucan.Options.to_nimble_schema!(@boxplot_opts)
@@ -1946,7 +1955,8 @@ defmodule Tucan do
                             @global_mark_opts,
                             :x,
                             :y,
-                            :color
+                            :color,
+                            :zoomable
                           ],
                           density_heatmap_opts
                         )
@@ -2019,6 +2029,7 @@ defmodule Tucan do
     |> encode_field(:x, x, opts, type: :quantitative, bin: true)
     |> encode_field(:y, y, opts, type: :quantitative, bin: true)
     |> color_fn.()
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   bar_opts = [
@@ -2180,7 +2191,8 @@ defmodule Tucan do
                     :y_offset,
                     :color,
                     :fill_color,
-                    :corner_radius
+                    :corner_radius,
+                    :zoomable
                   ])
   @range_bar_schema Tucan.Options.to_nimble_schema!(@range_bar_opts)
 
@@ -2272,6 +2284,7 @@ defmodule Tucan do
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_encode_field(:y_offset, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
     |> maybe_flip_axes(flip_axes?)
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   lollipop_opts = [
@@ -2547,7 +2560,8 @@ defmodule Tucan do
                   :size,
                   :point_color,
                   :point_size,
-                  :point_shape
+                  :point_shape,
+                  :zoomable
                 ])
   @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
 
@@ -2712,6 +2726,7 @@ defmodule Tucan do
     |> maybe_encode_field(:size, fn -> opts[:size_by] != nil end, opts[:size_by], opts,
       type: :quantitative
     )
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   @bubble_opts Tucan.Options.take!([
@@ -2721,7 +2736,8 @@ defmodule Tucan do
                  :x,
                  :y,
                  :size,
-                 :color
+                 :color,
+                 :zoomable
                ])
   @bubble_schema Tucan.Options.to_nimble_schema!(@bubble_opts)
 
@@ -2786,6 +2802,7 @@ defmodule Tucan do
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts,
       type: :nominal
     )
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   lineplot_opts = [
@@ -2825,7 +2842,8 @@ defmodule Tucan do
                      :color,
                      :stroke_width,
                      :stroke_dash,
-                     :line_color
+                     :line_color,
+                     :zoomable
                    ],
                    lineplot_opts
                  )
@@ -2949,6 +2967,7 @@ defmodule Tucan do
       [detail: []],
       type: :nominal
     )
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   defp maybe_add_point_opts(mark_opts, false, _opts), do: mark_opts
@@ -3034,7 +3053,8 @@ defmodule Tucan do
                  :color,
                  :fill_color,
                  :point_color,
-                 :line_color
+                 :line_color,
+                 :zoomable
                ],
                area_opts
              )
@@ -3154,6 +3174,7 @@ defmodule Tucan do
     |> encode_field(:x, x, opts, type: :quantitative)
     |> encode_field(:y, y, opts, type: :quantitative, stack: stack)
     |> maybe_encode_field(:color, fn -> opts[:color_by] != nil end, opts[:color_by], opts, [])
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   defp maybe_add_line_opts(mark_opts, false, _opts), do: mark_opts
@@ -3380,7 +3401,8 @@ defmodule Tucan do
                    :width,
                    :height,
                    :title,
-                   :tooltip
+                   :tooltip,
+                   :zoomable
                  ],
                  imshow_opts
                )
@@ -3496,6 +3518,7 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @imshow_schema)
 
     Tucan.Image.show(data, opts)
+    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   ## Composite plots
@@ -3635,7 +3658,7 @@ defmodule Tucan do
         pairplot_child_spec({row_field, row_index}, {col_field, col_index}, length(fields), opts)
       end
 
-    spec_opts = Keyword.take(opts, [:title]) ++ [columns: length(fields)]
+    spec_opts = Keyword.take(opts, [:title, :zoomable]) ++ [columns: length(fields)]
 
     plotdata
     |> new(spec_opts)

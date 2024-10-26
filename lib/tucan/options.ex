@@ -213,7 +213,6 @@ defmodule Tucan.Options do
     zoomable: [
       type: :boolean,
       default: false,
-      dest: :spec,
       doc: """
       Whether the plot will be zoomable or not. If set to `true` you will be able to pan and
       zoom the plot with your mouse. You can reset to the original view with a double click.

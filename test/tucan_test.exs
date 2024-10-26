@@ -32,6 +32,7 @@ defmodule TucanTest do
         {:lollipop, fn opts -> Tucan.lollipop(@dataset, "x", "y", opts) end},
         {:pie, fn opts -> Tucan.pie(@dataset, "x", "y", opts) end},
         {:punchcard, fn opts -> Tucan.punchcard(@dataset, "x", "y", "z", opts) end},
+        {:range_bar, fn opts -> Tucan.range_bar(@dataset, "c", "min", "max", opts) end},
         {:scatter, fn opts -> Tucan.scatter(@dataset, "x", "y", opts) end},
         {:step, fn opts -> Tucan.step(@dataset, "x", "y", opts) end},
         {:streamgraph, fn opts -> Tucan.streamgraph(@dataset, "x", "y", "z", opts) end},
@@ -50,6 +51,53 @@ defmodule TucanTest do
         assert Map.get(vl.spec, "width") == 135, "width not set for #{inspect(name)}"
         assert Map.get(vl.spec, "height") == 82, "height not set for #{inspect(name)}"
         assert Map.get(vl.spec, "title") == "Plot title", "title not set for #{inspect(name)}"
+      end
+    end
+
+    test "zoomable option is properly set to all tucan plots", context do
+      zoomable_param = %{
+        "bind" => "scales",
+        "name" => "_grid",
+        "select" => "interval"
+      }
+
+      supporting_zoom = [
+        :area,
+        :bubble,
+        :density,
+        :density_heatmap,
+        :histogram,
+        :lineplot,
+        :range_bar,
+        :scatter,
+        :step,
+        :streamgraph,
+        :stripplot
+      ]
+
+      # param properly set for all plots supporting it
+      for {name, plot_function} <- context.plot_functions, name in supporting_zoom do
+        vl = plot_function.(zoomable: true)
+
+        cond do
+          Tucan.Utils.single_view?(vl) ->
+            assert zoomable_param in Map.get(vl.spec, "params", []),
+                   "zoomable not set for #{name}"
+
+          Tucan.Utils.layered_view?(vl) ->
+            [first | _rest] = vl.spec["layer"]
+
+            refute zoomable_param in Map.get(vl.spec, "params", [])
+            assert zoomable_param in Map.get(first, "params", [])
+
+          true ->
+            assert false, "unexpected"
+        end
+      end
+
+      # validation error if set for plots not supporting it
+      for {name, plot_function} <- context.plot_functions, name not in supporting_zoom do
+        assert_raise NimbleOptions.ValidationError, fn -> plot_function.(zooamble: true) end
       end
     end
 
@@ -175,22 +223,6 @@ defmodule TucanTest do
       assert_raise ArgumentError,
                    "invalid shape for x tensor, expected a 1-d tensor, got a {2, 5} tensor",
                    fn -> Tucan.new(x: x) end
-    end
-
-    test "with zoomable option" do
-      vl = Tucan.new(:iris, zoomable: true)
-
-      assert get_in(vl.spec, ["params"]) == [
-               %{"bind" => "scales", "name" => "_grid", "select" => "interval"}
-             ]
-
-      # explicitly set to false
-      vl = Tucan.new(:iris, zoomable: false)
-      assert get_in(vl.spec, ["params"]) == nil
-
-      # no zoomable option sanity check
-      vl = Tucan.new(:iris)
-      assert get_in(vl.spec, ["params"]) == nil
     end
   end
 
