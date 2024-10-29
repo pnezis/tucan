@@ -61,7 +61,7 @@ Tucan.bubble(:gapminder, "income", "health", "population",
 # Some composite plots are also supported
 fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
 
-Tucan.pairplot(:iris, , width: 130, height: 130)
+Tucan.pairplot(:iris, fields, width: 130, height: 130)
 |> Tucan.color_by("species", recursive: true)
 
 # creating facet plots is very easy with the facet_by/4 function
