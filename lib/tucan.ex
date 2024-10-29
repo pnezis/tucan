@@ -3401,8 +3401,7 @@ defmodule Tucan do
                    :width,
                    :height,
                    :title,
-                   :tooltip,
-                   :zoomable
+                   :tooltip
                  ],
                  imshow_opts
                )
@@ -3518,7 +3517,6 @@ defmodule Tucan do
     opts = NimbleOptions.validate!(opts, @imshow_schema)
 
     Tucan.Image.show(data, opts)
-    |> Utils.maybe_zoomable(opts[:zoomable])
   end
 
   ## Composite plots
