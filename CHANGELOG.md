@@ -1,11 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [v0.4.1](https://github.com/pnezis/tucan/tree/v0.4.1) (2024-10-31)
 
 ### Fixed
 
 - Properly handle `:zoomable` option in `Tucan.Finance.candlestic/7` and other multi-layer
 plots.
+- Remove `:zoomable` option from plots with non quantitative scales since this is not
+supported by vega-lite.
 
 ## [v0.4.0](https://github.com/pnezis/tucan/tree/v0.4.0) (2024-10-21)
 

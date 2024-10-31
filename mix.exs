@@ -1,7 +1,7 @@
 defmodule Tucan.MixProject do
   use Mix.Project
 
-  @version "0.4.0"
+  @version "0.4.1"
   @scm_url "https://github.com/pnezis/tucan"
 
   def project do
