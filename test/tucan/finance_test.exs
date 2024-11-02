@@ -29,5 +29,21 @@ defmodule Tucan.FinanceTest do
       assert Tucan.Finance.candlestick(@ohlc_dataset, "date", "open", "high", "low", "close") ==
                expected
     end
+
+    test "with zoomable set" do
+      vl =
+        Tucan.Finance.candlestick(@ohlc_dataset, "date", "open", "high", "low", "close",
+          zoomable: true
+        )
+
+      refute Map.has_key?(vl.spec, "params")
+      assert [layer0, layer1] = vl.spec["layer"]
+
+      assert layer0["params"] == [
+               %{"bind" => "scales", "name" => "_grid", "select" => "interval"}
+             ]
+
+      refute Map.has_key?(layer1, "params")
+    end
   end
 end
