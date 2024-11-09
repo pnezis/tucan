@@ -1935,7 +1935,7 @@ defmodule Tucan do
     z: [
       type: :string,
       doc: """
-      If set corresponds to the field that will be used for calculating the color fo the
+      If set corresponds to the field that will be used for calculating the color of the
       bin using the provided aggregate. If not set (the default behaviour) the count of
       observations are used for coloring the bin.
       """

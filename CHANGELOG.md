@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Properly handle `:zoomable` option in `Tucan.Finance.candlestic/7` and other multi-layer
+- Properly handle `:zoomable` option in `Tucan.Finance.candlestick/7` and other multi-layer
 plots.
 - Remove `:zoomable` option from plots with non quantitative scales since this is not
 supported by vega-lite.
