@@ -18,8 +18,14 @@ env:
   TUCAN_DEV: true
 
 jobs:
+  codespell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: codespell-project/actions-codespell@v2
+        with:
+          skip: deps
+          ignore_words_list: tucan
   build:
-
     name: Build and test
     runs-on: ubuntu-latest
 
