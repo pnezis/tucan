@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `Tucan.Export` now uses `VegaLite.Convert` through the `:vega_lite_convert`
+package.
+
 ## [v0.4.1](https://github.com/pnezis/tucan/tree/v0.4.1) (2024-10-31)
 
 ### Fixed

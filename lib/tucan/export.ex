@@ -2,20 +2,22 @@ defmodule Tucan.Export do
   @moduledoc """
   Various export methods for `Tucan` plots.
 
-  This is a simple wrapper around the `VegaLite.Export` API. It provides helper
+  This is a simple wrapper around the `VegaLite.Convert` API. It provides helper
   utilities for exporting a tucan plot as `json`, `html`, `png`, `svg` or `pdf`.
 
   > #### External dependencies {: .info}
   >
-  > All of the export functions depend on the `:jason` package. Additionally PNG,
-  > SVG and PDF exports rely on `npm` packages, so you will need `Node.js`, `npm`,
-  > and the following dependencies installed:
+  > All of the export functions depend on the `vega_lite_convert` package.
+  > In order to use these functions you need to add the package in your
+  > dependencies:
   >
   > ```bash
-  > npm install -g vega vega-lite canvas
+  > def deps do
+  >   [
+  >     {:vega_lite_convert, "~> 1.0.0"}
+  >   ]
+  > end
   > ```
-  >
-  > For more details check `VegaLite.Export`.
   """
 
   @doc """
@@ -23,12 +25,9 @@ defmodule Tucan.Export do
 
   ## Options
 
-  * `:format` - the format to export the graphic as,
-    must be either of: `:json`, `:html`, `:png`, `:svg`, `:pdf`.
-    By default the format is inferred from the file extension.
-
-  * `:local_npm_prefix` - a relative path pointing to a local npm project directory
-    where the necessary npm packages are installed.
+    * `:format` - the format to export the graphic as,
+      must be either of: `:json`, `:html`, `:png`, `:svg`, `:pdf`.
+      By default the format is inferred from the file extension.
 
   ## Examples
 
@@ -37,60 +36,90 @@ defmodule Tucan.Export do
   |> Tucan.Export.save!("iris.png")
   ```
 
-  See also `VegaLite.Export.save!/3`
+  See also `VegaLite.Convert.save!/3`
   """
   @spec save!(vl :: VegaLite.t(), path :: String.t(), opts :: keyword()) :: :ok
   def save!(vl, path, opts \\ []) do
-    VegaLite.Export.save!(vl, path, opts)
+    assert_vega_lite_convert!()
+    VegaLite.Convert.save!(vl, path, opts)
   end
 
   @doc """
   Returns the underlying Vega-Lite specification as JSON.
 
-  See also `VegaLite.Export.to_json/1`
+  See also `VegaLite.Convert.to_json/1`
   """
   @spec to_json(vl :: VegaLite.t()) :: String.t()
-  def to_json(vl), do: VegaLite.Export.to_json(vl)
+  def to_json(vl) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_json(vl)
+  end
 
   @doc """
   Builds an HTML page that renders the given graphic.
 
-  See also `VegaLite.Export.to_html/1`
+  ## Options
+
+    * `:bundle` - configures whether the VegaLite client side JS library
+      is embedded in the document or if it is pulled down from the CDN.
+      Defaults to `true`.
+
+    * `:renderer` - determines how the VegaLite chart is rendered in
+      the HTML document. Possible values are: `:svg`, `:canvas`, or
+      `:hybrid`. Defaults to `:svg`.
+
+  See also `VegaLite.Convert.to_html/2`
   """
-  @spec to_html(vl :: VegaLite.t()) :: String.t()
-  def to_html(vl), do: VegaLite.Export.to_html(vl)
+  @spec to_html(vl :: VegaLite.t(), opts :: keyword()) :: String.t()
+  def to_html(vl, opts \\ []) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_html(vl, opts)
+  end
 
   @doc """
   Renders the given graphic as a PNG image and returns its binary content.
 
-  Relies on the `npm` packages mentioned above.
+  ## Options
+
+    * `:scale` - the image scale factor. Defaults to `1.0`.
+    * `:ppi` - the number of pixels per inch. Defaults to `72`
+
+  See also `VegaLite.Convert.to_png/2`
+  """
+  @spec to_png(vl :: VegaLite.t(), opts :: keyword()) :: binary()
+  def to_png(vl, opts \\ []) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_png(vl, opts)
+  end
+
+  @doc """
+  Renders the given graphic as a JPEG image and returns its binary content.
 
   ## Options
 
-  * `:local_npm_prefix` - a relative path pointing to a local npm project directory
-    where the necessary npm packages are installed.
+    * `:scale` - the image scale factor. Defaults to `1.0`.
 
-  See also `VegaLite.Export.to_png/2`
+    * `:quality` - the quality of the generated JPEG between 0 (worst)
+      and 100 (best). Defaults to `90`.
 
+  See also `VegaLite.Convert.to_png/2`
   """
-  @spec to_png(vl :: VegaLite.t(), opts :: keyword()) :: binary()
-  def to_png(vl, opts \\ []), do: VegaLite.Export.to_png(vl, opts)
+  @spec to_jpeg(vl :: VegaLite.t(), opts :: keyword()) :: binary()
+  def to_jpeg(vl, opts \\ []) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_jpeg(vl, opts)
+  end
 
   @doc """
   Renders the given graphic into a PDF and returns its binary content.
 
-  Relies on the `npm` packages mentioned above.
-
-  ## Options
-
-  * `:local_npm_prefix` - a relative path pointing to a local npm project directory
-    where the necessary npm packages are installed.
-
-  See also `VegaLite.Export.to_pdf/2`
-
+  See also `VegaLite.Convert.to_pdf/1`
   """
-  @spec to_pdf(vl :: VegaLite.t(), opts :: keyword()) :: binary()
-  def to_pdf(vl, opts \\ []), do: VegaLite.Export.to_pdf(vl, opts)
+  @spec to_pdf(vl :: VegaLite.t()) :: binary()
+  def to_pdf(vl) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_pdf(vl)
+  end
 
   @doc """
   Renders the given graphic as an SVG image and returns its binary content.
@@ -102,9 +131,26 @@ defmodule Tucan.Export do
   * `:local_npm_prefix` - a relative path pointing to a local npm project directory
     where the necessary npm packages are installed.
 
-  See also `VegaLite.Export.to_svg/2`
+  See also `VegaLite.Convert.to_svg/1`
 
   """
-  @spec to_svg(vl :: VegaLite.t(), opts :: keyword()) :: binary()
-  def to_svg(vl, opts \\ []), do: VegaLite.Export.to_svg(vl, opts)
+  @spec to_svg(vl :: VegaLite.t()) :: binary()
+  def to_svg(vl) do
+    assert_vega_lite_convert!()
+    VegaLite.Convert.to_svg(vl)
+  end
+
+  defp assert_vega_lite_convert! do
+    unless Code.ensure_loaded?(VegaLite.Convert) do
+      raise RuntimeError, """
+      Tucan.Export depends on the :vega_lite_convert package.
+
+      You can install it by adding
+
+          {:vega_lite_convert, "~> 1.0.0"}
+
+      to your dependency list.
+      """
+    end
+  end
 end
