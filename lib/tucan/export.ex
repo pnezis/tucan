@@ -3,7 +3,8 @@ defmodule Tucan.Export do
   Various export methods for `Tucan` plots.
 
   This is a simple wrapper around the `VegaLite.Convert` API. It provides helper
-  utilities for exporting a tucan plot as `json`, `html`, `png`, `svg` or `pdf`.
+  utilities for exporting a tucan plot as `json`, `html`, `png`, `svg`, `jpeg`
+  or `pdf`.
 
   > #### External dependencies {: .info}
   >
@@ -11,7 +12,7 @@ defmodule Tucan.Export do
   > In order to use these functions you need to add the package in your
   > dependencies:
   >
-  > ```bash
+  > ```elixir
   > def deps do
   >   [
   >     {:vega_lite_convert, "~> 1.0.0"}
@@ -26,7 +27,7 @@ defmodule Tucan.Export do
   ## Options
 
     * `:format` - the format to export the graphic as,
-      must be either of: `:json`, `:html`, `:png`, `:svg`, `:pdf`.
+      must be either of: `:json`, `:html`, `:png`, `:svg`, `:pdf`, `:jpeg`.
       By default the format is inferred from the file extension.
 
   ## Examples
@@ -132,7 +133,6 @@ defmodule Tucan.Export do
     where the necessary npm packages are installed.
 
   See also `VegaLite.Convert.to_svg/1`
-
   """
   @spec to_svg(vl :: VegaLite.t()) :: binary()
   def to_svg(vl) do
