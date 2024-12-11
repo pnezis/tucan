@@ -45,8 +45,10 @@ defmodule Tucan.Image do
         :lower -> {height - 1, 0}
       end
 
+    step = if start_index <= end_index, do: 1, else: -1
+
     y =
-      Nx.tensor(Enum.to_list(start_index..end_index))
+      Nx.tensor(Enum.to_list(start_index..end_index//step))
       |> Nx.broadcast({height, width}, axes: [0])
       |> Nx.to_flat_list()
 
