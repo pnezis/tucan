@@ -365,7 +365,7 @@ defmodule Tucan do
   defp maybe_nx_to_list(column, name) when is_struct(column, Nx.Tensor) do
     shape = Nx.shape(column)
 
-    unless valid_shape?(shape) do
+    if !valid_shape?(shape) do
       raise ArgumentError,
             "invalid shape for #{name} tensor, expected a 1-d tensor, got a #{inspect(shape)} tensor"
     end

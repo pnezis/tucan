@@ -13,7 +13,7 @@ defmodule Tucan.Image do
 
     type = Nx.type(tensor)
 
-    unless type in [{:u, 8}, {:f, 32}] do
+    if type not in [{:u, 8}, {:f, 32}] do
       raise ArgumentError,
             "expected Nx.Tensor to have type {:u, 8} or {:f, 32}, got: #{inspect(type)}"
     end
@@ -68,7 +68,7 @@ defmodule Tucan.Image do
   end
 
   defp assert_nx! do
-    unless Code.ensure_loaded?(Nx) do
+    if !Code.ensure_loaded?(Nx) do
       raise RuntimeError, """
       Tucan.imshow/2 depends on the :nx package.
 

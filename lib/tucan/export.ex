@@ -141,7 +141,7 @@ defmodule Tucan.Export do
   end
 
   defp assert_vega_lite_convert! do
-    unless Code.ensure_loaded?(VegaLite.Convert) do
+    if !Code.ensure_loaded?(VegaLite.Convert) do
       raise RuntimeError, """
       Tucan.Export depends on the :vega_lite_convert package.
 

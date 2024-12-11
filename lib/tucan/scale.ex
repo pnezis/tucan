@@ -364,7 +364,7 @@ defmodule Tucan.Scale do
   @spec set_scale(vl :: VegaLite.t(), channel :: atom(), scale :: atom(), opts :: keyword()) ::
           VegaLite.t()
   def set_scale(vl, channel, scale, opts \\ []) do
-    unless scale in @valid_scales do
+    if scale not in @valid_scales do
       raise ArgumentError,
             "scale can be one of #{inspect(@valid_scales)}, got: #{inspect(scale)}"
     end
