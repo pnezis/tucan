@@ -120,6 +120,8 @@ defmodule Tucan.Utils do
 
   This is a destructive operation, any existing value for the provided `key` will be
   replaced by `opts`.
+
+  See also `put_in_spec_new/3`
   """
   @spec put_in_spec(vl :: VegaLite.t(), key :: atom() | String.t(), opts :: term()) ::
           VegaLite.t()
@@ -128,6 +130,18 @@ defmodule Tucan.Utils do
     opts = to_vl(opts)
 
     %VegaLite{vl | spec: Map.merge(spec, %{key => opts})}
+  end
+
+  @doc """
+  Puts the given `opts` under the given `key` in the provided `VegaLite` struct if it does not already exist..
+  """
+  @spec put_in_spec_new(vl :: VegaLite.t(), key :: atom() | String.t(), opts :: term()) ::
+          VegaLite.t()
+  def put_in_spec_new(%VegaLite{spec: spec} = vl, key, opts) do
+    key = to_vl_key(key)
+    opts = to_vl(opts)
+
+    %VegaLite{vl | spec: Map.put_new(spec, key, opts)}
   end
 
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a

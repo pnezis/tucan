@@ -226,6 +226,53 @@ defmodule TucanTest do
     end
   end
 
+  describe "with global options set" do
+    setup do
+      Tucan.configure(default_width: 100, default_height: 100)
+
+      on_exit(fn ->
+        for option <- [:default_width, :default_height] do
+          Application.delete_env(:tucan, option)
+        end
+      end)
+    end
+
+    test "default options should be applied if not explicitly set" do
+      vl = Tucan.new()
+
+      assert vl.spec["width"] == 100
+      assert vl.spec["height"] == 100
+
+      vl = Tucan.scatter(:iris, "petal_width", "petal_length")
+
+      assert vl.spec["width"] == 100
+      assert vl.spec["height"] == 100
+
+      # if you configure again current global config is overridden
+      Tucan.configure(default_width: 200)
+
+      vl = Tucan.scatter(:iris, "petal_width", "petal_length")
+
+      assert vl.spec["width"] == 200
+      assert vl.spec["height"] == 100
+
+      # supports also :container as default value
+      Tucan.configure(default_width: :container, default_height: 100)
+
+      vl = Tucan.scatter(:iris, "petal_width", "petal_length", height: :container)
+
+      assert vl.spec["width"] == "container"
+      assert vl.spec["height"] == "container"
+    end
+
+    test "explicitly set options should take precedence over global defaults" do
+      vl = Tucan.new(:iris, width: 200)
+
+      assert vl.spec["width"] == 200
+      assert vl.spec["height"] == 100
+    end
+  end
+
   describe "histogram/3" do
     test "with default options" do
       expected =

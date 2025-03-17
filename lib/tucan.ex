@@ -176,6 +176,34 @@ defmodule Tucan do
   ```tucan
   Tucan.histogram(:cars, "Horsepower", tooltip: true, zoomable: true)
   ```
+
+  ## Global configuration
+
+  You can configure some options that will be applied to all plots by using the `Tucan.configure/1`
+  function.
+
+  For example you can set the default width and height of all plots:
+
+  ```elixir
+  Tucan.configure(default_width: 700, default_height: 350)
+  ```
+
+  > #### Options precedence {: .info}
+  >
+  > Global configuration options will be overridden by plot specific options.
+  >
+  > ```elixir
+  > Tucan.configure(default_width: 400, default_height: 300)
+  >
+  > # this will create a plot with the default width and height
+  > Tucan.scatter(:iris, "sepal_width", "sepal_length")
+  >
+  > # this will create a plot with the width to 500 and height having the default
+  > # value of 300
+  > Tucan.scatter(:iris, "sepal_width", "sepal_length", width: 500)
+  > ```
+
+  For more details check `Tucan.configure/1`.
   """
   import Tucan.Utils, only: [encode_field: 4, encode_field: 5, encode: 4]
   alias Tucan.Utils
@@ -209,7 +237,7 @@ defmodule Tucan do
   """
   @doc section: :construction
   @spec new() :: VegaLite.t()
-  def new, do: Vl.new()
+  def new, do: new_tucan_plot([])
 
   @doc """
   Creates if needed a `VegaLite` plot and adds data to it.
@@ -386,12 +414,28 @@ defmodule Tucan do
     spec_opts
     |> Vl.new()
     |> maybe_add_tucan_metadata(custom_opts[:tucan])
+    |> maybe_apply_defaults()
   end
 
   defp maybe_add_tucan_metadata(vl, nil), do: vl
 
   defp maybe_add_tucan_metadata(vl, tucan_opts),
     do: Utils.put_in_spec(vl, "__tucan__", tucan_opts)
+
+  defp maybe_apply_defaults(vl) do
+    opts = Application.get_all_env(:tucan)
+
+    vl
+    |> maybe_call(opts[:default_width] != nil, fn vl ->
+      Tucan.Utils.put_in_spec_new(vl, "width", opts[:default_width])
+    end)
+    |> maybe_call(opts[:default_height] != nil, fn vl ->
+      Tucan.Utils.put_in_spec_new(vl, "height", opts[:default_height])
+    end)
+  end
+
+  defp maybe_call(vl, false, _fun), do: vl
+  defp maybe_call(vl, true, fun), do: fun.(vl)
 
   ## Plots
 
@@ -4611,6 +4655,78 @@ defmodule Tucan do
     theme = Tucan.Themes.theme(theme)
 
     Vl.config(vl, theme)
+  end
+
+  @config_schema [
+    default_width: [
+      type: {:or, [:pos_integer, {:in, [:container]}]},
+      doc: "The default width of the plot, if the width is already set it will not be overridden"
+    ],
+    default_height: [
+      type: {:or, [:pos_integer, {:in, [:container]}]},
+      doc:
+        "The default height of the plot, if the height is already set it will not be overridden"
+    ]
+  ]
+
+  @doc """
+  Sets default `Tucan` options.
+
+  > #### Usage {: .info}
+  >
+  > These options will be set as default `tucan` options. Notice that if you override these
+  > settings in your plot then the global settings will not be used.
+  >
+  > ```elixir
+  > Tucan.configure(default_width: 400, default_height: 300)
+  >
+  > # this will create a plot with the default width and height
+  > Tucan.scatter(:iris, "sepal_width", "sepal_length")
+  >
+  > # this will create a plot with the width to 500 and height having the default
+  > # value of 300
+  > Tucan.scatter(:iris, "sepal_width", "sepal_length", width: 500)
+  >
+  > # you can also set the width to `:container` to make it responsive
+  > Tucan.configure(default_width: :container)
+  > ```
+
+  ## Options
+
+  #{NimbleOptions.docs(@config_schema)}
+
+  ## Examples
+
+      # Configuring default width and height for tucan plots
+      Tucan.configure(default_width: 700, default_height: 350)
+
+  > #### Width and Height Configuration {: .info}
+  >
+  > The `configure/1` function sets default dimensions for your plots:
+  >
+  > **Single-view plots:**
+  > * Default width and height control the plotting area size
+  > * Individual plots can override these defaults with their own `width` and `height` properties
+  >
+  > **Multi-view plots (concatenated, faceted, or repeated):**
+  > * Default dimensions apply to each inner view
+  > * Final size is calculated based on how views are composed
+  > * To control overall size, adjust dimensions of individual views
+  >
+  > **Responsive Layouts:**
+  > * Use `:container` as width/height to make a dimension match its container
+  > * Example: `Tucan.configure(default_width: :container, default_height: 350)`
+  >
+  > For more details check the [Vega-Lite docs](https://vega.github.io/vega-lite/docs/size.html).
+  """
+  @doc section: :styling
+  @spec configure(opts :: keyword()) :: :ok
+  def configure(opts) do
+    opts = NimbleOptions.validate!(opts, @config_schema)
+
+    current_opts = Application.get_all_env(:tucan)
+
+    Application.put_all_env(tucan: Keyword.merge(current_opts, opts))
   end
 
   ## Private functions

@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add `Tucan.configure/1` for setting default width and height for subsequent plots.
+
+```elixir
+Tucan.configure(default_width: 600, default_height: 300)
+
+# This will use default width and height
+Tucan.scatter(:iris, "sepal_width", "sepal_length")
+
+# You can override if needed the default values
+Tucan.scatter(:iris, "sepal_width", "sepal_length", width: 400, height: 200)
+```
+
 ### Changed
 
 - `Tucan.Export` now uses `VegaLite.Convert` through the `:vega_lite_convert`
