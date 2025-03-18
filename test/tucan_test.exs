@@ -163,8 +163,8 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_values(data)
 
-      assert Tucan.new(data) == expected
-      refute Tucan.new(data, only: [:a]) == expected
+      assert_plot(Tucan.new(data), expected)
+      refute_plot(Tucan.new(data, only: [:a]), expected)
 
       data_only_a = Enum.map(data, &Map.take(&1, [:a]))
 
@@ -172,7 +172,7 @@ defmodule TucanTest do
         Vl.new()
         |> Vl.data_from_values(data_only_a)
 
-      assert Tucan.new(data, only: [:a]) == expected
+      assert_plot(Tucan.new(data, only: [:a]), expected)
     end
 
     test "with vega plot" do
@@ -207,14 +207,17 @@ defmodule TucanTest do
         Vl.new(width: 100, height: 100)
         |> Vl.data_from_values(x: [0, 1, 2, 3, 4], y: [1, 2, 3, 4, 5])
 
-      assert Tucan.new([x: x, y: y], width: 100, height: 100) == expected
+      assert_plot(Tucan.new([x: x, y: y], width: 100, height: 100), expected)
 
       x = Nx.reshape(x, {5, 1})
       y = Nx.reshape(y, {1, 5})
 
-      assert Tucan.new([x: x, y: y], width: 100, height: 100) == expected
+      assert_plot(Tucan.new([x: x, y: y], width: 100, height: 100), expected)
+      assert_plot(Tucan.new([x: x, y: 1..5], width: 100, height: 100), expected)
 
-      assert Tucan.new([x: x, y: 1..5], width: 100, height: 100) == expected
+      vl = Tucan.new(x: x, y: y)
+      assert_inferred_type(vl, "x", "quantitative")
+      assert_inferred_type(vl, "y", "quantitative")
     end
 
     test "raises with invalid nx shape" do
@@ -223,6 +226,29 @@ defmodule TucanTest do
       assert_raise ArgumentError,
                    "invalid shape for x tensor, expected a 1-d tensor, got a {2, 5} tensor",
                    fn -> Tucan.new(x: x) end
+    end
+
+    test "various types are inferred from data" do
+      data = [
+        %{
+          x: ~D[2020-01-01],
+          y: "2020-01-01T10:00:00Z",
+          z: 12.34,
+          a: :foo,
+          b: "bar",
+          c: 10,
+          d: true
+        }
+      ]
+
+      vl = Tucan.new(data)
+      assert_inferred_type(vl, "x", "temporal")
+      assert_inferred_type(vl, "y", "temporal")
+      assert_inferred_type(vl, "z", "quantitative")
+      assert_inferred_type(vl, "a", "nominal")
+      assert_inferred_type(vl, "b", "nominal")
+      assert_inferred_type(vl, "c", "quantitative")
+      assert_inferred_type(vl, "d", "nominal")
     end
   end
 
@@ -1645,7 +1671,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:theta, "value", type: :quantitative)
         |> Vl.encode_field(:color, "category")
 
-      assert Tucan.pie(@pie_data, "value", "category") == expected
+      assert_plot(Tucan.pie(@pie_data, "value", "category"), expected)
     end
 
     test "with aggregate statistic" do
@@ -1702,7 +1728,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:x, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "y", type: :quantitative)
 
-      assert Tucan.bar(data, "x", "y") == expected
+      assert_plot(Tucan.bar(data, "x", "y"), expected)
     end
 
     test "with orient flag set" do
@@ -1713,7 +1739,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "x", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:x, "y", type: :quantitative)
 
-      assert Tucan.bar(@dataset, "x", "y", orient: :horizontal) == expected
+      assert_plot(Tucan.bar(@dataset, "x", "y", orient: :horizontal), expected)
     end
 
     test "with color_by set and custom aggregate" do
@@ -1725,8 +1751,10 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean)
         |> Vl.encode_field(:color, "group")
 
-      assert Tucan.bar(@dataset, "x", "y", color_by: "group", y: [aggregate: :mean]) ==
-               expected
+      assert_plot(
+        Tucan.bar(@dataset, "x", "y", color_by: "group", y: [aggregate: :mean]),
+        expected
+      )
     end
 
     test "with mode set to grouped" do
@@ -1739,12 +1767,14 @@ defmodule TucanTest do
         |> Vl.encode_field(:color, "group")
         |> Vl.encode_field(:x_offset, "group")
 
-      assert Tucan.bar(@dataset, "x", "y",
-               color_by: "group",
-               mode: :grouped,
-               y: [aggregate: :mean]
-             ) ==
-               expected
+      assert_plot(
+        Tucan.bar(@dataset, "x", "y",
+          color_by: "group",
+          mode: :grouped,
+          y: [aggregate: :mean]
+        ),
+        expected
+      )
     end
 
     test "with mode set to normalize" do
@@ -1756,12 +1786,14 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "y", type: :quantitative, aggregate: :mean, stack: :normalize)
         |> Vl.encode_field(:color, "group")
 
-      assert Tucan.bar(@dataset, "x", "y",
-               color_by: "group",
-               mode: :normalize,
-               y: [aggregate: :mean]
-             ) ==
-               expected
+      assert_plot(
+        Tucan.bar(@dataset, "x", "y",
+          color_by: "group",
+          mode: :normalize,
+          y: [aggregate: :mean]
+        ),
+        expected
+      )
     end
 
     test "encoding channel options with orient flag" do
@@ -1814,7 +1846,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:x, "min", type: :quantitative)
         |> Vl.encode_field(:x2, "max", type: :quantitative)
 
-      assert Tucan.range_bar(data, "category", "min", "max") == expected
+      assert_plot(Tucan.range_bar(data, "category", "min", "max"), expected)
     end
 
     test "with orient flag set" do
@@ -1832,7 +1864,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:y, "min", type: :quantitative)
         |> Vl.encode_field(:y2, "max", type: :quantitative)
 
-      assert Tucan.range_bar(data, "category", "min", "max", orient: :vertical) == expected
+      assert_plot(Tucan.range_bar(data, "category", "min", "max", orient: :vertical), expected)
     end
 
     test "with color_by set and custom options" do
@@ -1852,10 +1884,13 @@ defmodule TucanTest do
         |> Vl.encode_field(:y_offset, "category")
         |> Vl.encode_field(:color, "category")
 
-      assert Tucan.range_bar(data, "category", "min", "max",
-               color_by: "category",
-               fill_color: "red"
-             ) == expected
+      assert_plot(
+        Tucan.range_bar(data, "category", "min", "max",
+          color_by: "category",
+          fill_color: "red"
+        ),
+        expected
+      )
     end
   end
 
@@ -1981,7 +2016,7 @@ defmodule TucanTest do
         |> Vl.encode_field(:x, "type", type: :nominal, axis: [label_angle: 0])
         |> Vl.encode_field(:y, "type", aggregate: :count, type: :quantitative)
 
-      assert Tucan.countplot(data, "type") == expected
+      assert_plot(Tucan.countplot(data, "type"), expected)
     end
 
     test "with orient flag set" do
@@ -2947,5 +2982,15 @@ defmodule TucanTest do
     {_, plot} = pop_in(plot.spec["__tucan__"])
 
     assert plot == expected
+  end
+
+  defp refute_plot(plot, expected) do
+    {_, plot} = pop_in(plot.spec["__tucan__"])
+
+    refute plot == expected
+  end
+
+  defp assert_inferred_type(plot, field, type) do
+    assert get_in(plot.spec, ["__tucan__", "types", field]) == "#{type}"
   end
 end
