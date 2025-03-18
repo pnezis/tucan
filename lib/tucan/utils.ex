@@ -144,6 +144,21 @@ defmodule Tucan.Utils do
     %VegaLite{vl | spec: Map.put_new(spec, key, opts)}
   end
 
+  @doc """
+  Puts the given metadata key-value pair in the provided `VegaLite` struct.
+
+  This will overwrite any existing metadata for the given key.
+  """
+  @spec put_tucan_metadata(vl :: VegaLite.t(), key :: atom(), value :: term()) ::
+          VegaLite.t()
+  def put_tucan_metadata(%VegaLite{spec: spec} = vl, key, value) do
+    current_metadata = get_in(spec, ["__tucan__"]) || %{}
+    key = to_vl_key(key)
+    metadata = to_vl(value)
+
+    put_in_spec(vl, "__tucan__", Map.put(current_metadata, key, metadata))
+  end
+
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
   @doc false
@@ -219,7 +234,7 @@ defmodule Tucan.Utils do
   @doc """
   Override of `VegaLite.encode_field/4`.
 
-  we use encode_field and encode instead of Vl.encode_field and Vl.encode in all
+  we use `encode_field` and `encode` instead of `Vl.encode_field` and `Vl.encode` in all
   tucan plots for the following reason:
 
   - we want to support setting custom vega-lite options on each encoding
@@ -232,6 +247,7 @@ defmodule Tucan.Utils do
      - if they are missing the tests will raise ensuring that we have properly
      set all possible options for each plot type
      - they are set with the proper precedence and deep merged with the extra
+     - we can adjust the encoding type based on the inferred type of the field (if any)
   """
   @spec encode_field(
           vl :: VegaLite.t(),
@@ -241,7 +257,22 @@ defmodule Tucan.Utils do
           extra_opts :: keyword()
         ) :: VegaLite.t()
   def encode_field(vl, encoding, field, opts, extra_opts \\ []) do
-    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, Keyword.fetch!(opts, encoding))
+    # encoding overrides are set by the user and take precedence over the inferred types
+    encoding_overrides = Keyword.fetch!(opts, encoding)
+
+    # if we have inferred the column type as temporal and it is marked as quantitative
+    # we can safelyupdate it
+    # TODO: we can do more checks here, e.g. raise if invalid inferred type
+    field_type = get_in(vl.spec, ["__tucan__", "types", field])
+
+    extra_opts =
+      if field_type == "temporal" && extra_opts[:type] == :quantitative do
+        Keyword.put(extra_opts, :type, :temporal)
+      else
+        extra_opts
+      end
+
+    encoding_opts = Tucan.Keyword.deep_merge(extra_opts, encoding_overrides)
 
     VegaLite.encode_field(vl, encoding, field, encoding_opts)
   end

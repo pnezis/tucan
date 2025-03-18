@@ -371,9 +371,12 @@ defmodule Tucan do
 
     data = maybe_transform_data(data)
 
+    column_types = Tucan.Data.column_types(data)
+
     spec_opts
     |> new_tucan_plot()
     |> Vl.data_from_values(data, data_opts)
+    |> Utils.put_tucan_metadata(:types, column_types)
   end
 
   defp maybe_transform_data(data) do
