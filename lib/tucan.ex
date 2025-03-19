@@ -110,6 +110,60 @@ defmodule Tucan do
   |> Tucan.set_theme(:latimes)
   ```
 
+  ## Data types inference
+
+  Tucan will try to infer the types of the data you pass to it. Currently this
+  is mainly used for automatically assigning temporal encodings when your data
+  contains date or date-time values.
+
+  For example the following will mark the `:x` encoding type as `:temporal`:
+
+  ```tucan
+  data = [
+    %{x: ~D[2020-01-01], y: 12.34},
+    %{x: ~D[2020-01-02], y: 13.21},
+    %{x: ~D[2020-01-03], y: 9.81}
+  ]
+
+  # x is marked as temporal instead of quantitative which is the default for line plots
+  Tucan.lineplot(data, "x", "y")
+  ```
+
+  Type inference will also work if your data contains a binary represenation of timestamps:
+
+  ```tucan
+  data = [
+    %{x: "2020-01-01T10:00:00Z", y: 12.34},
+    %{x: "2020-01-02", y: 13.21},
+    %{x: "2020-01-03", y: 9.81}
+  ]
+
+  Tucan.lineplot(data, "x", "y")
+  ```
+
+  > #### Limitations {: .warning}
+  >
+  > Notice that there are some limitations to the type inference:
+  >
+  > - Only if you pass actual data the type inference will be performed, if you
+  > pass a URL to a dataset then no type inference is applied.
+  > - Types are inferred only from the **first row** of the data, if your data
+  > are not consistent this may lead to incorrect type inference.
+  >
+  > If you want to enforce a specific type you need to override the type
+  > in the encoding channel options.
+  >
+  > ```tucan
+  > data = [
+  >   %{x: ~D[2020-01-01], y: 12.34},
+  >   %{x: ~D[2020-01-02], y: 13.21},
+  >   %{x: ~D[2020-01-03], y: 9.81}
+  > ]
+  >
+  > # x is marked as nominal instead of temporal
+  > Tucan.lineplot(data, "x", "y", x: [type: :nominal])
+  > ```
+
   ## Encoding channels options
 
   All Tucan plots are building a `VegaLite` specification based on some sane
