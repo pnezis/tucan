@@ -250,6 +250,26 @@ defmodule TucanTest do
       assert_inferred_type(vl, "c", "quantitative")
       assert_inferred_type(vl, "d", "nominal")
     end
+
+    test "time columns are parsed and format added to data" do
+      data = [
+        %{
+          t: ~T[10:00:00],
+          y: "11:00:00",
+          z: ~D[2020-01-01]
+        }
+      ]
+
+      vl = Tucan.new(data)
+
+      assert_inferred_type(vl, "t", "time")
+      assert_inferred_type(vl, "y", "time")
+      assert_inferred_type(vl, "z", "temporal")
+
+      assert get_in(vl.spec, ["data", "format"]) == %{
+               "parse" => %{"t" => "date:'%H:%M:%S'", "y" => "date:'%H:%M:%S'"}
+             }
+    end
   end
 
   describe "with global options set" do

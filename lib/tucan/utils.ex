@@ -266,7 +266,7 @@ defmodule Tucan.Utils do
     field_type = get_in(vl.spec, ["__tucan__", "types", field])
 
     extra_opts =
-      if field_type == "temporal" && extra_opts[:type] == :quantitative do
+      if field_type in ["temporal", "time"] && extra_opts[:type] == :quantitative do
         Keyword.put(extra_opts, :type, :temporal)
       else
         extra_opts

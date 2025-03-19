@@ -164,6 +164,55 @@ defmodule Tucan do
   > Tucan.lineplot(data, "x", "y", x: [type: :nominal])
   > ```
 
+  #### Time columns
+
+  Tucan will also parse time columns if they are passed as strings or `Time` structs
+  and will apply the proper parse format in order to be displayed correctly:
+
+  ```tucan
+  data = [
+    %{x: ~T[10:00:00], y: 12.34},
+    %{x: ~T[11:00:00], y: 13.21},
+    %{x: ~T[12:00:00], y: 9.81}
+  ]
+
+  Tucan.lineplot(data, "x", "y", points: true)
+  ```
+
+  > #### Use time columns carefully {: .warning}
+  >
+  > It is advised to use date-time columns instead of time columns, since the
+  > latter missed the date information. As a result `VegaLite` will assign a
+  > default date (1900-01-01) to all of them and you may have unexpected results
+  > if you have data from two different dates.
+  >
+  > ```tucan
+  > data = [
+  >   %{x: ~T[20:00:00], y: 12.34},
+  >   %{x: ~T[21:00:00], y: 13.21},
+  >   %{x: ~T[23:42:22], y: 9.81},
+  >   # data imply an observiation of the following day
+  >   %{x: ~T[01:10:10], y: 10.01}
+  > ]
+  >
+  > # notice the default tooltip rendered by vega-lite as well as
+  > # the position of the last point on the left side of the plot
+  > Tucan.lineplot(data, "x", "y", points: true, tooltip: true)
+  > ```
+  >
+  > Instead with date time columns you would get:
+  >
+  > ```tucan
+  > data = [
+  >   %{x: ~U[2020-01-01T20:00:00Z], y: 12.34},
+  >   %{x: ~U[2020-01-01T21:00:00Z], y: 13.21},
+  >   %{x: ~U[2020-01-01T23:42:22Z], y: 9.81},
+  >   %{x: ~U[2020-01-02T01:10:10Z], y: 10.01}
+  > ]
+  >
+  > Tucan.lineplot(data, "x", "y", points: true, tooltip: true)
+  > ```
+
   ## Encoding channels options
 
   All Tucan plots are building a `VegaLite` specification based on some sane
@@ -426,6 +475,18 @@ defmodule Tucan do
     data = maybe_transform_data(data)
 
     column_types = Tucan.Data.column_types(data)
+
+    # we need to inject time parser formatting in case of time columns
+    time_columns =
+      column_types
+      |> Enum.filter(fn {_key, type} -> type == :time end)
+      |> Enum.map(fn {key, _} -> {key, "date:'%H:%M:%S'"} end)
+      |> Enum.into(%{})
+
+    data_opts =
+      Tucan.Keyword.put_new_conditionally(data_opts, :format, [parse: time_columns], fn ->
+        time_columns != %{}
+      end)
 
     spec_opts
     |> new_tucan_plot()

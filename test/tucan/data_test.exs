@@ -52,6 +52,17 @@ defmodule Tucan.DataTest do
              }
     end
 
+    test "infers time data as :time" do
+      data = [
+        [time: ~T[10:00:00], time_str: "10:00:00"]
+      ]
+
+      assert Tucan.Data.column_types(data) == %{
+               "time" => :time,
+               "time_str" => :time
+             }
+    end
+
     test "atoms are inferred as nominal" do
       data = [
         [module: :foo]
@@ -80,13 +91,23 @@ defmodule Tucan.DataTest do
   end
 
   describe "inferred types in plots" do
-    test "temporal data is used instead of quantitative" do
+    test "temporal type is used instead of quantitative" do
       data = [
         %{x: ~D[2020-01-01], y: "2020-01-01T10:00:00Z"},
         %{x: ~D[2020-01-02], y: "2020-01-02T10:00:00Z"}
       ]
 
       %VegaLite{spec: spec} = Tucan.scatter(data, "x", "y")
+      assert get_in(spec, ["encoding", "x", "type"]) == "temporal"
+      assert get_in(spec, ["encoding", "y", "type"]) == "temporal"
+    end
+
+    test "time is mapped to temporal" do
+      data = [
+        %{x: ~T[10:00:00], y: "10:00:00"}
+      ]
+
+      %VegaLite{spec: spec} = Tucan.lineplot(data, "x", "y")
       assert get_in(spec, ["encoding", "x", "type"]) == "temporal"
       assert get_in(spec, ["encoding", "y", "type"]) == "temporal"
     end

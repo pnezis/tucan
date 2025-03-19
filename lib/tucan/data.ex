@@ -33,10 +33,16 @@ defmodule Tucan.Data do
 
   defp type_of(%mod{}) when mod in [Date, NaiveDateTime, DateTime], do: :temporal
 
+  defp type_of(%Time{}), do: :time
+
   defp type_of(data) when is_number(data), do: :quantitative
 
   defp type_of(data) when is_binary(data) do
-    if date?(data) or date_time?(data), do: :temporal, else: :nominal
+    cond do
+      date?(data) or date_time?(data) -> :temporal
+      time?(data) -> :time
+      true -> :nominal
+    end
   end
 
   defp type_of(data) when is_atom(data), do: :nominal
@@ -45,4 +51,5 @@ defmodule Tucan.Data do
 
   defp date?(value), do: match?({:ok, _}, Date.from_iso8601(value))
   defp date_time?(value), do: match?({:ok, _, _}, DateTime.from_iso8601(value))
+  defp time?(value), do: match?({:ok, _}, Time.from_iso8601(value))
 end

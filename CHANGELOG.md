@@ -18,6 +18,18 @@ the type to temporal in case of date, datetime columns.
   Tucan.lineplot(data, "x", "y")
   ```
 
+- Infer time columns and apply the proper formatting on the data definition:
+
+  ```tucan
+  data = [
+    %{x: ~T[10:00:00], y: 12.34},
+    %{x: ~T[11:00:00], y: 13.21},
+    %{x: ~T[12:00:00], y: 9.81}
+  ]
+
+  Tucan.lineplot(data, "x", "y", points: true)
+  ```
+
 - Add `Tucan.configure/1` for setting default width and height for subsequent plots.
 
   ```elixir
