@@ -8,7 +8,7 @@ defmodule Tucan.Data do
   @doc """
   Returns a map with each column and its respective inferred type for the given data.
   """
-  @spec column_types(Table.Reader.t()) :: map() | nil
+  @spec column_types(Table.Reader.t()) :: map()
   def column_types(data) do
     with true <- implements?(Table.Reader, data),
          data = {_, %{columns: [_ | _] = columns}, _} <- Table.Reader.init(data),
@@ -16,7 +16,7 @@ defmodule Tucan.Data do
       types = infer_types(data)
       Enum.zip_with(columns, types, fn column, type -> {to_string(column), type} end) |> Map.new()
     else
-      _ -> nil
+      _ -> %{}
     end
   end
 
