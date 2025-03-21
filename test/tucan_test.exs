@@ -270,6 +270,11 @@ defmodule TucanTest do
                "parse" => %{"t" => "date:'%H:%M:%S'", "y" => "date:'%H:%M:%S'"}
              }
     end
+
+    test "with empty data" do
+      vl = Tucan.new([])
+      assert get_in(vl.spec, ["__tucan__", "types"]) == %{}
+    end
   end
 
   describe "with global options set" do

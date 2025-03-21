@@ -78,7 +78,7 @@ defmodule Tucan.DataTest do
     end
 
     test "with empty row data" do
-      assert Tucan.Data.column_types([%{}]) == nil
+      assert Tucan.Data.column_types([%{}]) == %{}
     end
 
     test "not supported types are inferred as nil" do
