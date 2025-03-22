@@ -70,6 +70,3 @@ jobs:
     - name: Run tests
       run: mix test --cover
       if: ${{ matrix.lint }}
-    - name: Dialyzer
-      run: mix dialyzer --format dialyxir --format dialyxir --error_handling --extra_return --underspecs --unmatched_returns
-      if: ${{ matrix.lint }}

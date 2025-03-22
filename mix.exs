@@ -55,8 +55,7 @@ defmodule Tucan.MixProject do
       "true" ->
         [
           {:doctor, "~> 0.21.0", only: :dev},
-          {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-          {:dialyxir, "~> 1.4", only: :dev, runtime: false}
+          {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
         ]
 
       _other ->
