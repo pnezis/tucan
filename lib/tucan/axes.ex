@@ -154,6 +154,29 @@ defmodule Tucan.Axes do
   end
 
   @doc """
+  Set the rotation angle of the given axis labels.
+
+  By default, the label angle is -90 degrees for nominal and ordinal fields, and 0
+  degrees otherwise.
+
+  ## Examples
+
+  A scatter plot with the `x-axis` labels rotated 45 degrees:
+
+  ```tucan
+  Tucan.bar(%{x: ["Monday", "Tuesday", "Wednesday"], y: [4, 8, 2]}, "x", "y")
+  |> Tucan.Axes.set_label_angle(:x, 45)
+  ```
+  """
+  @spec set_label_angle(vl :: VegaLite.t(), axis :: axis(), angle :: number()) ::
+          VegaLite.t()
+  def set_label_angle(vl, axis, angle) when is_struct(vl, VegaLite) and is_number(angle) do
+    validate_axis!(axis, [:x, :y], "set_label_angle/3")
+
+    put_options(vl, axis, label_angle: angle)
+  end
+
+  @doc """
   Enables or disables both axes (`x`, `y`) at once.
 
   See also `set_enabled/3`

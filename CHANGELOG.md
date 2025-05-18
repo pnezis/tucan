@@ -42,6 +42,8 @@ the type to temporal in case of date, datetime columns.
   Tucan.scatter(:iris, "sepal_width", "sepal_length", width: 400, height: 200)
   ```
 
+- Add `Tucan.Axes.set_label_angle/3` for rotating axes labels.
+
 ### Changed
 
 - `Tucan.Export` now uses `VegaLite.Convert` through the `:vega_lite_convert`
