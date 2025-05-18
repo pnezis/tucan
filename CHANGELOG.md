@@ -42,7 +42,8 @@ the type to temporal in case of date, datetime columns.
   Tucan.scatter(:iris, "sepal_width", "sepal_length", width: 400, height: 200)
   ```
 
-- Add `Tucan.Axes.set_label_angle/3` for rotating axes labels.
+- Add `Tucan.Axes.set_labels_angle/3` for rotating axes labels.
+- Add `Tucan.Axes.set_labels_enabled/3` for disabling axes labels.
 
 ### Changed
 

@@ -154,6 +154,28 @@ defmodule Tucan.Axes do
   end
 
   @doc """
+  Enables or disables the labels of the given axis.
+
+  ## Examples
+
+  A scatter plot with both `x-axis` and `y-axis` labels disabled:
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Axes.set_labels_enabled(:x, false)
+  |> Tucan.Axes.set_labels_enabled(:y, false)
+  ```
+  """
+  @spec set_labels_enabled(vl :: VegaLite.t(), axis :: axis(), enabled :: boolean()) ::
+          VegaLite.t()
+  def set_labels_enabled(vl, axis, enabled)
+      when is_struct(vl, VegaLite) and is_boolean(enabled) do
+    validate_axis!(axis, [:x, :y], "set_labels_enabled/3")
+
+    put_options(vl, axis, labels: enabled)
+  end
+
+  @doc """
   Set the rotation angle of the given axis labels.
 
   By default, the label angle is -90 degrees for nominal and ordinal fields, and 0
@@ -165,13 +187,13 @@ defmodule Tucan.Axes do
 
   ```tucan
   Tucan.bar(%{x: ["Monday", "Tuesday", "Wednesday"], y: [4, 8, 2]}, "x", "y")
-  |> Tucan.Axes.set_label_angle(:x, 45)
+  |> Tucan.Axes.set_labels_angle(:x, 45)
   ```
   """
-  @spec set_label_angle(vl :: VegaLite.t(), axis :: axis(), angle :: number()) ::
+  @spec set_labels_angle(vl :: VegaLite.t(), axis :: axis(), angle :: number()) ::
           VegaLite.t()
-  def set_label_angle(vl, axis, angle) when is_struct(vl, VegaLite) and is_number(angle) do
-    validate_axis!(axis, [:x, :y], "set_label_angle/3")
+  def set_labels_angle(vl, axis, angle) when is_struct(vl, VegaLite) and is_number(angle) do
+    validate_axis!(axis, [:x, :y], "set_labels_angle/3")
 
     put_options(vl, axis, label_angle: angle)
   end
