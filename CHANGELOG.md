@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v0.5.0](https://github.com/pnezis/tucan/tree/v0.5.0) (2025-05-19)
 
 ### Added
 
