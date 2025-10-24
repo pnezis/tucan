@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.5.1](https://github.com/pnezis/tucan/tree/v0.5.1) (2025-10-24)
+
+### Fixed
+
+- Typing violation warnings in elixir 1.19
+
 ## [v0.5.0](https://github.com/pnezis/tucan/tree/v0.5.0) (2025-05-19)
 
 ### Added
