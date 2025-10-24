@@ -4561,11 +4561,11 @@ defmodule Tucan do
                   """
 
           true ->
-            vl = Vl.new()
+            %VegaLite{} = vl = Vl.new()
 
             layers =
               for layer <- plot.spec["layer"] do
-                %VegaLite{vl | spec: Map.merge(vl.spec, layer)}
+                %{vl | spec: Map.merge(vl.spec, layer)}
               end
 
             acc ++ layers
