@@ -27,4 +27,30 @@ defmodule Tucan.ThemesTest do
       assert_raise ArgumentError, message, fn -> Tucan.Themes.theme(:foo) end
     end
   end
+
+  describe "set_theme/2 with keyword list" do
+    test "applies custom theme config" do
+      vl =
+        Tucan.scatter(:iris, "petal_width", "petal_length")
+        |> Tucan.set_theme(background: "#0E0E0E", axis: [grid: false])
+
+      spec = VegaLite.to_spec(vl)
+      assert spec["config"]["background"] == "#0E0E0E"
+      assert spec["config"]["axis"]["grid"] == false
+    end
+
+    test "raises on empty list" do
+      assert_raise ArgumentError, ~r/non-empty keyword list/, fn ->
+        Tucan.scatter(:iris, "petal_width", "petal_length")
+        |> Tucan.set_theme([])
+      end
+    end
+
+    test "raises if wrapper format is passed" do
+      assert_raise ArgumentError, ~r/not a theme definition/, fn ->
+        Tucan.scatter(:iris, "petal_width", "petal_length")
+        |> Tucan.set_theme(name: :my_theme, theme: [background: "#fff"])
+      end
+    end
+  end
 end
