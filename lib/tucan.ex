@@ -4765,12 +4765,50 @@ defmodule Tucan do
   @doc """
   Sets the plot's theme.
 
-  Check `Tucan.Themes` for more details on theming.
+  You can pass either a built-in theme atom or a custom theme as a keyword list
+  of Vega-Lite configuration options.
+
+  ## Built-in themes
+
+  Check `Tucan.Themes` for the list of available built-in themes.
+
+      Tucan.scatter(:iris, "petal_width", "petal_length")
+      |> Tucan.set_theme(:latimes)
+
+  ## Custom themes
+
+  You can also pass a keyword list of Vega-Lite
+  [config](https://vega.github.io/vega-lite/docs/config.html) options directly:
+
+      Tucan.scatter(:iris, "petal_width", "petal_length")
+      |> Tucan.set_theme(
+        background: "#0E0E0E",
+        axis: [grid: false, label_color: "#FFF"],
+        style: [bar: [fill: "#FDDA00"]]
+      )
   """
   @doc section: :styling
-  @spec set_theme(vl :: VegaLite.t(), theme :: atom()) :: VegaLite.t()
-  def set_theme(vl, theme) do
+  @spec set_theme(vl :: VegaLite.t(), theme :: atom() | keyword()) :: VegaLite.t()
+  def set_theme(vl, theme) when is_atom(theme) do
     theme = Tucan.Themes.theme(theme)
+
+    Vl.config(vl, theme)
+  end
+
+  def set_theme(vl, theme) when is_list(theme) do
+    wrapper_keys = [:name, :theme, :doc, :source]
+
+    if Enum.any?(wrapper_keys, &Keyword.has_key?(theme, &1)) do
+      raise ArgumentError,
+            "set_theme/2 expects a keyword list of Vega-Lite config options, " <>
+              "not a theme definition. Pass the config directly, e.g. " <>
+              "set_theme(vl, background: \"#fff\", axis: [grid: false])"
+    end
+
+    if theme == [] do
+      raise ArgumentError,
+            "set_theme/2 expects a non-empty keyword list of Vega-Lite config options"
+    end
 
     Vl.config(vl, theme)
   end
