@@ -2984,6 +2984,11 @@ defmodule Tucan do
       doc: "The color of the points, if `:points` is set to `true`.",
       section: :style
     ],
+    point_size: [
+      type: :pos_integer,
+      doc: "The size of the points, if `:points` is set to `true`.",
+      section: :style
+    ],
     filled: [
       type: :boolean,
       doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
@@ -3141,6 +3146,7 @@ defmodule Tucan do
         false -> [filled: false, fill: "white"]
       end
       |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
 
     Keyword.merge(mark_opts, point: point_opts)
   end
@@ -3182,6 +3188,10 @@ defmodule Tucan do
       type: :boolean,
       doc: "Whether points will be included in the chart.",
       default: false
+    ],
+    point_size: [
+      type: :pos_integer,
+      doc: "The size of the points, if `:points` is set to `true`."
     ],
     line: [
       type: :boolean,
