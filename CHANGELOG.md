@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
+
+### Added
+
+- Support custom themes as keyword lists in `set_theme/2`
+- Add `point_size` option to lineplot and area plots
+
 ## [v0.5.1](https://github.com/pnezis/tucan/tree/v0.5.1) (2025-10-24)
 
 ### Fixed
