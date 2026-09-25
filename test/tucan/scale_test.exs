@@ -255,6 +255,52 @@ defmodule Tucan.ScaleTest do
 
       assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == ["a", "b", "c"]
     end
+
+    test "set_domain with tuples, :unaggregate and maps" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:y, "y", type: :quantitative)
+        |> Vl.encode_field(:color, "color", type: :quantitative)
+        |> Tucan.Scale.set_domain(:x, {1, 10})
+        |> Tucan.Scale.set_domain(:y, :unaggregate)
+        |> Tucan.Scale.set_domain(:color, %{param: "brush"})
+
+      assert get_in(vl.spec, ["encoding", "x", "scale", "domain"]) == [1, 10]
+      assert get_in(vl.spec, ["encoding", "y", "scale", "domain"]) == "unaggregate"
+      assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == %{"param" => "brush"}
+    end
+
+    test "set_domain raises with invalid domains" do
+      vl =
+        Vl.new()
+        |> Vl.encode_field(:x, "x", type: :quantitative)
+        |> Vl.encode_field(:color, "color", type: :nominal)
+
+      assert_raise ArgumentError,
+                   "expected domain to be a list, a {min, max} tuple, :unaggregate or a map, got: 10",
+                   fn -> Tucan.Scale.set_domain(vl, :x, 10) end
+
+      assert_raise ArgumentError,
+                   ~s(expected the domain of the quantitative :x channel to contain only numbers, got: ["a", "b"]),
+                   fn -> Tucan.Scale.set_domain(vl, :x, ["a", "b"]) end
+
+      # non quantitative domains are not checked
+      vl = Tucan.Scale.set_domain(vl, :color, ["a", 1])
+      assert get_in(vl.spec, ["encoding", "color", "scale", "domain"]) == ["a", 1]
+    end
+
+    test "set_domain validates all layers of a layered plot" do
+      vl =
+        Tucan.layers([
+          Vl.new() |> Vl.encode_field(:x, "x", type: :nominal),
+          Vl.new() |> Vl.encode_field(:x, "x", type: :quantitative)
+        ])
+
+      assert_raise ArgumentError, ~r/quantitative :x channel/, fn ->
+        Tucan.Scale.set_domain(vl, :x, ["a", "b"])
+      end
+    end
   end
 
   describe "put_options/3" do

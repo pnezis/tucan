@@ -11,10 +11,19 @@ error bar end ticks.
   Tucan.errorbar(:barley, "yield", group_by: "variety", tick_color: "orange", tick_width: 3)
   ```
 
+- `Tucan.Scale.set_domain/3` accepts a `{min, max}` tuple and `:unaggregate`.
+
+  ```tucan
+  Tucan.scatter(:iris, "petal_width", "petal_length")
+  |> Tucan.Scale.set_domain(:x, {0, 4})
+  ```
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
 raises instead of silently producing a broken plot.
+- `Tucan.Scale.set_domain/3` validates the domain and raises if it is not valid,
+e.g. if a quantitative channel's domain contains non-numeric values.
 
 ## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
 

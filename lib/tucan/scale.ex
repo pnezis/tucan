@@ -444,15 +444,61 @@ defmodule Tucan.Scale do
   @doc """
   Sets the domain for the given encoding channel.
 
-  `domain` can be anything Vega-Lite supports and the validity of it depends on the type
-  of the encoding's data.
+  `domain` can be one of the following:
 
-  Notice that no validation is performed.
+    * a list of values, e.g. `[0, 100]` or `["a", "b", "c"]`
+    * a `{min, max}` tuple, which is converted to a `[min, max]` list
+    * `:unaggregate`, for using the unaggregated domain
+    * a map, e.g. a Vega-Lite parameter extent like `%{param: "brush"}`
+
+  If the channel is encoded as `:quantitative` the domain values must be numbers,
+  `nil` or maps (e.g. expressions). The validity of any other domain depends on the
+  type of the encoding's data and is not checked.
+
+  Raises an `ArgumentError` if the domain is not valid.
   """
-  # TODO: support domain validation
   @spec set_domain(vl :: VegaLite.t(), channel :: atom(), domain :: term()) :: VegaLite.t()
   def set_domain(vl, channel, domain) do
+    domain = validate_domain!(domain, channel, encoding_types(vl, channel))
     put_options(vl, channel, domain: domain)
+  end
+
+  defp validate_domain!({min, max}, channel, types),
+    do: validate_domain!([min, max], channel, types)
+
+  defp validate_domain!(domain, _channel, _types) when domain in [:unaggregate, "unaggregate"],
+    do: "unaggregate"
+
+  defp validate_domain!(domain, _channel, _types) when is_map(domain), do: domain
+
+  defp validate_domain!(domain, channel, types) when is_list(domain) do
+    if "quantitative" in types do
+      for value <- domain, not (is_number(value) or is_nil(value) or is_map(value)) do
+        raise ArgumentError,
+              "expected the domain of the quantitative #{inspect(channel)} channel to " <>
+                "contain only numbers, got: #{inspect(domain)}"
+      end
+    end
+
+    domain
+  end
+
+  defp validate_domain!(domain, _channel, _types) do
+    raise ArgumentError,
+          "expected domain to be a list, a {min, max} tuple, :unaggregate or a map, " <>
+            "got: #{inspect(domain)}"
+  end
+
+  # the encoding types of the channel, across all layers for layered plots
+  defp encoding_types(%VegaLite{spec: %{"layer" => layers}}, channel) do
+    Enum.flat_map(layers, &encoding_types(%VegaLite{spec: &1}, channel))
+  end
+
+  defp encoding_types(vl, channel) do
+    case Utils.encoding_options(vl, channel) do
+      %{"type" => type} -> [type]
+      _other -> []
+    end
   end
 
   @doc """
