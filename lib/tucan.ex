@@ -557,10 +557,8 @@ defmodule Tucan do
 
   ## Plots
 
-  # TODO: move it to helper module for reusability
-  # global_opts should be applicable in all plot types
-  @global_opts [:width, :height, :title, :only]
-  @global_mark_opts [:clip, :fill_opacity, :tooltip]
+  @global_opts Tucan.Options.global_opts()
+  @global_mark_opts Tucan.Options.global_mark_opts()
 
   histogram_opts = [
     relative: [

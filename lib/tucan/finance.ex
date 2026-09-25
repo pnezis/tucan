@@ -6,8 +6,8 @@ defmodule Tucan.Finance do
   """
   alias VegaLite, as: Vl
 
-  @global_opts [:width, :height, :title, :only, :zoomable]
-  @global_mark_opts [:clip, :fill_opacity, :tooltip]
+  @global_opts Tucan.Options.global_opts() ++ [:zoomable]
+  @global_mark_opts Tucan.Options.global_mark_opts()
 
   @candlestick_opts Tucan.Options.take!([@global_opts, @global_mark_opts])
   @candlestick_schema Tucan.Options.to_nimble_schema!(@candlestick_opts)

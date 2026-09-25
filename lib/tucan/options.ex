@@ -440,6 +440,18 @@ defmodule Tucan.Options do
   @options options
 
   @doc """
+  Options applicable to all plot types.
+  """
+  @spec global_opts() :: [atom()]
+  def global_opts, do: [:width, :height, :title, :only]
+
+  @doc """
+  Mark options applicable to all plot types.
+  """
+  @spec global_mark_opts() :: [atom()]
+  def global_mark_opts, do: [:clip, :fill_opacity, :tooltip]
+
+  @doc """
   Take the given options from the globally defined options list and optionally merge them
   with `extra`.
 
