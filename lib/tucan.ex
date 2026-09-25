@@ -1012,7 +1012,6 @@ defmodule Tucan do
   |> Tucan.set_theme(:ggplot2)
   ```
   """
-  # TODO: if filled is set to false we could use a line mark instead
   @doc section: :plots
   @spec density(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def density(plotdata, field, opts \\ []) do
