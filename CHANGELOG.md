@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add `:tick_color` and `:tick_width` options to `Tucan.errorbar/3` for styling the
+error bar end ticks.
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety", tick_color: "orange", tick_width: 3)
+  ```
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,

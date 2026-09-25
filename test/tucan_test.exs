@@ -987,6 +987,47 @@ defmodule TucanTest do
       assert_plot(Tucan.errorbar(@barley_dataset, "yield", ticks: true), expected)
     end
 
+    test "with tick color and width" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar,
+            extent: :stderr,
+            fill_opacity: 1,
+            ticks: [color: "red", thickness: 3]
+          )
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        ])
+
+      assert_plot(
+        Tucan.errorbar(@barley_dataset, "yield", tick_color: "red", tick_width: 3),
+        expected
+      )
+
+      assert_plot(
+        Tucan.errorbar(@barley_dataset, "yield", ticks: true, tick_color: "red", tick_width: 3),
+        expected
+      )
+    end
+
+    test "tick styling is ignored if ticks are disabled" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@barley_dataset)
+        |> Vl.layers([
+          Vl.new()
+          |> Vl.mark(:errorbar, extent: :stderr, fill_opacity: 1, ticks: false)
+          |> Vl.encode_field(:x, "yield", type: :quantitative, scale: [zero: false])
+        ])
+
+      assert_plot(
+        Tucan.errorbar(@barley_dataset, "yield", ticks: false, tick_color: "red"),
+        expected
+      )
+    end
+
     test "with ticks and points" do
       expected =
         Vl.new()

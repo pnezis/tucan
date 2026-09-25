@@ -1336,6 +1336,22 @@ defmodule Tucan do
       type: :string,
       doc: "The color of the points if enabled. If not set defaults to the error bars color",
       section: :style
+    ],
+    tick_color: [
+      type: :string,
+      doc: """
+      The color of the end ticks. If not set defaults to the error bars color. Setting it
+      enables the ticks, unless `:ticks` is explicitly set to `false`.
+      """,
+      section: :style
+    ],
+    tick_width: [
+      type: {:or, [:integer, :float]},
+      doc: """
+      The thickness of the end ticks in pixels. Setting it enables the ticks, unless
+      `:ticks` is explicitly set to `false`.
+      """,
+      section: :style
     ]
   ]
 
@@ -1415,6 +1431,12 @@ defmodule Tucan do
   Tucan.errorbar(:barley, "yield", group_by: "variety", line_color: "red", stroke_width: 3, ticks: true, points: true)
   ```
 
+  The end ticks can be styled separately with `:tick_color` and `:tick_width`:
+
+  ```tucan
+  Tucan.errorbar(:barley, "yield", group_by: "variety", tick_color: "orange", tick_width: 3)
+  ```
+
   You can color categories by combining it with `Tucan.color_by/3`.
 
   ```tucan
@@ -1422,7 +1444,6 @@ defmodule Tucan do
   |> Tucan.color_by("variety")
   ```
   """
-  # TODO: options for configuring tick color and width
   @doc section: :plots
   @spec errorbar(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
   def errorbar(plotdata, field, opts \\ []) do
@@ -1439,6 +1460,7 @@ defmodule Tucan do
         opts[:stroke_width] != nil
       end)
       |> Keyword.delete(:stroke_width)
+      |> maybe_put_errorbar_ticks(opts)
 
     errorbar_layer =
       Vl.new()
@@ -1474,6 +1496,19 @@ defmodule Tucan do
     plotdata
     |> new(spec_opts ++ [tucan: [multilayer: true]])
     |> layers([errorbar_layer] ++ points_layer)
+  end
+
+  defp maybe_put_errorbar_ticks(mark_opts, opts) do
+    tick_opts =
+      []
+      |> Tucan.Keyword.put_not_nil(:color, opts[:tick_color])
+      |> Tucan.Keyword.put_not_nil(:thickness, opts[:tick_width])
+
+    if tick_opts != [] and opts[:ticks] != false do
+      Keyword.put(mark_opts, :ticks, tick_opts)
+    else
+      mark_opts
+    end
   end
 
   errorband_opts = [
