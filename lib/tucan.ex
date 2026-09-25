@@ -3584,13 +3584,13 @@ defmodule Tucan do
       type: :atom,
       doc: """
       The color scheme to be used for the image. Should be one of the supported
-      color schemes of `Tucan.Scale.set_color_scheme/3`.
+      color schemes of `Tucan.Scale.set_color_scheme/3`. Ignored for RGB(A) images.
       """,
       default: :viridis
     ],
     reverse: [
       type: :boolean,
-      doc: "Whether the color scheme will be reversed or not.",
+      doc: "Whether the color scheme will be reversed or not. Ignored for RGB(A) images.",
       default: false
     ],
     origin: [
@@ -3616,7 +3616,7 @@ defmodule Tucan do
     ],
     show_scale: [
       type: :boolean,
-      doc: "If set the color scale is displayed.",
+      doc: "If set the color scale is displayed. Ignored for RGB(A) images.",
       default: false,
       section: :style
     ]
@@ -3636,10 +3636,21 @@ defmodule Tucan do
   @doc """
   Display data as an image.
 
-  The input is expected to be an `Nx.Tensor` containing 2D scalar data, which will be
-  rendered as a pseudo-color image. The origin is set at the upper left hand corner and
-  rows (first dimension of the array) are displayed horizontally. By setting `:origin`
-  to `:lower` you can set the origin to the lower left hand corner.
+  The input is expected to be an `Nx.Tensor` of type `{:u, 8}` or `{:f, 32}` with one of
+  the following shapes:
+
+    * `{height, width}` or `{height, width, 1}` - 2D scalar data, which will be rendered
+    as a pseudo-color image using the `:color_scheme`.
+    * `{height, width, 3}` - an RGB image.
+    * `{height, width, 4}` - an RGBA image.
+
+  For RGB(A) images the pixel values should be in the `0..255` range for `{:u, 8}`
+  tensors, or in the `[0, 1]` range for `{:f, 32}` tensors (values outside the range
+  are clipped).
+
+  The origin is set at the upper left hand corner and rows (first dimension of the
+  array) are displayed horizontally. By setting `:origin` to `:lower` you can set the
+  origin to the lower left hand corner.
 
   ## Options
 
@@ -3655,6 +3666,21 @@ defmodule Tucan do
   images = File.read!(mnist_path) |> Nx.deserialize()
 
   Tucan.imshow(images[[images: 5]], width: 200, height: 200)
+  ```
+
+  RGB images are displayed with their actual colors:
+
+  ```tucan
+  height = 60
+  width = 120
+
+  red = Nx.iota({height, width}, axis: 1) |> Nx.divide(width - 1)
+  green = Nx.iota({height, width}, axis: 0) |> Nx.divide(height - 1)
+  blue = Nx.broadcast(0.6, {height, width})
+
+  image = Nx.stack([red, green, blue], axis: -1) |> Nx.as_type({:f, 32})
+
+  Tucan.imshow(image, width: 240, height: 120)
   ```
 
   Below we use `Tucan.concat/2` to plot a grid of 40 images of the MNIST dataset. We

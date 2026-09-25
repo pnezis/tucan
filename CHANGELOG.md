@@ -30,6 +30,21 @@ error bar end ticks.
   )
   ```
 
+- Support RGB and RGBA images in `Tucan.imshow/2`.
+
+  ```tucan
+  height = 60
+  width = 120
+
+  red = Nx.iota({height, width}, axis: 1) |> Nx.divide(width - 1)
+  green = Nx.iota({height, width}, axis: 0) |> Nx.divide(height - 1)
+  blue = Nx.broadcast(0.6, {height, width})
+
+  image = Nx.stack([red, green, blue], axis: -1) |> Nx.as_type({:f, 32})
+
+  Tucan.imshow(image, width: 240, height: 120)
+  ```
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,

@@ -2501,11 +2501,57 @@ defmodule TucanTest do
       assert Tucan.imshow(data, color_scheme: :greys, reverse: true) == expected_scheme
     end
 
+    test "with RGB and RGBA images" do
+      x = [0, 1, 0, 1]
+      y = [0, 0, 1, 1]
+
+      expected = fn v ->
+        Vl.new()
+        |> Vl.data_from_values(v: v, x: x, y: y)
+        |> Vl.mark(:rect)
+        |> Vl.encode_field(:x, "x", axis: nil, type: :ordinal)
+        |> Vl.encode_field(:y, "y", axis: nil, type: :ordinal)
+        |> Vl.encode_field(:color, "v", type: :nominal, scale: nil, legend: nil)
+      end
+
+      rgb = Nx.tensor([[[255, 0, 0], [0, 255, 0]], [[0, 0, 255], [16, 32, 48]]], type: {:u, 8})
+      rgb_colors = ["#ff0000", "#00ff00", "#0000ff", "#102030"]
+
+      assert Tucan.imshow(rgb) == expected.(rgb_colors)
+
+      # color scheme options are ignored
+      assert Tucan.imshow(rgb, color_scheme: :greys, show_scale: true) == expected.(rgb_colors)
+
+      # float images are in the [0, 1] range and are clipped
+      rgb_float =
+        Nx.tensor([[[1.0, 0.0, 0.0], [0.0, 2.0, 0.0]], [[0.0, 0.0, 1.0], [-1.0, 0.5, 0.0]]],
+          type: {:f, 32}
+        )
+
+      assert Tucan.imshow(rgb_float) ==
+               expected.(["#ff0000", "#00ff00", "#0000ff", "#008000"])
+
+      rgba =
+        Nx.tensor(
+          [[[255, 0, 0, 255], [0, 255, 0, 0]], [[0, 0, 255, 128], [16, 32, 48, 51]]],
+          type: {:u, 8}
+        )
+
+      assert Tucan.imshow(rgba) ==
+               expected.([
+                 "rgba(255, 0, 0, 1.0)",
+                 "rgba(0, 255, 0, 0.0)",
+                 "rgba(0, 0, 255, 0.502)",
+                 "rgba(16, 32, 48, 0.2)"
+               ])
+    end
+
     test "raises with invalid tensor shape" do
-      data = Nx.tensor([[[1, 2, 3]]], type: {:f, 32})
+      data = Nx.tensor([[[1, 2]]], type: {:f, 32})
 
       message =
-        "expected Nx.Tensor to have shape {height, width} or {height, width, 1}, got: {1, 1, 3}"
+        "expected Nx.Tensor to have shape {height, width} or {height, width, channels} " <>
+          "with 1 (grayscale), 3 (RGB) or 4 (RGBA) channels, got: {1, 1, 2}"
 
       assert_raise ArgumentError, message, fn -> Tucan.imshow(data) end
     end
