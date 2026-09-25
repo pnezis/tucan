@@ -261,8 +261,7 @@ defmodule Tucan.Utils do
     encoding_overrides = Keyword.fetch!(opts, encoding)
 
     # if we have inferred the column type as temporal and it is marked as quantitative
-    # we can safelyupdate it
-    # TODO: we can do more checks here, e.g. raise if invalid inferred type
+    # we can safely update it
     field_type = get_in(vl.spec, ["__tucan__", "types", field])
 
     extra_opts =
@@ -274,7 +273,28 @@ defmodule Tucan.Utils do
 
     encoding_opts = Tucan.Keyword.deep_merge(extra_opts, encoding_overrides)
 
+    maybe_warn_non_quantitative(encoding, field, field_type, encoding_opts, encoding_overrides)
+
     VegaLite.encode_field(vl, encoding, field, encoding_opts)
+  end
+
+  # aggregations that are valid on non quantitative data
+  @non_numeric_aggregates ["count", "valid", "missing", "distinct"]
+
+  # warn if a nominal column is used in a channel that expects numbers, since
+  # vega-lite will silently render an empty or broken plot
+  defp maybe_warn_non_quantitative(encoding, field, field_type, encoding_opts, overrides) do
+    if field_type == "nominal" and encoding_opts[:type] == :quantitative and
+         not Keyword.has_key?(overrides, :type) and
+         to_string(encoding_opts[:aggregate]) not in @non_numeric_aggregates do
+      IO.warn(
+        "the #{inspect(field)} field is encoded as quantitative in the #{inspect(encoding)} " <>
+          "channel but its values are not numbers, the plot may be empty or incorrect. " <>
+          "If this is intended set the type explicitly, e.g. " <>
+          "#{encoding}: [type: :quantitative]",
+        []
+      )
+    end
   end
 
   @doc """

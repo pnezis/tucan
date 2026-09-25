@@ -41,6 +41,8 @@ defmodule Tucan.Data do
     cond do
       date?(data) or date_time?(data) -> :temporal
       time?(data) -> :time
+      # vega-lite parses numeric strings, e.g. from a CSV file, as numbers
+      number?(data) -> :quantitative
       true -> :nominal
     end
   end
@@ -52,4 +54,5 @@ defmodule Tucan.Data do
   defp date?(value), do: match?({:ok, _}, Date.from_iso8601(value))
   defp date_time?(value), do: match?({:ok, _, _}, DateTime.from_iso8601(value))
   defp time?(value), do: match?({:ok, _}, Time.from_iso8601(value))
+  defp number?(value), do: match?({_number, ""}, Float.parse(String.trim(value)))
 end

@@ -1,6 +1,8 @@
 defmodule Tucan.DataTest do
   use ExUnit.Case
 
+  import ExUnit.CaptureIO
+
   describe "column_types/1" do
     test "infers types for row tables" do
       data = [
@@ -73,6 +75,21 @@ defmodule Tucan.DataTest do
              }
     end
 
+    test "numeric strings are inferred as quantitative" do
+      data = [
+        %{int: "42", float: " 1.5 ", exp: "1e3", neg: "-0.5", mixed: "1.5 kg", zip: "01234"}
+      ]
+
+      assert Tucan.Data.column_types(data) == %{
+               "int" => :quantitative,
+               "float" => :quantitative,
+               "exp" => :quantitative,
+               "neg" => :quantitative,
+               "mixed" => :nominal,
+               "zip" => :quantitative
+             }
+    end
+
     test "with inconsistent data" do
       assert Tucan.Data.column_types([%{x: 1}, %{x: 2, y: 1}]) == %{"x" => :quantitative}
     end
@@ -121,6 +138,52 @@ defmodule Tucan.DataTest do
       %VegaLite{spec: spec} = Tucan.bar(data, "x", "y")
       assert get_in(spec, ["encoding", "x", "type"]) == "nominal"
       assert get_in(spec, ["encoding", "y", "type"]) == "temporal"
+    end
+  end
+
+  describe "non quantitative data in quantitative channels" do
+    @data [%{cat: "a", val: 1, str_val: "1.5"}, %{cat: "b", val: 2, str_val: "2.5"}]
+
+    test "warns if a nominal field is encoded as quantitative" do
+      warning = capture_io(:stderr, fn -> Tucan.scatter(@data, "cat", "val") end)
+
+      assert warning =~
+               ~s(the "cat" field is encoded as quantitative in the :x channel but its values are not numbers)
+
+      assert warning =~ "x: [type: :quantitative]"
+
+      assert capture_io(:stderr, fn -> Tucan.pie(@data, "cat", "val") end) =~
+               ~s(the "cat" field is encoded as quantitative in the :theta channel)
+    end
+
+    test "does not warn for valid encodings" do
+      assert capture_io(:stderr, fn ->
+               Tucan.scatter(@data, "val", "str_val")
+               Tucan.bar(@data, "cat", "val")
+               Tucan.countplot(@data, "cat")
+               Tucan.heatmap(@data, "cat", "cat", nil)
+             end) == ""
+    end
+
+    test "does not warn if the type is explicitly set" do
+      assert capture_io(:stderr, fn ->
+               Tucan.scatter(@data, "cat", "val", x: [type: :quantitative])
+               Tucan.scatter(@data, "cat", "val", x: [type: :nominal])
+             end) == ""
+    end
+
+    test "does not warn for aggregations valid on nominal data" do
+      assert capture_io(:stderr, fn ->
+               Tucan.new(@data)
+               |> Tucan.Utils.encode_field(:x, "cat", [x: []],
+                 type: :quantitative,
+                 aggregate: :distinct
+               )
+               |> Tucan.Utils.encode_field(:y, "cat", [y: []],
+                 type: :quantitative,
+                 aggregate: "count"
+               )
+             end) == ""
     end
   end
 end

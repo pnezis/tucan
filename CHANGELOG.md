@@ -45,12 +45,17 @@ error bar end ticks.
   Tucan.imshow(image, width: 240, height: 120)
   ```
 
+- Warn if a column with non-numeric values is encoded in a quantitative channel,
+e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
+empty plot. Set the channel type explicitly to silence the warning.
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
 raises instead of silently producing a broken plot.
 - `Tucan.Scale.set_domain/3` validates the domain and raises if it is not valid,
 e.g. if a quantitative channel's domain contains non-numeric values.
+- Numeric strings, e.g. `"1.5"`, are inferred as quantitative.
 
 ## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
 
