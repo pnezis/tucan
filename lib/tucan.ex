@@ -3404,9 +3404,31 @@ defmodule Tucan do
       """,
       dest: :mark
     ],
-    # TODO: custom validation with supported types
     aggregate: [
-      type: :atom,
+      type:
+        {:in,
+         [
+           :count,
+           :valid,
+           :missing,
+           :distinct,
+           :sum,
+           :product,
+           :mean,
+           :average,
+           :variance,
+           :variancep,
+           :stdev,
+           :stdevp,
+           :stderr,
+           :median,
+           :q1,
+           :q3,
+           :ci0,
+           :ci1,
+           :min,
+           :max
+         ]},
       doc: "The statistic to use (if any) for aggregating values per pie slice (e.g. `:mean`).",
       dest: :theta
     ]

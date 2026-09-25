@@ -1710,6 +1710,12 @@ defmodule TucanTest do
       assert Tucan.pie(:iris, "sepal_length", "species", aggregate: :mean, fill_opacity: 0.8) ==
                expected
     end
+
+    test "raises with unsupported aggregate statistic" do
+      assert_raise NimbleOptions.ValidationError, ~r/invalid value for :aggregate option/, fn ->
+        Tucan.pie(:iris, "sepal_length", "species", aggregate: :avg)
+      end
+    end
   end
 
   describe "donut/4" do

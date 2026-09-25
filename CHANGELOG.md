@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
+raises instead of silently producing a broken plot.
+
 ## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
 
 ### Added
