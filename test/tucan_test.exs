@@ -2205,12 +2205,42 @@ defmodule TucanTest do
       )
     end
 
-    test "raises if color_by is set with density_heatmap" do
-      assert_raise ArgumentError,
-                   "combining a density_heatmap with the :color_by option is not supported",
-                   fn ->
-                     Tucan.jointplot(:iris, "x", "y", joint: :density_heatmap, color_by: "z")
-                   end
+    test "with density_heatmap and color_by" do
+      marginal_x =
+        Tucan.density(Vl.new(height: 90), "petal_width", x: [axis: nil], color_by: "species")
+
+      marginal_y =
+        Tucan.density(Vl.new(width: 90), "petal_length",
+          orient: :vertical,
+          y: [axis: nil],
+          color_by: "species"
+        )
+        |> Tucan.Legend.set_enabled(:color, false)
+
+      joint =
+        Tucan.density_heatmap(Vl.new(width: 200, height: 200), "petal_width", "petal_length")
+        |> Tucan.Legend.set_enabled(:color, false)
+
+      expected =
+        Vl.new(bounds: :flush, spacing: 15)
+        |> Vl.data_from_url(@iris_dataset)
+        |> Vl.concat(
+          [
+            marginal_x,
+            Vl.concat(Vl.new(bounds: :flush, spacing: 15), [joint, marginal_y], :horizontal)
+            |> Vl.resolve(:scale, color: :independent)
+          ],
+          :vertical
+        )
+        |> Vl.resolve(:scale, color: :independent)
+
+      assert(
+        Tucan.jointplot(:iris, "petal_width", "petal_length",
+          joint: :density_heatmap,
+          marginal: :density,
+          color_by: "species"
+        ) == expected
+      )
     end
 
     test "with density_heatmap and density" do

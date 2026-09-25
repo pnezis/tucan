@@ -3955,7 +3955,9 @@ defmodule Tucan do
       default: :scatter,
       doc: """
       The plot type to be used for the main (joint) plot. Can be one of
-      `:scatter` and `:density_heatmap`.
+      `:scatter` and `:density_heatmap`. If `:density_heatmap` is combined with
+      `:color_by`, the heatmap shows the counts of all groups and only the marginal
+      plots are colored by group.
       """
     ],
     joint_opts: [
@@ -4046,6 +4048,19 @@ defmodule Tucan do
     ratio: 0.3
   )
   ```
+
+  A density heatmap can also be combined with `:color_by`. In this case the heatmap
+  shows the counts of all groups, while the marginal plots are colored by group:
+
+  ```tucan
+  Tucan.jointplot(
+    :penguins, "Beak Length (mm)", "Beak Depth (mm)",
+    joint: :density_heatmap,
+    marginal: :density,
+    color_by: "Species",
+    marginal_opts: [fill_opacity: 0.5]
+  )
+  ```
   """
   @doc section: :composite
   @spec jointplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
@@ -4053,11 +4068,11 @@ defmodule Tucan do
   def jointplot(plotdata, x, y, opts \\ []) do
     opts = NimbleOptions.validate!(opts, @jointplot_schema)
 
-    # TODO: maybe enable this in the future (we need to properly set the legends for this)
-    if opts[:joint] == :density_heatmap and opts[:color_by] do
-      raise ArgumentError,
-            "combining a density_heatmap with the :color_by option is not supported"
-    end
+    # With a density heatmap the joint plot is colored by the (quantitative) counts
+    # while the marginals are colored by the group, so we need independent color
+    # scales. Only the group legend is shown, since with the flush bounds of the
+    # layout the heatmap legend would overlap the marginal plot.
+    heatmap_by_group? = opts[:joint] == :density_heatmap and opts[:color_by] != nil
 
     joint_opts =
       opts
@@ -4073,7 +4088,10 @@ defmodule Tucan do
 
         :density_heatmap ->
           joint_opts = Keyword.drop(joint_opts, [:color_by])
-          density_heatmap(joint_plot, x, y, joint_opts)
+
+          joint_plot
+          |> density_heatmap(x, y, joint_opts)
+          |> maybe_call(heatmap_by_group?, &Tucan.Legend.set_enabled(&1, :color, false))
       end
 
     marginal_dimension = ceil(opts[:ratio] * opts[:width])
@@ -4085,19 +4103,22 @@ defmodule Tucan do
     {marginal_x, marginal_y} =
       marginal_plots(x, y, marginal_dimension, opts[:marginal], marginal_opts)
 
+    # both marginals have the same group legend, keep only the top one
+    marginal_y =
+      maybe_call(marginal_y, heatmap_by_group?, &Tucan.Legend.set_enabled(&1, :color, false))
+
     plotdata
     |> new(spacing: opts[:spacing], bounds: "flush")
     |> Vl.concat(
       [
         marginal_x,
-        Vl.concat(
-          Vl.new(spacing: opts[:spacing], bounds: "flush"),
-          [joint_plot, marginal_y],
-          :horizontal
-        )
+        Vl.new(spacing: opts[:spacing], bounds: "flush")
+        |> Vl.concat([joint_plot, marginal_y], :horizontal)
+        |> maybe_call(heatmap_by_group?, &Vl.resolve(&1, :scale, color: :independent))
       ],
       :vertical
     )
+    |> maybe_call(heatmap_by_group?, &Vl.resolve(&1, :scale, color: :independent))
   end
 
   defp marginal_plots(x, y, dimension, type, opts) do

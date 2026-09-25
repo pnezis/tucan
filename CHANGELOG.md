@@ -18,6 +18,18 @@ error bar end ticks.
   |> Tucan.Scale.set_domain(:x, {0, 4})
   ```
 
+- Support combining a `:density_heatmap` joint plot with `:color_by` in `Tucan.jointplot/4`.
+
+  ```tucan
+  Tucan.jointplot(
+    :penguins, "Beak Length (mm)", "Beak Depth (mm)",
+    joint: :density_heatmap,
+    marginal: :density,
+    color_by: "Species",
+    marginal_opts: [fill_opacity: 0.5]
+  )
+  ```
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
