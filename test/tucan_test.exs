@@ -36,7 +36,8 @@ defmodule TucanTest do
         {:scatter, fn opts -> Tucan.scatter(@dataset, "x", "y", opts) end},
         {:step, fn opts -> Tucan.step(@dataset, "x", "y", opts) end},
         {:streamgraph, fn opts -> Tucan.streamgraph(@dataset, "x", "y", "z", opts) end},
-        {:stripplot, fn opts -> Tucan.stripplot(@dataset, "x", opts) end}
+        {:stripplot, fn opts -> Tucan.stripplot(@dataset, "x", opts) end},
+        {:violin, fn opts -> Tucan.violin(@dataset, "x", opts) end}
       ]
 
       [plot_functions: plot_functions]
@@ -1408,6 +1409,163 @@ defmodule TucanTest do
 
       assert get_in(vl.spec, ["encoding", "x", "foo"]) == 1
       assert get_in(vl.spec, ["encoding", "y", "foo"]) == 2
+    end
+  end
+
+  describe "violin/3" do
+    test "draws a single violin without a grouping field" do
+      spec = Tucan.violin([%{value: 1}, %{value: 2}], "value") |> VegaLite.to_spec()
+
+      assert [
+               %{"calculate" => "toNumber(datum[\"value\"])", "as" => "value"},
+               %{"density" => "value", "minsteps" => 25, "maxsteps" => 200} = density,
+               %{"calculate" => "-datum.density", "as" => "negative_density"}
+             ] = spec["transform"]
+
+      refute Map.has_key?(density, "groupby")
+      refute Map.has_key?(spec["encoding"], "column")
+      assert spec["width"] == 140
+      assert spec["height"] == 300
+      assert spec["mark"] == %{"type" => "area", "orient" => "horizontal", "fillOpacity" => 0.8}
+    end
+
+    test "converts the field to a number before estimating the density" do
+      spec =
+        Tucan.violin([%{"Body \"Mass\" (g)" => 1}], "Body \"Mass\" (g)")
+        |> VegaLite.to_spec()
+
+      assert [
+               %{
+                 "calculate" => ~S|toNumber(datum["Body \"Mass\" (g)"])|,
+                 "as" => ~S|Body "Mass" (g)|
+               },
+               %{"density" => ~S|Body "Mass" (g)|} | _
+             ] = spec["transform"]
+    end
+
+    test "does not override the theme color by default" do
+      spec = Tucan.violin([%{value: 1}, %{value: 2}], "value") |> VegaLite.to_spec()
+
+      refute Map.has_key?(spec["mark"], "color")
+    end
+
+    test "supports orientation, grouping, and color combinations" do
+      data = [%{group: "A", value: 1}, %{group: "B", value: 2}]
+
+      for orient <- [:vertical, :horizontal],
+          group_by <- [nil, "group"],
+          color_by <- [nil, "group"] do
+        opts =
+          [orient: orient]
+          |> Tucan.Keyword.put_not_nil(:group_by, group_by)
+          |> Tucan.Keyword.put_not_nil(:color_by, color_by)
+
+        spec = Tucan.violin(data, "value", opts) |> VegaLite.to_spec()
+        group_field = group_by || color_by
+        density = Enum.at(spec["transform"], 1)
+        encodings = spec["encoding"]
+
+        assert density["groupby"] == if(group_field, do: [group_field], else: nil)
+
+        assert encodings["color"] ==
+                 if(color_by,
+                   do: %{"field" => "group", "type" => "nominal", "legend" => nil},
+                   else: nil
+                 )
+
+        if orient == :vertical do
+          assert spec["mark"]["orient"] == "horizontal"
+          assert get_in(encodings, ["x", "field"]) == "negative_density"
+          assert get_in(encodings, ["x2", "field"]) == "density"
+          assert get_in(encodings, ["y", "field"]) == "value"
+          assert get_in(encodings, ["column", "field"]) == group_field
+          refute Map.has_key?(encodings, "row")
+        else
+          assert spec["mark"]["orient"] == "vertical"
+          assert get_in(encodings, ["x", "field"]) == "value"
+          assert get_in(encodings, ["y", "field"]) == "negative_density"
+          assert get_in(encodings, ["y2", "field"]) == "density"
+          assert get_in(encodings, ["row", "field"]) == group_field
+          refute Map.has_key?(encodings, "column")
+        end
+      end
+    end
+
+    test "passes density and appearance options to the plot" do
+      spec =
+        Tucan.violin([%{value: 1}, %{value: 2}], "value",
+          bandwidth: 0.25,
+          extent: [0, 3],
+          steps: 40,
+          width: 260,
+          height: 180,
+          fill_color: "purple",
+          fill_opacity: 0.5,
+          title: "Sample"
+        )
+        |> VegaLite.to_spec()
+
+      assert %{"bandwidth" => 0.25, "extent" => [0, 3], "steps" => 40} =
+               Enum.at(spec["transform"], 1)
+
+      assert spec["width"] == 260
+      assert spec["height"] == 180
+      assert spec["title"] == "Sample"
+      assert get_in(spec, ["mark", "color"]) == "purple"
+      assert get_in(spec, ["mark", "fillOpacity"]) == 0.5
+    end
+
+    test "accepts an integer bandwidth" do
+      spec = Tucan.violin([%{value: 1}, %{value: 2}], "value", bandwidth: 1) |> VegaLite.to_spec()
+
+      assert %{"bandwidth" => 1} = Enum.at(spec["transform"], 1)
+    end
+
+    test "fill_color overrides the color encoding" do
+      spec =
+        Tucan.violin([%{group: "A", value: 1}, %{group: "B", value: 2}], "value",
+          color_by: "group",
+          fill_color: "red"
+        )
+        |> VegaLite.to_spec()
+
+      assert get_in(spec, ["mark", "color"]) == "red"
+      assert get_in(spec, ["encoding", "color", "field"]) == "group"
+    end
+
+    test "tooltip shows the category instead of the density fields" do
+      data = [%{group: "A", value: 1}, %{group: "B", value: 2}]
+
+      grouped =
+        Tucan.violin(data, "value", group_by: "group", tooltip: true) |> VegaLite.to_spec()
+
+      assert grouped["mark"]["tooltip"] == true
+      assert grouped["encoding"]["tooltip"] == %{"field" => "group", "type" => "nominal"}
+
+      single = Tucan.violin(data, "value", tooltip: true) |> VegaLite.to_spec()
+
+      assert single["encoding"]["tooltip"] == %{"value" => "value"}
+
+      custom = Tucan.violin(data, "value", tooltip: :data) |> VegaLite.to_spec()
+
+      assert custom["mark"]["tooltip"] == %{"content" => "data"}
+      refute Map.has_key?(custom["encoding"], "tooltip")
+    end
+
+    test "validates orientation, density steps, and extent" do
+      data = [%{value: 1}, %{value: 2}]
+
+      for options <- [[orient: :diagonal], [steps: 0], [minsteps: 0], [extent: [3, 0]]] do
+        assert_raise NimbleOptions.ValidationError, fn ->
+          Tucan.violin(data, "value", options)
+        end
+      end
+    end
+
+    test "rejects coloring by a different field from the grouping field" do
+      assert_raise ArgumentError, ~r/:color_by must match :group_by/, fn ->
+        Tucan.violin([%{value: 1}], "value", group_by: "group", color_by: "other")
+      end
     end
   end
 

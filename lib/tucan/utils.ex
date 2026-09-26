@@ -159,6 +159,18 @@ defmodule Tucan.Utils do
     put_in_spec(vl, "__tucan__", Map.put(current_metadata, key, metadata))
   end
 
+  @doc """
+  Adds a transform converting the given field to a number.
+
+  Vega-Lite parses CSV fields as numbers only if they are used in a quantitative
+  encoding. Fields that are only used as transform inputs, e.g. in a density
+  transform, must be converted explicitly, otherwise they are treated as strings.
+  """
+  @spec to_number_transform(vl :: VegaLite.t(), field :: String.t()) :: VegaLite.t()
+  def to_number_transform(vl, field) do
+    VegaLite.transform(vl, calculate: "toNumber(datum[#{Jason.encode!(field)}])", as: field)
+  end
+
   @multi_view_only_keys ~w(layer hconcat vconcat concat repeat facet spec)a
 
   @doc false

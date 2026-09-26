@@ -45,6 +45,13 @@ error bar end ticks.
   Tucan.imshow(image, width: 240, height: 120)
   ```
 
+- Add `Tucan.violin/3` for drawing violin plots, optionally grouped and colored by a
+categorical field.
+
+  ```tucan
+  Tucan.violin(:penguins, "Body Mass (g)", group_by: "Species", color_by: "Species")
+  ```
+
 - Warn if a column with non-numeric values is encoded in a quantitative channel,
 e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
 empty plot. Set the channel type explicitly to silence the warning.
@@ -56,6 +63,8 @@ raises instead of silently producing a broken plot.
 - `Tucan.Scale.set_domain/3` validates the domain and raises if it is not valid,
 e.g. if a quantitative channel's domain contains non-numeric values.
 - Numeric strings, e.g. `"1.5"`, are inferred as quantitative.
+- `Tucan.density/3` accepts an integer `:bandwidth`, and requires `:steps`, `:minsteps`
+and `:maxsteps` to be positive integers.
 
 ## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
 

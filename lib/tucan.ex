@@ -788,6 +788,52 @@ defmodule Tucan do
     end
   end
 
+  density_transform_opts = [
+    bandwidth: [
+      type: {:or, [:integer, :float]},
+      doc: """
+      The bandwidth (standard deviation) of the Gaussian kernel. If unspecified or set to
+      zero, the bandwidth value is automatically estimated from the input data using
+      Scott’s rule.
+      """,
+      dest: :density_transform
+    ],
+    extent: [
+      type: {:custom, Tucan.Options, :extent, []},
+      doc: """
+      A `[min, max]` domain from which to sample the distribution. If unspecified, the extent
+      will be determined by the observed minimum and maximum values of the density value field.
+      """,
+      dest: :density_transform
+    ],
+    minsteps: [
+      type: :pos_integer,
+      doc: """
+      The minimum number of samples to take along the extent domain for plotting the density.
+      """,
+      default: 25,
+      dest: :density_transform
+    ],
+    maxsteps: [
+      type: :pos_integer,
+      doc: """
+      The maximum number of samples to take along the extent domain for plotting the density.
+      """,
+      default: 200,
+      dest: :density_transform
+    ],
+    steps: [
+      type: :pos_integer,
+      doc: """
+      The exact number of samples to take along the extent domain for plotting the density. If
+      specified, overrides both minsteps and maxsteps to set an exact number of uniform samples.
+      Potentially useful in conjunction with a fixed extent to ensure consistent sample points
+      for stacked densities.
+      """,
+      dest: :density_transform
+    ]
+  ]
+
   density_opts = [
     filled: [
       type: :boolean,
@@ -828,49 +874,6 @@ defmodule Tucan do
       default: false,
       dest: :density_transform
     ],
-    bandwidth: [
-      type: :float,
-      doc: """
-      The bandwidth (standard deviation) of the Gaussian kernel. If unspecified or set to
-      zero, the bandwidth value is automatically estimated from the input data using
-      Scott’s rule.
-      """,
-      dest: :density_transform
-    ],
-    extent: [
-      type: {:custom, Tucan.Options, :extent, []},
-      doc: """
-      A `[min, max]` domain from which to sample the distribution. If unspecified, the extent
-      will be determined by the observed minimum and maximum values of the density value field.
-      """,
-      dest: :density_transform
-    ],
-    minsteps: [
-      type: :integer,
-      doc: """
-      The minimum number of samples to take along the extent domain for plotting the density.
-      """,
-      default: 25,
-      dest: :density_transform
-    ],
-    maxsteps: [
-      type: :integer,
-      doc: """
-      The maximum number of samples to take along the extent domain for plotting the density.
-      """,
-      default: 200,
-      dest: :density_transform
-    ],
-    steps: [
-      type: :integer,
-      doc: """
-      The exact number of samples to take along the extent domain for plotting the density. If
-      specified, overrides both minsteps and maxsteps to set an exact number of uniform samples.
-      Potentially useful in conjunction with a fixed extent to ensure consistent sample points
-      for stacked densities.
-      """,
-      dest: :density_transform
-    ],
     stacked: [
       type: :boolean,
       doc: """
@@ -893,7 +896,7 @@ defmodule Tucan do
                     :color,
                     :zoomable
                   ],
-                  density_opts
+                  density_opts ++ density_transform_opts
                 )
   @density_schema Tucan.Options.to_nimble_schema!(@density_opts)
 
@@ -1063,6 +1066,183 @@ defmodule Tucan do
     |> maybe_flip_axes(flip_axes?)
     |> Utils.maybe_zoomable(opts[:zoomable])
   end
+
+  violin_opts = [
+    group_by: [
+      type: :string,
+      doc: """
+      A categorical field. One violin is drawn for each category and the density is
+      estimated separately per category.
+      """,
+      section: :grouping
+    ],
+    orient: [
+      default: :vertical,
+      doc: """
+      The plot's orientation. With `:vertical` the values are on the y-axis, with
+      `:horizontal` the values are on the x-axis.
+      """
+    ],
+    color_by: [
+      doc: """
+      A categorical field used for coloring the violins. The density is estimated per
+      category, so setting only `:color_by` also draws one violin per category. If
+      `:group_by` is also set, both must name the same field.
+      """
+    ],
+    fill_opacity: [default: 0.8]
+  ]
+
+  @violin_opts Tucan.Options.take!(
+                 [@global_opts, @global_mark_opts, :orient, :color_by, :fill_color],
+                 violin_opts ++ density_transform_opts
+               )
+  @violin_schema Tucan.Options.to_nimble_schema!(@violin_opts)
+
+  @doc """
+  Draws a violin plot of a numeric field.
+
+  Each violin mirrors a kernel density estimate around zero. Use `:group_by`
+  to compare distributions across categories, `:color_by` to assign a color
+  to each category, and `:orient` to switch the value axis. The categories
+  share a density scale.
+
+  Setting `tooltip: true` shows the violin's category, or the plotted field's name if
+  the data are not grouped. The density values are not included since an area mark
+  has a single tooltip for the whole violin.
+
+  > #### Violins per category are facets {: .warning}
+  >
+  > When `:group_by` or `:color_by` is set, each category is drawn in its own
+  > facet, using the `:column` channel for vertical violins and the `:row` channel
+  > for horizontal violins. As a result:
+  >
+  > * `:width` and `:height` set the size of each violin, not of the whole plot.
+  > * A grouped violin plot cannot be used as a layer in `layers/1`, since Vega-Lite
+  >   does not support facet channels inside layers.
+  > * Calling `facet_by/4` with the same faceting mode replaces the grouping.
+
+  ## Options
+
+  #{Tucan.Options.docs(@violin_opts)}
+
+  ## Examples
+
+  A single violin shows the distribution of all penguin body masses. Wider
+  sections indicate body masses that occur more often:
+
+  ```tucan
+  Tucan.violin(:penguins, "Body Mass (g)")
+  ```
+
+  Split the same measurements by species to compare the three distributions.
+  Each panel uses the same density scale, so their widths are comparable:
+
+  ```tucan
+  Tucan.violin(:penguins, "Body Mass (g)", group_by: "Species")
+  ```
+
+  Color each species and turn the violins sideways. Body mass now runs along
+  the horizontal axis, with one species per row:
+
+  ```tucan
+  Tucan.violin(:penguins, "Body Mass (g)",
+    group_by: "Species",
+    color_by: "Species",
+    orient: :horizontal
+  )
+  ```
+
+  Set `:bandwidth` to control smoothing. This example shows the distribution
+  of iris petal widths for each species with a narrower density estimate:
+
+  ```tucan
+  Tucan.violin(:iris, "petal_width", group_by: "species", bandwidth: 0.1)
+  ```
+  """
+  @doc section: :plots
+  @spec violin(plotdata :: plotdata(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
+  def violin(plotdata, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @violin_schema)
+    group_field = opts[:group_by] || opts[:color_by]
+
+    if opts[:group_by] && opts[:color_by] && opts[:group_by] != opts[:color_by] do
+      raise ArgumentError, ":color_by must match :group_by for violin plots"
+    end
+
+    {default_width, default_height} =
+      if opts[:orient] == :vertical, do: {140, 300}, else: {350, 140}
+
+    spec_opts =
+      opts
+      |> Tucan.Options.take_options(@violin_opts, :spec)
+      |> Keyword.put_new(:width, default_width)
+      |> Keyword.put_new(:height, default_height)
+
+    transform_opts =
+      opts
+      |> Tucan.Options.take_options(@violin_opts, :density_transform)
+      |> Keyword.merge(density: field)
+      |> Tucan.Keyword.put_not_nil(:groupby, if(group_field, do: [group_field]))
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @violin_opts, :mark)
+      |> Keyword.merge(orient: if(opts[:orient] == :vertical, do: :horizontal, else: :vertical))
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+
+    plotdata
+    |> new(spec_opts)
+    |> Utils.to_number_transform(field)
+    |> Vl.transform(transform_opts)
+    |> Vl.transform(calculate: "-datum.density", as: "negative_density")
+    |> Vl.mark(:area, mark_opts)
+    |> violin_encodings(field, opts[:orient])
+    |> violin_facet(group_field, opts[:orient])
+    |> violin_tooltip(field, group_field, opts[:tooltip])
+    |> violin_color(opts[:color_by])
+  end
+
+  defp violin_color(vl, nil), do: vl
+
+  defp violin_color(vl, field),
+    do: Vl.encode_field(vl, :color, field, type: :nominal, legend: nil)
+
+  defp violin_encodings(vl, field, :vertical) do
+    vl
+    |> Vl.encode_field(:x, "negative_density", type: :quantitative, axis: nil)
+    |> Vl.encode_field(:x2, "density")
+    |> Vl.encode_field(:y, "value",
+      type: :quantitative,
+      scale: [zero: false],
+      axis: [title: field]
+    )
+  end
+
+  defp violin_encodings(vl, field, :horizontal) do
+    vl
+    |> Vl.encode_field(:y, "negative_density", type: :quantitative, axis: nil)
+    |> Vl.encode_field(:y2, "density")
+    |> Vl.encode_field(:x, "value",
+      type: :quantitative,
+      scale: [zero: false],
+      axis: [title: field]
+    )
+  end
+
+  defp violin_facet(vl, nil, _orient), do: vl
+
+  defp violin_facet(vl, group, :vertical),
+    do: Vl.encode_field(vl, :column, group, type: :nominal, title: nil)
+
+  defp violin_facet(vl, group, :horizontal),
+    do: Vl.encode_field(vl, :row, group, type: :nominal, title: nil)
+
+  defp violin_tooltip(vl, field, nil, true), do: Vl.encode(vl, :tooltip, value: field)
+
+  defp violin_tooltip(vl, _field, group, true),
+    do: Vl.encode_field(vl, :tooltip, group, type: :nominal)
+
+  defp violin_tooltip(vl, _field, _group, _tooltip), do: vl
 
   stripplot_opts = [
     group_by: [
