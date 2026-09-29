@@ -1229,6 +1229,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,
@@ -1252,6 +1253,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,
@@ -1275,6 +1277,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,
@@ -1298,6 +1301,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,
@@ -1321,6 +1325,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           groupby: ["species"],
@@ -1353,6 +1358,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,
@@ -1378,6 +1384,7 @@ defmodule TucanTest do
       expected =
         Vl.new()
         |> Vl.data_from_url(@iris_dataset)
+        |> Vl.transform(calculate: ~S|toNumber(datum["petal_width"])|, as: "petal_width")
         |> Vl.transform(
           density: "petal_width",
           counts: false,

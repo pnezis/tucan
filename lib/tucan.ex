@@ -1054,6 +1054,7 @@ defmodule Tucan do
 
     plotdata
     |> new(spec_opts)
+    |> Utils.to_number_transform(field)
     |> Vl.transform(transform_opts)
     |> Vl.mark(mark, mark_opts)
     |> encode_field(:x, "value", opts,

@@ -66,6 +66,12 @@ e.g. if a quantitative channel's domain contains non-numeric values.
 - `Tucan.density/3` accepts an integer `:bandwidth`, and requires `:steps`, `:minsteps`
 and `:maxsteps` to be positive integers.
 
+### Fixed
+
+- `Tucan.density/3` converts the density field to a number before estimating the
+density. Previously densities of CSV data were computed on strings, producing
+wrong plots, e.g. `Tucan.density(:iris, "petal_width", color_by: "species")`.
+
 ## [v0.6.0](https://github.com/pnezis/tucan/tree/v0.6.0) (2026-04-29)
 
 ### Added
