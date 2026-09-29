@@ -144,16 +144,27 @@ defmodule Tucan.Polar.Grid do
   end
 
   @doc """
-  Adds the grid layers below and the grid labels above the given data layers.
-  """
-  @spec layers(grid :: t(), data_layers :: [VegaLite.t()]) :: [VegaLite.t()]
-  def layers(grid, data_layers) do
-    style = [color: grid.color, opacity: grid.opacity]
+  Adds the grid layers to the given data layers. The grid labels are always drawn
+  above the data.
 
-    [circles_layer(grid, style), angle_lines_layer(grid, style)] ++
-      data_layers ++
-      [angle_labels_layer(grid), radius_labels_layer(grid)]
+  The grid lines are drawn below the data, unless `lines_above` is set, e.g. for
+  opaque sectors that would hide them.
+
+  The grid layers are named with a `polar_` prefix.
+  """
+  @spec layers(grid :: t(), data_layers :: [VegaLite.t()], lines_above :: boolean()) ::
+          [VegaLite.t()]
+  def layers(grid, data_layers, lines_above \\ false) do
+    style = [color: grid.color, opacity: grid.opacity]
+    lines = [circles_layer(grid, style), angle_lines_layer(grid, style)]
+    labels = [angle_labels_layer(grid), radius_labels_layer(grid)]
+
+    if lines_above,
+      do: data_layers ++ lines ++ labels,
+      else: lines ++ data_layers ++ labels
   end
+
+  defp named_layer(name), do: Tucan.Utils.put_in_spec(Vl.new(), :name, "polar_#{name}")
 
   defp circles_layer(grid, style) do
     radiuses = Enum.uniq(grid.radius_ticks ++ [grid.max_radius])
@@ -164,7 +175,7 @@ defmodule Tucan.Polar.Grid do
         %{r: r, i: i, x: r * :math.cos(angle), y: r * :math.sin(angle)}
       end
 
-    Vl.new()
+    named_layer("circles")
     |> Vl.data_from_values(values)
     |> Vl.mark(:line, style ++ [stroke_width: 1])
     |> encode_xy("x", "y", grid)
@@ -179,7 +190,7 @@ defmodule Tucan.Polar.Grid do
         %{x: 0, y: 0, x2: x, y2: y}
       end
 
-    Vl.new()
+    named_layer("angle_lines")
     |> Vl.data_from_values(values)
     |> Vl.mark(:rule, style ++ [stroke_width: 1])
     |> encode_xy("x", "y", grid)
@@ -218,7 +229,7 @@ defmodule Tucan.Polar.Grid do
         %{x: x, y: y, label: label}
       end
 
-    Vl.new()
+    named_layer("angle_labels")
     |> Vl.data_from_values(values)
     |> Vl.mark(:text, align: :center, baseline: :middle)
     |> encode_xy("x", "y", grid)
@@ -242,7 +253,7 @@ defmodule Tucan.Polar.Grid do
         %{x: x, y: y, label: format_number(r)}
       end
 
-    Vl.new()
+    named_layer("radius_labels")
     |> Vl.data_from_values(values)
     |> Vl.mark(:text, align: :center, baseline: :middle, font_size: 10, opacity: 0.8)
     |> encode_xy("x", "y", grid)

@@ -5,8 +5,13 @@ defmodule Tucan.PolarTest do
 
   defp layers(vl), do: VegaLite.to_spec(vl)["layer"]
 
-  # the data layers are between the grid lines and the grid labels
-  defp data_layer(vl), do: vl |> layers() |> Enum.drop(-2) |> List.last()
+  defp grid_layer?(layer), do: String.starts_with?(layer["name"] || "", "polar_")
+
+  defp data_layers(vl), do: vl |> layers() |> Enum.reject(&grid_layer?/1)
+
+  defp data_layer(vl), do: vl |> data_layers() |> List.last()
+
+  defp named_layer(vl, name), do: vl |> layers() |> Enum.find(&(&1["name"] == "polar_#{name}"))
 
   defp grid_layer(vl, mark) do
     vl |> layers() |> Enum.find(fn layer -> layer["mark"]["type"] == mark end)
@@ -15,14 +20,12 @@ defmodule Tucan.PolarTest do
   defp domain(vl), do: get_in(data_layer(vl), ["encoding", "radius", "scale", "domain"])
 
   defp angle_labels(vl) do
-    vl |> layers() |> Enum.at(-2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
+    vl |> named_layer("angle_labels") |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
   end
 
   defp radius_labels(vl) do
     vl
-    |> layers()
-    |> Enum.filter(fn layer -> layer["mark"]["type"] == "text" end)
-    |> List.last()
+    |> named_layer("radius_labels")
     |> get_in(["data", "values"])
     |> Enum.map(& &1["label"])
   end
@@ -43,6 +46,14 @@ defmodule Tucan.PolarTest do
                "line",
                "text",
                "text"
+             ]
+
+      assert Enum.map(spec["layer"], & &1["name"]) == [
+               "polar_circles",
+               "polar_angle_lines",
+               nil,
+               "polar_angle_labels",
+               "polar_radius_labels"
              ]
     end
 
@@ -186,7 +197,7 @@ defmodule Tucan.PolarTest do
                %{"x" => 0, "y" => 0, "x2" => 0, "y2" => 1}
              ]
 
-      labels = vl |> layers() |> Enum.at(-2) |> get_in(["data", "values"])
+      labels = vl |> named_layer("angle_labels") |> get_in(["data", "values"])
 
       assert Enum.map(labels, & &1["label"]) == ["0°", "90°"]
     end
@@ -194,8 +205,7 @@ defmodule Tucan.PolarTest do
     test "with angle labels" do
       labels = fn opts ->
         Tucan.Polar.lineplot(@data, "r", "theta", [max_radius: 1] ++ opts)
-        |> layers()
-        |> Enum.at(-2)
+        |> named_layer("angle_labels")
         |> get_in(["data", "values"])
         |> Enum.map(& &1["label"])
       end
@@ -539,7 +549,7 @@ defmodule Tucan.PolarTest do
           tooltip: true
         )
 
-      [fill, line] = vl |> layers() |> Enum.slice(2, 2)
+      [fill, line] = data_layers(vl)
 
       assert fill["mark"] == %{
                "type" => "line",
@@ -737,8 +747,20 @@ defmodule Tucan.PolarTest do
       assert layer["encoding"]["radius2"] == %{"field" => "__r_start"}
 
       # grid lines at the sector boundaries and labels at their centers
-      assert get_in(Enum.at(layers(vl), 1), ["data", "values"]) |> length() == 3
+      assert get_in(named_layer(vl, "angle_lines"), ["data", "values"]) |> length() == 3
       assert angle_labels(vl) == ["x", "y", "z"]
+    end
+
+    test "draws the grid lines above the sectors" do
+      names = Tucan.Polar.bar(@bar_data, "v", "k") |> layers() |> Enum.map(& &1["name"])
+
+      assert names == [
+               nil,
+               "polar_circles",
+               "polar_angle_lines",
+               "polar_angle_labels",
+               "polar_radius_labels"
+             ]
     end
 
     test "stacks the bars by color" do

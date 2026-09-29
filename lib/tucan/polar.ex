@@ -975,7 +975,8 @@ defmodule Tucan.Polar do
         if opts[:tooltip] == true, do: Vl.encode(layer, :tooltip, tooltip), else: layer
       end)
 
-    Vl.layers(vl, Grid.layers(grid, [layer]))
+    # the grid lines are drawn above the opaque sectors, otherwise they are hidden
+    Vl.layers(vl, Grid.layers(grid, [layer], true))
   end
 
   histogram_opts = [
