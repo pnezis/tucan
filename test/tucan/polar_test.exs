@@ -803,4 +803,115 @@ defmodule Tucan.PolarTest do
       end
     end
   end
+
+  describe "histogram/3" do
+    defp domain(vl), do: get_in(data_layer(vl), ["encoding", "radius", "scale", "domain"])
+
+    test "bins the angles and counts the values" do
+      vl = Tucan.Polar.histogram([t: [10, 20, 100, 370, -80]], "t", bins: 4)
+      layer = data_layer(vl)
+
+      assert [
+               %{"calculate" => degrees, "as" => "__degrees"},
+               %{"calculate" => bin, "as" => "__bin"},
+               %{"aggregate" => [%{"op" => "count", "as" => "__value"}], "groupby" => ["__bin"]},
+               %{"calculate" => "datum.__bin * 90.0", "as" => "__start_angle"},
+               %{"calculate" => "datum.__start_angle + 90.0", "as" => "__end_angle"},
+               %{"as" => "__r_end"},
+               %{"as" => "__r_start"},
+               %{"calculate" => "datum.__start_angle * 1", "as" => "__bin_start"},
+               %{"calculate" => "datum.__end_angle * 1", "as" => "__bin_end"},
+               %{"as" => "__theta"},
+               %{"as" => "__theta2"}
+             ] = layer["transform"]
+
+      assert degrees == ~S|((toNumber(datum["t"])) % 360 + 360) % 360|
+      assert bin == "min(floor(datum.__degrees / 90.0), 3)"
+
+      # 10, 20 and 370 are in the first bin
+      assert domain(vl) == [0, 3]
+      assert layer["mark"]["type"] == "arc"
+
+      # counter clockwise from the right by default
+      assert Enum.at(layer["transform"], 9)["calculate"] ==
+               "#{:math.pi() / 2} - #{:math.pi() / 180} * (datum.__start_angle)"
+    end
+
+    test "with stacked colors and relative values" do
+      data = [t: [10, 20, 30, 200], g: ["a", "b", "b", "a"]]
+      vl = Tucan.Polar.histogram(data, "t", bins: 4, color_by: "g", relative: true, tooltip: true)
+      layer = data_layer(vl)
+
+      assert Enum.at(layer["transform"], 2)["groupby"] == ["__bin", "g"]
+
+      assert Enum.at(layer["transform"], 3) == %{
+               "joinaggregate" => [%{"op" => "sum", "field" => "__value", "as" => "__total"}]
+             }
+
+      assert Enum.at(layer["transform"], 7)["sort"] == [%{"field" => "g"}]
+
+      # 3 of the 4 values are in the first bin
+      assert domain(vl) == [0, 75]
+
+      assert layer["encoding"]["tooltip"] == [
+               %{
+                 "field" => "__bin_start",
+                 "type" => "quantitative",
+                 "title" => "t from",
+                 "format" => ".4~f"
+               },
+               %{
+                 "field" => "__bin_end",
+                 "type" => "quantitative",
+                 "title" => "t to",
+                 "format" => ".4~f"
+               },
+               %{
+                 "field" => "__value",
+                 "type" => "quantitative",
+                 "title" => "Percentage",
+                 "format" => ".3~f"
+               },
+               %{"field" => "g", "type" => "nominal"}
+             ]
+    end
+
+    test "with angle units and periods" do
+      pi = :math.pi()
+
+      vl = Tucan.Polar.histogram([t: [0.1, 0.2, pi]], "t", bins: 2, angle_unit: :radians)
+      assert domain(vl) == [0, 2]
+
+      assert hd(data_layer(vl)["transform"])["calculate"] ==
+               ~s|((toNumber(datum["t"]) * #{180 / pi}) % 360 + 360) % 360|
+
+      vl = Tucan.Polar.histogram([h: [1, 2, 25, 13]], "h", bins: 2, period: 24)
+      assert domain(vl) == [0, 3]
+
+      assert Enum.at(data_layer(vl)["transform"], -3)["calculate"] ==
+               "datum.__end_angle * #{24 / 360}"
+
+      dates = [d: [~D[2024-01-02], "2024-01-05", ~N[2024-09-01 10:00:00], "invalid"]]
+      vl = Tucan.Polar.histogram(dates, "d", bins: 2, period: :year, tooltip: true)
+
+      assert domain(vl) == [0, 2]
+
+      assert Enum.map(data_layer(vl)["encoding"]["tooltip"], & &1["field"]) == ["__value"]
+
+      # a week starts on Monday
+      vl =
+        Tucan.Polar.histogram([d: ["2024-01-01T10:00:00", "2024-01-07"]], "d",
+          bins: 7,
+          period: :week
+        )
+
+      assert domain(vl) == [0, 1]
+    end
+
+    test "raises if the max radius cannot be inferred" do
+      assert_raise ArgumentError, ~r/cannot infer the maximum radius/, fn ->
+        Tucan.Polar.histogram("https://example.com/data.csv", "t")
+      end
+    end
+  end
 end

@@ -79,6 +79,8 @@ defmodule Tucan.Polar do
   alias Tucan.Polar.Grid
   alias VegaLite, as: Vl
 
+  @temporal_periods [:day, :week, :year]
+
   @polar_opts [
     max_radius: [
       type: {:custom, Tucan.Options, :positive_number, []},
@@ -866,19 +868,19 @@ defmodule Tucan.Polar do
   end
 
   # Sets the __r_start and __r_end fields of each sector, stacking the values of
-  # each group if a color field is set
+  # each group in the order of the sort field, if set
   defp stack_radius(vl, _group, nil) do
     vl
     |> Vl.transform(calculate: "datum.__value", as: "__r_end")
     |> Vl.transform(calculate: "0", as: "__r_start")
   end
 
-  defp stack_radius(vl, group, color_by) do
+  defp stack_radius(vl, group, sort_field) do
     vl
     |> Vl.transform(
       window: [[op: :sum, field: "__value", as: "__r_end"]],
       groupby: [group],
-      sort: [[field: color_by]],
+      sort: [[field: sort_field]],
       frame: [nil, 0]
     )
     |> Vl.transform(calculate: "datum.__r_end - datum.__value", as: "__r_start")
@@ -954,6 +956,286 @@ defmodule Tucan.Polar do
 
     Vl.layers(vl, Grid.layers(grid, [layer]))
   end
+
+  histogram_opts = [
+    bins: [
+      type: :pos_integer,
+      default: 16,
+      doc: "The number of equal angle bins a full turn is split to."
+    ],
+    relative: [
+      type: :boolean,
+      default: false,
+      doc: """
+      If set the radius is the percentage of the values in each bin instead of
+      their count.
+      """
+    ],
+    color_by: [
+      doc: """
+      If set a data field used for coloring the bars. The bars of each bin are
+      stacked outwards, in the order of the colors in the legend.
+      """
+    ]
+  ]
+
+  @histogram_opts Tucan.Options.take!(
+                    [
+                      :fill_opacity,
+                      :tooltip,
+                      :color_by,
+                      :color,
+                      :fill_color,
+                      :line_color,
+                      :stroke_width
+                    ],
+                    Tucan.Keyword.deep_merge(@polar_opts, histogram_opts)
+                  )
+  @histogram_schema Tucan.Options.to_nimble_schema!(@histogram_opts)
+
+  @doc """
+  Draws a circular histogram of the angles in the `theta` field.
+
+  A full turn is split in `:bins` equal sectors and the radius of each sector is
+  the number of values in it. Circular histograms are useful for cyclic data, like
+  directions or the times of a day, since values near the end of the cycle are next
+  to values near its start.
+
+  See the module documentation for the coordinate conventions, cyclic data and the
+  polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@histogram_opts)}
+
+  ## Examples
+
+  The directions of 400 generated observations, concentrated around 60 degrees:
+
+  ```tucan
+  directions =
+    for i <- 1..400 do
+      spread = 50 * :math.sin(i * 12.9898) * :math.cos(i * 4.1414)
+      60 + spread + if(rem(i, 5) == 0, do: 180, else: 0)
+    end
+
+  Tucan.Polar.histogram([direction: directions], "direction",
+    bins: 24,
+    fill_color: "seagreen",
+    line_color: "white"
+  )
+  ```
+
+  The times of the day at which the purchases of an online store were made, as a
+  percentage per hour and colored by the kind of device:
+
+  ```tucan
+  purchases =
+    for i <- 1..600 do
+      device = if rem(i, 3) == 0, do: "mobile", else: "desktop"
+      peak = if device == "mobile", do: 21, else: 14
+      hour = peak + 4 * :math.sin(i * 7.31) * :math.cos(i * 2.17)
+
+      %{hour: hour, device: device}
+    end
+
+  Tucan.Polar.histogram(purchases, "hour",
+    period: 24,
+    bins: 24,
+    color_by: "device",
+    relative: true,
+    tooltip: true
+  )
+  ```
+  """
+  @spec histogram(plotdata :: Tucan.plotdata(), theta :: String.t(), opts :: keyword()) ::
+          VegaLite.t()
+  def histogram(plotdata, theta, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @histogram_schema)
+
+    bin_width = 360 / opts[:bins]
+    color_by = opts[:color_by]
+    groupby = Enum.reject(["__bin", color_by], &is_nil/1)
+
+    layer =
+      Vl.new()
+      |> add_degrees_transform(theta, opts)
+      |> Vl.transform(
+        calculate: "min(floor(datum.__degrees / #{bin_width}), #{opts[:bins] - 1})",
+        as: "__bin"
+      )
+      |> Vl.transform(aggregate: [[op: :count, as: "__value"]], groupby: groupby)
+      |> maybe_relative(opts[:relative])
+      |> Vl.transform(calculate: "datum.__bin * #{bin_width}", as: "__start_angle")
+      |> Vl.transform(calculate: "datum.__start_angle + #{bin_width}", as: "__end_angle")
+      |> stack_radius("__bin", color_by)
+      |> add_bin_range_transforms(opts)
+
+    value_title = if opts[:relative], do: "Percentage", else: "Count"
+
+    tooltip =
+      bin_range_tooltip(theta, opts) ++
+        [[field: "__value", type: :quantitative, title: value_title, format: ".3~f"]]
+
+    infer_max_radius = fn vl ->
+      max_bin_value(vl, theta, color_by, opts, fn degrees -> trunc(degrees / bin_width) end)
+    end
+
+    sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip)
+  end
+
+  # Sets the __degrees field, the angle in degrees in [0, 360)
+  defp add_degrees_transform(vl, theta, opts) do
+    degrees =
+      cond do
+        opts[:period] != nil -> "datum.__polar_period_angle"
+        opts[:angle_unit] == :radians -> "#{to_number(theta)} * #{180 / :math.pi()}"
+        true -> to_number(theta)
+      end
+
+    vl
+    |> maybe_add_period_transform(theta, opts[:period])
+    |> Vl.transform(calculate: "((#{degrees}) % 360 + 360) % 360", as: "__degrees")
+  end
+
+  defp maybe_relative(vl, false), do: vl
+
+  defp maybe_relative(vl, true) do
+    vl
+    |> Vl.transform(joinaggregate: [[op: :sum, field: "__value", as: "__total"]])
+    |> Vl.transform(calculate: "datum.__value / datum.__total * 100", as: "__value")
+  end
+
+  # The bin limits in the units of the theta field, not available for temporal data
+  defp add_bin_range_transforms(vl, opts) do
+    case bin_range_factor(opts) do
+      nil ->
+        vl
+
+      factor ->
+        vl
+        |> Vl.transform(calculate: "datum.__start_angle * #{factor}", as: "__bin_start")
+        |> Vl.transform(calculate: "datum.__end_angle * #{factor}", as: "__bin_end")
+    end
+  end
+
+  defp bin_range_factor(opts) do
+    cond do
+      opts[:period] in @temporal_periods -> nil
+      opts[:period] != nil -> opts[:period] / 360
+      opts[:angle_unit] == :radians -> :math.pi() / 180
+      true -> 1
+    end
+  end
+
+  defp bin_range_tooltip(theta, opts) do
+    if bin_range_factor(opts) do
+      [
+        [field: "__bin_start", type: :quantitative, title: "#{theta} from", format: ".4~f"],
+        [field: "__bin_end", type: :quantitative, title: "#{theta} to", format: ".4~f"]
+      ]
+    else
+      []
+    end
+  end
+
+  # The maximum stacked value of the bins, computed in the same way as the vega-lite
+  # transforms, if the data are inline. `bin_fun` returns the bin of an angle in
+  # degrees in [0, 360).
+  defp max_bin_value(vl, theta, color_by, opts, bin_fun) do
+    case get_in(vl.spec, ["data", "values"]) do
+      rows when is_list(rows) ->
+        counts =
+          rows
+          |> Enum.map(fn row -> {degrees(row[theta], opts), color_by && row[color_by]} end)
+          |> Enum.reject(fn {degrees, _color} -> is_nil(degrees) end)
+          |> Enum.map(fn {degrees, color} -> {bin_fun.(degrees), color} end)
+          |> Enum.frequencies()
+
+        total = counts |> Map.values() |> Enum.sum()
+
+        counts
+        |> Enum.group_by(fn {{bin, _color}, _count} -> bin end, &elem(&1, 1))
+        |> Enum.map(fn {_bin, counts} -> Enum.sum(counts) end)
+        |> Enum.max(fn -> 0 end)
+        |> then(fn max -> if opts[:relative] and total > 0, do: max / total * 100, else: max end)
+
+      _other ->
+        nil
+    end
+  end
+
+  # The angle in degrees in [0, 360) of a theta value, nil if it is not valid
+  defp degrees(value, opts) do
+    degrees =
+      case {opts[:period], opts[:angle_unit]} do
+        {nil, :radians} -> to_float(value) && to_float(value) * 180 / :math.pi()
+        {nil, _unit} -> to_float(value)
+        {period, _unit} when period in @temporal_periods -> period_fraction(value, period)
+        {period, _unit} -> to_float(value) && positive_mod(to_float(value), period) / period * 360
+      end
+
+    degrees && positive_mod(degrees, 360)
+  end
+
+  defp to_float(value) when is_number(value), do: value * 1.0
+
+  defp to_float(value) when is_binary(value) do
+    case Float.parse(value) do
+      {float, ""} -> float
+      _other -> nil
+    end
+  end
+
+  defp to_float(_value), do: nil
+
+  defp positive_mod(value, period) do
+    value - period * Float.floor(value / period)
+  end
+
+  # The fraction of a temporal period, in degrees
+  defp period_fraction(value, period) do
+    case to_naive_datetime(value) do
+      nil ->
+        nil
+
+      datetime ->
+        {seconds, _micro} = NaiveDateTime.to_time(datetime) |> Time.to_seconds_after_midnight()
+        day_fraction = seconds / 86_400
+        date = NaiveDateTime.to_date(datetime)
+
+        case period do
+          :day ->
+            day_fraction * 360
+
+          :week ->
+            (Date.day_of_week(date) - 1 + day_fraction) / 7 * 360
+
+          :year ->
+            days = if Date.leap_year?(date), do: 366, else: 365
+            (Date.day_of_year(date) - 1 + day_fraction) / days * 360
+        end
+    end
+  end
+
+  defp to_naive_datetime(%NaiveDateTime{} = datetime), do: datetime
+  defp to_naive_datetime(%DateTime{} = datetime), do: DateTime.to_naive(datetime)
+  defp to_naive_datetime(%Date{} = date), do: NaiveDateTime.new!(date, ~T[00:00:00])
+
+  defp to_naive_datetime(value) when is_binary(value) do
+    case NaiveDateTime.from_iso8601(value) do
+      {:ok, datetime} ->
+        datetime
+
+      _error ->
+        case Date.from_iso8601(value) do
+          {:ok, date} -> NaiveDateTime.new!(date, ~T[00:00:00])
+          _error -> nil
+        end
+    end
+  end
+
+  defp to_naive_datetime(_value), do: nil
 
   ## Polar plot construction
 
@@ -1034,8 +1316,6 @@ defmodule Tucan.Polar do
   end
 
   ## Cyclic data
-
-  @temporal_periods [:day, :week, :year]
 
   defp theta_type(opts) do
     if opts[:period] in @temporal_periods, do: :temporal, else: :quantitative
