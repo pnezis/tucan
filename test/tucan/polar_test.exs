@@ -998,4 +998,82 @@ defmodule Tucan.PolarTest do
       end
     end
   end
+
+  describe "heatmap/5" do
+    @heat [t: [10, 100, 200, 15], r: [0.5, 1.5, 3, 5], v: [1, 2, 3, 4]]
+
+    test "bins the angle and the radius" do
+      vl = Tucan.Polar.heatmap(@heat, "t", "r", "v", theta_bins: 4, max_radius: 4)
+      layer = data_layer(vl)
+
+      assert [
+               %{"as" => "__degrees"},
+               %{"calculate" => ~S|toNumber(datum["r"])|, "as" => "__r"},
+               %{"filter" => "datum.__r >= 0 && datum.__r <= 4"},
+               %{"calculate" => "min(floor(datum.__degrees / 90.0), 3)", "as" => "__bin"},
+               %{"calculate" => r_bin, "as" => "__r_bin"},
+               %{
+                 "aggregate" => [%{"op" => "mean", "field" => "v", "as" => "__value"}],
+                 "groupby" => ["__bin", "__r_bin"]
+               },
+               %{"as" => "__start_angle"},
+               %{"as" => "__end_angle"},
+               %{"calculate" => "[0,1,2,3,4][datum.__r_bin]", "as" => "__r_start"},
+               %{"calculate" => "[0,1,2,3,4][datum.__r_bin + 1]", "as" => "__r_end"} | _
+             ] = layer["transform"]
+
+      assert r_bin ==
+               "datum.__r >= 3 ? 3 : (datum.__r >= 2 ? 2 : (datum.__r >= 1 ? 1 : " <>
+                 "(datum.__r >= 0 ? 0 : (0))))"
+
+      assert layer["encoding"]["color"] == %{
+               "field" => "__value",
+               "type" => "quantitative",
+               "title" => "mean(v)"
+             }
+    end
+
+    test "with counts, radius bins and color scheme" do
+      vl =
+        Tucan.Polar.heatmap(@heat, "t", "r", nil,
+          radius_bins: 2,
+          color_scheme: :viridis,
+          tooltip: true
+        )
+
+      layer = data_layer(vl)
+
+      assert Enum.at(layer["transform"], 5)["aggregate"] == [
+               %{"op" => "count", "as" => "__value"}
+             ]
+
+      # the max radius is inferred from the data
+      assert Enum.at(layer["transform"], 8)["calculate"] == "[0,2.5,5][datum.__r_bin]"
+
+      assert layer["encoding"]["color"] == %{
+               "field" => "__value",
+               "type" => "quantitative",
+               "title" => "Count",
+               "scale" => %{"scheme" => "viridis"}
+             }
+
+      assert Enum.map(layer["encoding"]["tooltip"], & &1["field"]) == [
+               "__bin_start",
+               "__bin_end",
+               "__r_start",
+               "__r_end",
+               "__value"
+             ]
+    end
+
+    test "with an aggregate" do
+      layer = Tucan.Polar.heatmap(@heat, "t", "r", "v", aggregate: :max) |> data_layer()
+
+      assert Enum.at(layer["transform"], 5)["aggregate"] == [
+               %{"op" => "max", "field" => "v", "as" => "__value"}
+             ]
+
+      assert layer["encoding"]["color"]["title"] == "max(v)"
+    end
+  end
 end

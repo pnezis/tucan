@@ -61,8 +61,8 @@ wedge are proportional to the value.
 
 - Add experimental `Tucan.Polar` module for plots in polar coordinates, with
 `Tucan.Polar.lineplot/4`, `Tucan.Polar.scatter/4`, `Tucan.Polar.area/4`,
-`Tucan.Polar.radar/4`, `Tucan.Polar.bar/4`, `Tucan.Polar.histogram/3` and
-`Tucan.Polar.windrose/4`. The polar grid is drawn in the data coordinates, and
+`Tucan.Polar.radar/4`, `Tucan.Polar.bar/4`, `Tucan.Polar.histogram/3`,
+`Tucan.Polar.windrose/4` and `Tucan.Polar.heatmap/5`. The polar grid is drawn in the data coordinates, and
 the maximum radius is inferred from inline data. Angle marks can be labeled in
 degrees, as compass points or with custom labels. Cyclic data, e.g. the days of
 a year, are supported through the `:period` option.

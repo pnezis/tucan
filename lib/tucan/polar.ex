@@ -921,7 +921,8 @@ defmodule Tucan.Polar do
   defp aggregate_values(values, :max), do: [Enum.max(values)]
 
   # Builds a polar plot of circular sectors, from a layer that sets the __start_angle,
-  # __end_angle (in degrees) and __r_start, __r_end fields of each sector
+  # __end_angle (in degrees) and __r_start, __r_end fields of each sector. The layer
+  # can also be a function receiving the grid and returning the layer.
   #
   # `color` is the field and the encoding options of the color, by default the
   # `:color_by` field if set.
@@ -936,9 +937,13 @@ defmodule Tucan.Polar do
     {color_field, color_opts} =
       color || {opts[:color_by], [type: :nominal]}
 
+    # the layer may depend on the grid
+    layer = if is_function(layer, 1), do: layer.(grid), else: layer
+
     tooltip =
       if color_field,
-        do: tooltip ++ [[field: color_field, type: color_opts[:type]]],
+        do:
+          Enum.uniq_by(tooltip ++ [[field: color_field, type: color_opts[:type]]], & &1[:field]),
         else: tooltip
 
     layer =
@@ -1469,6 +1474,192 @@ defmodule Tucan.Polar do
       _other ->
         nil
     end
+  end
+
+  heatmap_opts = [
+    theta_bins: [
+      type: :pos_integer,
+      default: 24,
+      doc: "The number of equal angle bins a full turn is split to."
+    ],
+    radius_bins: [
+      type: :pos_integer,
+      doc: """
+      The number of equal radius bins. If not set the radius ticks of the grid are
+      used as the bin limits, so that the grid circles are the edges of the cells.
+      """
+    ],
+    aggregate: [
+      type: {:in, [:mean, :sum, :count, :median, :min, :max]},
+      doc: """
+      The statistic used for aggregating the values of the `color` field within each
+      cell. Defaults to `:mean`. Ignored if `color` is `nil`.
+      """
+    ],
+    color_scheme: [
+      type: :atom,
+      doc: """
+      The color scheme to use, for supported color schemes check `Tucan.Scale`.
+      """,
+      section: :style
+    ]
+  ]
+
+  @heatmap_opts Tucan.Options.take!(
+                  [
+                    :fill_opacity,
+                    :tooltip,
+                    :color,
+                    :line_color,
+                    :stroke_width
+                  ],
+                  Tucan.Keyword.deep_merge(@polar_opts, heatmap_opts)
+                )
+  @heatmap_schema Tucan.Options.to_nimble_schema!(@heatmap_opts)
+
+  @doc """
+  Draws a polar heatmap.
+
+  The observations are binned by their angle, the `theta` field, and their radius,
+  the `r` field, and each cell is colored by the aggregated values of the `color`
+  field. If `color` is `nil` the cells are colored by the number of observations.
+
+  Radius values below zero or above the maximum radius are ignored.
+
+  See the module documentation for the coordinate conventions, cyclic data and the
+  polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@heatmap_opts)}
+
+  ## Examples
+
+  The number of generated wind observations by direction and speed:
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  data =
+    for _i <- 1..2000 do
+      direction = 225 + 50 * :rand.normal()
+      %{direction: direction, speed: abs(6 + 2.5 * :rand.normal())}
+    end
+
+  Tucan.Polar.heatmap(data, "direction", "speed", nil,
+    theta_bins: 36,
+    radius_bins: 12,
+    direction: :clockwise,
+    angle_offset: 90,
+    angle_labels: :compass,
+    color_scheme: :viridis
+  )
+  ```
+
+  The activity of a website per hour of the day and day of the week, from Monday at
+  the center to Sunday at the edge:
+
+  ```tucan
+  data =
+    for day <- 0..6, hour <- 0..23 do
+      weekend? = day >= 5
+      peak = if weekend?, do: 15, else: 11
+      activity = 100 * :math.exp(-:math.pow((hour - peak) / 4, 2)) * if(weekend?, do: 0.6, else: 1)
+
+      %{day: day, hour: hour, activity: activity}
+    end
+
+  Tucan.Polar.heatmap(data, "hour", "day", "activity",
+    period: 24,
+    radius_ticks: [1, 2, 3, 4, 5, 6, 7],
+    color_scheme: :oranges,
+    tooltip: true
+  )
+  ```
+  """
+  @spec heatmap(
+          plotdata :: Tucan.plotdata(),
+          theta :: String.t(),
+          r :: String.t(),
+          color :: String.t() | nil,
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def heatmap(plotdata, theta, r, color, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @heatmap_schema)
+
+    bin_width = 360 / opts[:theta_bins]
+
+    {aggregate, value_title} =
+      case color do
+        nil -> {[op: :count, as: "__value"], "Count"}
+        field -> heatmap_aggregate(field, opts[:aggregate] || :mean)
+      end
+
+    layer = fn grid ->
+      edges = radius_edges(grid, opts[:radius_bins])
+
+      Vl.new()
+      |> add_degrees_transform(theta, opts)
+      |> Vl.transform(calculate: to_number(r), as: "__r")
+      |> Vl.transform(filter: "datum.__r >= 0 && datum.__r <= #{grid.max_radius}")
+      |> Vl.transform(
+        calculate: "min(floor(datum.__degrees / #{bin_width}), #{opts[:theta_bins] - 1})",
+        as: "__bin"
+      )
+      |> Vl.transform(calculate: radius_bin_expr(edges), as: "__r_bin")
+      |> Vl.transform(aggregate: [aggregate], groupby: ["__bin", "__r_bin"])
+      |> Vl.transform(calculate: "datum.__bin * #{bin_width}", as: "__start_angle")
+      |> Vl.transform(calculate: "datum.__start_angle + #{bin_width}", as: "__end_angle")
+      |> Vl.transform(calculate: "#{Jason.encode!(edges)}[datum.__r_bin]", as: "__r_start")
+      |> Vl.transform(calculate: "#{Jason.encode!(edges)}[datum.__r_bin + 1]", as: "__r_end")
+      |> add_bin_range_transforms(opts)
+    end
+
+    tooltip =
+      bin_range_tooltip(theta, opts) ++
+        [
+          [field: "__r_start", type: :quantitative, title: "#{r} from", format: ".4~f"],
+          [field: "__r_end", type: :quantitative, title: "#{r} to", format: ".4~f"],
+          [field: "__value", type: :quantitative, title: value_title, format: ".3~f"]
+        ]
+
+    opts =
+      if opts[:color_scheme] do
+        Keyword.update!(opts, :color, fn color_opts ->
+          Tucan.Keyword.deep_merge([scale: [scheme: opts[:color_scheme]]], color_opts)
+        end)
+      else
+        opts
+      end
+
+    sectors_plot(
+      plotdata,
+      layer,
+      opts,
+      &max_abs_value(&1, r),
+      tooltip,
+      {"__value", [type: :quantitative, title: value_title]}
+    )
+  end
+
+  defp heatmap_aggregate(field, aggregate) do
+    {[op: aggregate, field: field, as: "__value"], "#{aggregate}(#{field})"}
+  end
+
+  defp radius_edges(grid, nil) do
+    Enum.uniq([0 | grid.radius_ticks] ++ [grid.max_radius])
+  end
+
+  defp radius_edges(grid, bins) do
+    for i <- 0..bins, do: round_number(i * grid.max_radius / bins)
+  end
+
+  # The index of the radius bin, the last bin includes its upper limit
+  defp radius_bin_expr(edges) do
+    edges
+    |> Enum.drop(-1)
+    |> Enum.with_index()
+    |> Enum.reduce("0", fn {edge, i}, acc -> "datum.__r >= #{edge} ? #{i} : (#{acc})" end)
   end
 
   ## Polar plot construction
