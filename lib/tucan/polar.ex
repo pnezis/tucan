@@ -952,12 +952,13 @@ defmodule Tucan.Polar do
         if opts[:tooltip] == true, do: Vl.encode(layer, :tooltip, tooltip), else: layer
       end)
 
-    Vl.layers(vl, Grid.layers(grid) ++ [layer])
+    Vl.layers(vl, Grid.layers(grid, [layer]))
   end
 
   ## Polar plot construction
 
-  # Builds a layered plot with the polar grid and the given data layers on top of it.
+  # Builds a layered plot with the polar grid and the given data layers, drawn above
+  # the grid lines and below the grid labels.
   # The data are set on the top level spec and inherited by the data layers.
   #
   # `tooltip_theta` is the field and type of the angle shown in the tooltip.
@@ -975,7 +976,7 @@ defmodule Tucan.Polar do
         |> maybe_encode_tooltip(r, tooltip_theta || {theta, theta_type(opts)}, opts)
       end
 
-    Vl.layers(vl, Grid.layers(grid) ++ layers)
+    Vl.layers(vl, Grid.layers(grid, layers))
   end
 
   # The square top level plot and the grid. `infer_max_radius` is called with the

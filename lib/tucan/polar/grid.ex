@@ -144,18 +144,15 @@ defmodule Tucan.Polar.Grid do
   end
 
   @doc """
-  Returns the grid layers.
+  Adds the grid layers below and the grid labels above the given data layers.
   """
-  @spec layers(grid :: t()) :: [VegaLite.t()]
-  def layers(grid) do
+  @spec layers(grid :: t(), data_layers :: [VegaLite.t()]) :: [VegaLite.t()]
+  def layers(grid, data_layers) do
     style = [color: grid.color, opacity: grid.opacity]
 
-    [
-      circles_layer(grid, style),
-      angle_lines_layer(grid, style),
-      angle_labels_layer(grid),
-      radius_labels_layer(grid)
-    ]
+    [circles_layer(grid, style), angle_lines_layer(grid, style)] ++
+      data_layers ++
+      [angle_labels_layer(grid), radius_labels_layer(grid)]
   end
 
   defp circles_layer(grid, style) do

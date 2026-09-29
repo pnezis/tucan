@@ -5,14 +5,15 @@ defmodule Tucan.PolarTest do
 
   defp layers(vl), do: VegaLite.to_spec(vl)["layer"]
 
-  defp data_layer(vl), do: vl |> layers() |> List.last()
+  # the data layers are between the grid lines and the grid labels
+  defp data_layer(vl), do: vl |> layers() |> Enum.drop(-2) |> List.last()
 
   defp grid_layer(vl, mark) do
     vl |> layers() |> Enum.find(fn layer -> layer["mark"]["type"] == mark end)
   end
 
   defp angle_labels(vl) do
-    vl |> layers() |> Enum.at(2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
+    vl |> layers() |> Enum.at(-2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
   end
 
   defp radius_labels(vl) do
@@ -25,7 +26,7 @@ defmodule Tucan.PolarTest do
   end
 
   describe "lineplot/4" do
-    test "creates a square layered plot with the grid below the data" do
+    test "creates a square layered plot with the data between the grid lines and labels" do
       spec = Tucan.Polar.lineplot(@data, "r", "theta") |> VegaLite.to_spec()
 
       assert spec["width"] == 300
@@ -36,9 +37,9 @@ defmodule Tucan.PolarTest do
       assert Enum.map(spec["layer"], & &1["mark"]["type"]) == [
                "line",
                "rule",
+               "line",
                "text",
-               "text",
-               "line"
+               "text"
              ]
     end
 
@@ -182,7 +183,7 @@ defmodule Tucan.PolarTest do
                %{"x" => 0, "y" => 0, "x2" => 0, "y2" => 1}
              ]
 
-      labels = vl |> layers() |> Enum.at(2) |> get_in(["data", "values"])
+      labels = vl |> layers() |> Enum.at(-2) |> get_in(["data", "values"])
 
       assert Enum.map(labels, & &1["label"]) == ["0°", "90°"]
     end
@@ -191,7 +192,7 @@ defmodule Tucan.PolarTest do
       labels = fn opts ->
         Tucan.Polar.lineplot(@data, "r", "theta", [max_radius: 1] ++ opts)
         |> layers()
-        |> Enum.at(2)
+        |> Enum.at(-2)
         |> get_in(["data", "values"])
         |> Enum.map(& &1["label"])
       end
@@ -297,7 +298,7 @@ defmodule Tucan.PolarTest do
   end
 
   describe "scatter/4" do
-    test "draws the points on top of the polar grid" do
+    test "draws the points between the grid lines and labels" do
       vl = Tucan.Polar.scatter(@data, "r", "theta")
       spec = VegaLite.to_spec(vl)
       layer = data_layer(vl)
@@ -308,9 +309,9 @@ defmodule Tucan.PolarTest do
       assert Enum.map(spec["layer"], & &1["mark"]["type"]) == [
                "line",
                "rule",
+               "point",
                "text",
-               "text",
-               "point"
+               "text"
              ]
 
       assert layer["mark"] == %{"type" => "point", "fillOpacity" => 1}
@@ -523,7 +524,7 @@ defmodule Tucan.PolarTest do
           tooltip: true
         )
 
-      [fill, line] = vl |> layers() |> Enum.drop(4)
+      [fill, line] = vl |> layers() |> Enum.slice(2, 2)
 
       assert fill["mark"] == %{
                "type" => "line",
