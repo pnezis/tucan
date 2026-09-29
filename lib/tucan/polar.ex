@@ -2,13 +2,21 @@ defmodule Tucan.Polar do
   @moduledoc """
   Plots in polar coordinates.
 
+  The following plots are supported:
+
+  * `lineplot/4`, `scatter/4` and `area/4` for lines, points and filled areas.
+  * `radar/4` for comparing the values of several categories.
+  * `bar/4`, `histogram/3` and `windrose/4` for circular sectors per category, per
+  angle bin, or per direction and speed.
+  * `heatmap/5` for cells binned by angle and radius.
+
   > #### Experimental {: .error}
   >
   > This API is experimental and may change. `VegaLite` does not support polar
   > coordinates for lines and points, so the polar data are converted to cartesian
-  > coordinates and the polar grid is drawn manually as extra layers. As a result
-  > polar plots are layered plots and helpers like `Tucan.Axes`, `Tucan.Grid` or
-  > `Tucan.Scale` do not apply to them.
+  > coordinates, while circular sectors are drawn as arc marks. The polar grid is
+  > drawn manually as extra layers. As a result polar plots are layered plots and
+  > helpers like `Tucan.Axes`, `Tucan.Grid` or `Tucan.Scale` do not apply to them.
 
   ## Coordinates
 
