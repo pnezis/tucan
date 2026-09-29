@@ -52,6 +52,13 @@ categorical field.
   Tucan.violin(:penguins, "Body Mass (g)", group_by: "Species", color_by: "Species")
   ```
 
+- Add `Tucan.radial/4` for radial plots, where both the angle and the radius of each
+wedge are proportional to the value.
+
+  ```tucan
+  Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30)
+  ```
+
 - Warn if a column with non-numeric values is encoded in a quantitative channel,
 e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
 empty plot. Set the channel type explicitly to silence the warning.

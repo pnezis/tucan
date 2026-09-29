@@ -161,6 +161,14 @@ defmodule Tucan.Options do
       default: [],
       section: :encodings
     ],
+    radius: [
+      type: :keyword_list,
+      doc: """
+      Extra vega lite options for the `:radius` encoding.
+      """,
+      default: [],
+      section: :encodings
+    ],
     color: [
       type: :keyword_list,
       doc: """

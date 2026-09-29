@@ -31,6 +31,7 @@ defmodule TucanTest do
         {:lineplot, fn opts -> Tucan.lineplot(@dataset, "x", "y", opts) end},
         {:lollipop, fn opts -> Tucan.lollipop(@dataset, "x", "y", opts) end},
         {:pie, fn opts -> Tucan.pie(@dataset, "x", "y", opts) end},
+        {:radial, fn opts -> Tucan.radial(@dataset, "x", "y", opts) end},
         {:punchcard, fn opts -> Tucan.punchcard(@dataset, "x", "y", "z", opts) end},
         {:range_bar, fn opts -> Tucan.range_bar(@dataset, "c", "min", "max", opts) end},
         {:scatter, fn opts -> Tucan.scatter(@dataset, "x", "y", opts) end},
@@ -1945,6 +1946,62 @@ defmodule TucanTest do
         |> Vl.encode_field(:color, "category")
 
       assert Tucan.donut(@dataset, "value", "category", inner_radius: 20) == expected
+    end
+  end
+
+  describe "radial/4" do
+    test "with default values" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:arc, fill_opacity: 1.0)
+        |> Vl.encode_field(:theta, "value", type: :quantitative, stack: true)
+        |> Vl.encode_field(:radius, "value",
+          type: :quantitative,
+          scale: [type: :sqrt, zero: true, range_min: 0]
+        )
+        |> Vl.encode_field(:color, "category")
+
+      assert Tucan.radial(@dataset, "value", "category") == expected
+    end
+
+    test "with aggregate and inner radius" do
+      expected =
+        Vl.new()
+        |> Vl.data_from_url(@dataset)
+        |> Vl.mark(:arc, fill_opacity: 1.0)
+        |> Vl.encode_field(:theta, "value", type: :quantitative, stack: true, aggregate: :sum)
+        |> Vl.encode_field(:radius, "value",
+          type: :quantitative,
+          scale: [type: :sqrt, zero: true, range_min: 30],
+          aggregate: :sum
+        )
+        |> Vl.encode_field(:color, "category")
+
+      assert Tucan.radial(@dataset, "value", "category", aggregate: :sum, inner_radius: 30) ==
+               expected
+    end
+
+    test "with custom encoding options" do
+      spec =
+        Tucan.radial(@dataset, "value", "category", radius: [scale: [type: :linear]])
+        |> VegaLite.to_spec()
+
+      assert get_in(spec, ["encoding", "radius", "scale"]) == %{
+               "type" => "linear",
+               "zero" => true,
+               "rangeMin" => 0
+             }
+    end
+
+    test "raises with invalid options" do
+      assert_raise NimbleOptions.ValidationError, fn ->
+        Tucan.radial(@dataset, "value", "category", aggregate: :avg)
+      end
+
+      assert_raise NimbleOptions.ValidationError, fn ->
+        Tucan.radial(@dataset, "value", "category", inner_radius: -1)
+      end
     end
   end
 

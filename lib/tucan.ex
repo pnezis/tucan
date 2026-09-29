@@ -3608,6 +3608,29 @@ defmodule Tucan do
     area(plotdata, x, y, opts)
   end
 
+  aggregate_ops = [
+    :count,
+    :valid,
+    :missing,
+    :distinct,
+    :sum,
+    :product,
+    :mean,
+    :average,
+    :variance,
+    :variancep,
+    :stdev,
+    :stdevp,
+    :stderr,
+    :median,
+    :q1,
+    :q3,
+    :ci0,
+    :ci1,
+    :min,
+    :max
+  ]
+
   pie_opts = [
     inner_radius: [
       type: :integer,
@@ -3618,30 +3641,7 @@ defmodule Tucan do
       dest: :mark
     ],
     aggregate: [
-      type:
-        {:in,
-         [
-           :count,
-           :valid,
-           :missing,
-           :distinct,
-           :sum,
-           :product,
-           :mean,
-           :average,
-           :variance,
-           :variancep,
-           :stdev,
-           :stdevp,
-           :stderr,
-           :median,
-           :q1,
-           :q3,
-           :ci0,
-           :ci1,
-           :min,
-           :max
-         ]},
+      type: {:in, aggregate_ops},
       doc: "The statistic to use (if any) for aggregating values per pie slice (e.g. `:mean`).",
       dest: :theta
     ]
@@ -3756,6 +3756,99 @@ defmodule Tucan do
     opts = Keyword.put_new(opts, :inner_radius, 50)
 
     pie(plotdata, field, category, opts)
+  end
+
+  radial_opts = [
+    aggregate: [
+      type: {:in, aggregate_ops},
+      doc: """
+      The statistic to use (if any) for aggregating values per category (e.g. `:sum`).
+      It is applied to both the angle and the radius of each wedge.
+      """
+    ],
+    inner_radius: [
+      type: :non_neg_integer,
+      doc: """
+      The radius in pixels of the empty center of the plot. Wedges are scaled between
+      the inner radius and the outer edge of the plot.
+      """,
+      default: 0
+    ]
+  ]
+
+  @radial_opts Tucan.Options.take!(
+                 [@global_opts, @global_mark_opts, :theta, :radius, :color],
+                 radial_opts
+               )
+  @radial_schema Tucan.Options.to_nimble_schema!(@radial_opts)
+
+  @doc """
+  Draws a radial plot.
+
+  A radial plot is a pie chart where both the angle and the radius of each wedge
+  are proportional to the value of the `field`. The radius uses a square root scale,
+  so the area of each wedge is proportional to its value. The chart is colored by
+  the `category` field.
+
+  Compared to `pie/4`, differences between categories are easier to spot since
+  they are encoded in two dimensions.
+
+  ## Options
+
+  #{Tucan.Options.docs(@radial_opts)}
+
+  ## Examples
+
+  ```tucan
+  data = [
+    %{value: 12, category: "A"},
+    %{value: 23, category: "B"},
+    %{value: 47, category: "C"},
+    %{value: 6, category: "D"},
+    %{value: 52, category: "E"},
+    %{value: 19, category: "F"}
+  ]
+
+  Tucan.radial(data, "value", "category")
+  ```
+
+  You can aggregate the values of each category and leave the center of the plot
+  empty with the `:inner_radius` option:
+
+  ```tucan
+  Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30, tooltip: true)
+  ```
+  """
+  @doc section: :plots
+  @spec radial(
+          plotdata :: plotdata(),
+          field :: String.t(),
+          category :: String.t(),
+          opts :: keyword()
+        ) ::
+          VegaLite.t()
+  def radial(plotdata, field, category, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @radial_schema)
+
+    spec_opts = Tucan.Options.take_options(opts, @radial_opts, :spec)
+    mark_opts = Tucan.Options.take_options(opts, @radial_opts, :mark)
+
+    aggregate = if opts[:aggregate], do: [aggregate: opts[:aggregate]], else: []
+
+    plotdata
+    |> new(spec_opts)
+    |> Vl.mark(:arc, mark_opts)
+    |> encode_field(:theta, field, opts, [type: :quantitative, stack: true] ++ aggregate)
+    |> encode_field(
+      :radius,
+      field,
+      opts,
+      [
+        type: :quantitative,
+        scale: [type: :sqrt, zero: true, range_min: opts[:inner_radius]]
+      ] ++ aggregate
+    )
+    |> encode_field(:color, category, opts)
   end
 
   ## Image
