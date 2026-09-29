@@ -11,6 +11,10 @@ defmodule Tucan.PolarTest do
     vl |> layers() |> Enum.find(fn layer -> layer["mark"]["type"] == mark end)
   end
 
+  defp angle_labels(vl) do
+    vl |> layers() |> Enum.at(2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
+  end
+
   defp radius_labels(vl) do
     vl
     |> layers()
@@ -453,10 +457,6 @@ defmodule Tucan.PolarTest do
       %{s: "b", k: "z", v: 4}
     ]
 
-    defp angle_labels(vl) do
-      vl |> layers() |> Enum.at(2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
-    end
-
     test "places the categories at equal angles" do
       vl = Tucan.Polar.radar(@radar_data, "v", "k")
       layer = data_layer(vl)
@@ -574,6 +574,95 @@ defmodule Tucan.PolarTest do
 
       assert Enum.at(layer["transform"], 2)["calculate"] ==
                ~s|#{:math.pi() / 180} * toNumber(datum["__radar_angle"]) + 0.0|
+    end
+  end
+
+  describe "period" do
+    test "with a numeric period" do
+      vl = Tucan.Polar.lineplot([r: [1, 2], h: [0, 12]], "r", "h", period: 24, tooltip: true)
+      layer = data_layer(vl)
+
+      assert [
+               %{"calculate" => period, "as" => "__polar_period_angle"},
+               %{"calculate" => angle, "as" => "__polar_angle"} | _
+             ] = layer["transform"]
+
+      assert period == ~S|((toNumber(datum["h"]) % 24) + 24) % 24 / 24 * 360|
+
+      # clock-like by default
+      assert angle ==
+               "#{-:math.pi() / 180} * datum.__polar_period_angle + #{:math.pi() / 2}"
+
+      assert angle_labels(vl) == ~w(0 3 6 9 12 15 18 21)
+      assert layer["encoding"]["order"]["type"] == "quantitative"
+
+      assert Enum.at(layer["encoding"]["tooltip"], 1) == %{
+               "field" => "h",
+               "type" => "quantitative"
+             }
+
+      assert angle_labels(Tucan.Polar.lineplot([r: [1], h: [0]], "r", "h", period: 12)) ==
+               ~w(0 1 2 3 4 5 6 7 8 9 10 11)
+
+      assert angle_labels(Tucan.Polar.lineplot([r: [1], h: [0]], "r", "h", period: 1)) ==
+               ~w(0 0.125 0.25 0.375 0.5 0.625 0.75 0.875)
+    end
+
+    test "with temporal periods" do
+      data = [r: [1, 2], d: [~D[2024-01-01], ~D[2024-06-01]]]
+
+      for {period, expr, labels} <- [
+            {:day, "/ 86400 * 360", ~w(00:00 03:00 06:00 09:00 12:00 15:00 18:00 21:00)},
+            {:week, "(day(datum.__polar_date) + 6) % 7", ~w(Mon Tue Wed Thu Fri Sat Sun)},
+            {:year, "time(datetime(year(datum.__polar_date) + 1, 0, 1))",
+             ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)}
+          ] do
+        vl = Tucan.Polar.lineplot(data, "r", "d", period: period, tooltip: true)
+        layer = data_layer(vl)
+
+        assert [
+                 %{"calculate" => ~S|toDate(datum["d"])|, "as" => "__polar_date"},
+                 %{"calculate" => period_expr, "as" => "__polar_period_angle"} | _
+               ] = layer["transform"]
+
+        assert period_expr =~ expr
+        assert angle_labels(vl) == labels
+        assert layer["encoding"]["order"] == %{"field" => "d", "type" => "temporal"}
+        assert Enum.at(layer["encoding"]["tooltip"], 1) == %{"field" => "d", "type" => "temporal"}
+      end
+    end
+
+    test "user options take precedence over the period defaults" do
+      vl =
+        Tucan.Polar.area([r: [1], h: [0]], "r", "h",
+          period: 24,
+          direction: :counter_clockwise,
+          angle_offset: 0,
+          angle_marks: [0, 180]
+        )
+
+      assert Enum.at(data_layer(vl)["transform"], 1)["calculate"] ==
+               "#{:math.pi() / 180} * datum.__polar_period_angle + 0.0"
+
+      # custom angle marks are labeled in degrees
+      assert angle_labels(vl) == ["0°", "180°"]
+
+      vl =
+        Tucan.Polar.scatter([r: [1], h: [0]], "r", "h",
+          period: 24,
+          angle_marks: [0, 180],
+          angle_labels: ["midnight", "noon"]
+        )
+
+      assert angle_labels(vl) == ["midnight", "noon"]
+    end
+
+    test "raises with an invalid period" do
+      for period <- [0, -1, :month] do
+        assert_raise NimbleOptions.ValidationError, fn ->
+          Tucan.Polar.lineplot(@data, "r", "theta", period: period)
+        end
+      end
     end
   end
 end

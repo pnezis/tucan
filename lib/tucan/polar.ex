@@ -33,6 +33,47 @@ defmodule Tucan.Polar do
   either `:max_radius` or `:radius_ticks`.
 
   Polar plots are always square. Use the `:width` option to set their size.
+
+  ## Cyclic data
+
+  Polar plots are well suited for cyclic data, like the hours of a day or the days
+  of a year, since the end of a period is next to its start. With the `:period`
+  option a full turn corresponds to the given period. By default the plot then
+  looks like a clock, starting at the top and going clockwise, and the angle marks
+  are labeled with the period's divisions.
+
+  Daily temperatures of two cities over a year, where the `theta` field is a date:
+
+  ```tucan
+  data =
+    for {city, mean, amplitude} <- [{"Dublin", 10, 5}, {"Madrid", 16, 10}],
+        date <- Date.range(~D[2024-01-01], ~D[2024-12-31]) do
+      day = Date.day_of_year(date)
+      wiggle = :math.sin(day / 3) + 0.6 * :math.sin(day / 1.7)
+      temp = mean - amplitude * :math.cos(2 * :math.pi() * (day - 20) / 366) + wiggle
+
+      %{city: city, date: date, temp: temp}
+    end
+
+  Tucan.Polar.lineplot(data, "temp", "date", period: :year, color_by: "city")
+  ```
+
+  With a numeric period the `theta` field is a number, e.g. the hour of the day
+  with a period of `24`. Notice that the hour `24` is the same as the hour `0`:
+
+  ```tucan
+  demand = [30, 26, 24, 23, 24, 28, 38, 52, 60, 58, 55, 54,
+            56, 55, 53, 54, 60, 72, 80, 78, 70, 58, 45, 36]
+
+  data = Enum.with_index(demand, fn value, hour -> %{hour: hour, demand: value} end)
+
+  Tucan.Polar.area(data, "demand", "hour",
+    period: 24,
+    fill_color: "orange",
+    line_color: "darkorange",
+    tooltip: true
+  )
+  ```
   """
 
   alias Tucan.Polar.Grid
@@ -58,18 +99,18 @@ defmodule Tucan.Polar do
     angle_marks: [
       type: {:list, {:or, [:integer, :float]}},
       type_doc: "list of `t:number/0`",
-      default: [0, 45, 90, 135, 180, 225, 270, 315],
       doc: """
       The angles in degrees at which grid lines from the origin are drawn. Always in
-      degrees, regardless of the `:angle_unit`.
+      degrees, regardless of the `:angle_unit` and the `:period`. Defaults to every
+      45 degrees, or to the period's divisions if `:period` is set.
       """
     ],
     angle_labels: [
       type: {:or, [{:in, [:degrees, :compass, :none]}, {:list, :string}]},
       type_doc: "`t:atom/0` or list of `t:String.t/0`",
-      default: :degrees,
       doc: """
-      The labels of the angle marks. One of:
+      The labels of the angle marks. Defaults to `:degrees`, or to the period's
+      divisions if `:period` is set and `:angle_marks` is not. One of:
 
       * `:degrees` - the angle in degrees, e.g. `"45°"`.
       * `:compass` - the compass point of the angle, e.g. `"NE"`, for multiples of
@@ -82,19 +123,38 @@ defmodule Tucan.Polar do
     angle_unit: [
       type: {:in, [:degrees, :radians]},
       default: :degrees,
-      doc: "The unit of the `theta` field values, one of `:degrees` or `:radians`."
+      doc: """
+      The unit of the `theta` field values, one of `:degrees` or `:radians`. Ignored
+      if `:period` is set.
+      """
+    ],
+    period: [
+      type: {:or, [{:in, [:day, :week, :year]}, {:custom, Tucan.Options, :positive_number, []}]},
+      type_doc: "`t:atom/0` or `t:number/0`",
+      doc: """
+      Plots cyclic data, where a full turn corresponds to the given period. One of:
+
+      * `:day`, `:week` or `:year` - the `theta` field is a date or datetime and a
+      full turn corresponds to a day, a week starting on Monday, or a year.
+      * a number - the `theta` field is a number and a full turn corresponds to the
+      given value, e.g. `24` for the hours of a day.
+
+      See the "Cyclic data" section of the module documentation for more details.
+      """
     ],
     direction: [
       type: {:in, [:counter_clockwise, :clockwise]},
-      default: :counter_clockwise,
-      doc: "The direction in which angles increase."
+      doc: """
+      The direction in which angles increase. Defaults to `:counter_clockwise`, or to
+      `:clockwise` if `:period` is set.
+      """
     ],
     angle_offset: [
       type: {:or, [:integer, :float]},
-      default: 0,
       doc: """
       Rotates the plot counter clockwise by the given angle in degrees. For example
-      with `angle_offset: 90` an angle of `0` points up.
+      with `angle_offset: 90` an angle of `0` points up. Defaults to `0`, or to `90`
+      if `:period` is set.
       """
     ],
     grid_color: [
@@ -217,7 +277,7 @@ defmodule Tucan.Polar do
     layer =
       Vl.new()
       |> Vl.mark(:line, mark_opts)
-      |> Vl.encode_field(:order, theta, type: :quantitative)
+      |> Vl.encode_field(:order, theta, type: theta_type(opts))
       |> maybe_encode_detail(opts[:group_by])
       |> maybe_encode_field(:color, opts[:color_by], opts, [])
 
@@ -442,7 +502,7 @@ defmodule Tucan.Polar do
 
     Vl.new()
     |> Vl.mark(:line, mark_opts)
-    |> Vl.encode_field(:order, theta, type: :quantitative)
+    |> Vl.encode_field(:order, theta, type: theta_type(opts))
     |> maybe_encode_detail(opts[:group_by])
     # filled lines have no stroke, so the default line legend symbols would be empty
     |> maybe_encode_field(:color, opts[:color_by], opts, legend: [symbol_type: "square"])
@@ -503,7 +563,7 @@ defmodule Tucan.Polar do
                   :stroke_dash
                 ],
                 Tucan.Keyword.deep_merge(
-                  Keyword.drop(@polar_opts, [:angle_marks, :angle_labels, :angle_unit]),
+                  Keyword.drop(@polar_opts, [:angle_marks, :angle_labels, :angle_unit, :period]),
                   radar_opts
                 )
               )
@@ -663,6 +723,7 @@ defmodule Tucan.Polar do
   #
   # `tooltip_theta` is the field and type of the angle shown in the tooltip.
   defp polar_plot(plotdata, r, theta, layers, opts, tooltip_theta \\ nil) do
+    opts = resolve_defaults(opts)
     width = opts[:width]
 
     vl =
@@ -675,11 +736,12 @@ defmodule Tucan.Polar do
     layers =
       for layer <- List.wrap(layers) do
         layer
+        |> maybe_add_period_transform(theta, opts[:period])
         |> Vl.transform(calculate: angle_expr(theta, opts), as: "__polar_angle")
         |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
         |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
         |> Grid.encode_xy("__polar_x", "__polar_y", grid)
-        |> maybe_encode_tooltip(r, tooltip_theta || {theta, :quantitative}, opts)
+        |> maybe_encode_tooltip(r, tooltip_theta || {theta, theta_type(opts)}, opts)
       end
 
     Vl.layers(vl, Grid.layers(grid) ++ layers)
@@ -708,10 +770,114 @@ defmodule Tucan.Polar do
   end
 
   defp angle_expr(theta, opts) do
-    to_radians = if opts[:angle_unit] == :degrees, do: :math.pi() / 180, else: 1
     sign = if opts[:direction] == :clockwise, do: -1, else: 1
+    offset = deg_to_rad(opts[:angle_offset])
 
-    "#{sign * to_radians} * #{to_number(theta)} + #{deg_to_rad(opts[:angle_offset])}"
+    cond do
+      opts[:period] != nil ->
+        "#{sign * :math.pi() / 180} * datum.__polar_period_angle + #{offset}"
+
+      opts[:angle_unit] == :degrees ->
+        "#{sign * :math.pi() / 180} * #{to_number(theta)} + #{offset}"
+
+      true ->
+        "#{sign} * #{to_number(theta)} + #{offset}"
+    end
+  end
+
+  ## Cyclic data
+
+  @temporal_periods [:day, :week, :year]
+
+  defp theta_type(opts) do
+    if opts[:period] in @temporal_periods, do: :temporal, else: :quantitative
+  end
+
+  defp resolve_defaults(opts) do
+    {period_marks, period_labels} = period_marks(opts[:period])
+
+    # the period labels apply only to the period marks
+    angle_labels = if opts[:angle_marks], do: :degrees, else: period_labels
+
+    {direction, angle_offset} =
+      if opts[:period], do: {:clockwise, 90}, else: {:counter_clockwise, 0}
+
+    Keyword.merge(opts,
+      angle_marks: opts[:angle_marks] || period_marks,
+      angle_labels: opts[:angle_labels] || angle_labels,
+      direction: opts[:direction] || direction,
+      angle_offset: opts[:angle_offset] || angle_offset
+    )
+  end
+
+  @default_angle_marks [0, 45, 90, 135, 180, 225, 270, 315]
+
+  @month_start_days [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+
+  # The default angle marks and labels of a period
+  defp period_marks(nil), do: {@default_angle_marks, :degrees}
+
+  defp period_marks(:day) do
+    {@default_angle_marks,
+     for(hour <- 0..21//3, do: String.pad_leading("#{hour}", 2, "0") <> ":00")}
+  end
+
+  defp period_marks(:week) do
+    {for(i <- 0..6, do: i * 360 / 7), ~w(Mon Tue Wed Thu Fri Sat Sun)}
+  end
+
+  defp period_marks(:year) do
+    {for(day <- @month_start_days, do: day * 360 / 365),
+     ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)}
+  end
+
+  defp period_marks(period) do
+    divisions =
+      Enum.find([8, 12, 6, 4], 8, fn divisions ->
+        step = period / divisions
+        step == Float.round(step * 1.0)
+      end)
+
+    step = period / divisions
+
+    {for(i <- 0..(divisions - 1), do: i * 360 / divisions),
+     for(i <- 0..(divisions - 1), do: format_number(i * step))}
+  end
+
+  defp format_number(value) do
+    if value == Float.round(value * 1.0),
+      do: Integer.to_string(trunc(value)),
+      else: to_string(value)
+  end
+
+  defp maybe_add_period_transform(vl, _theta, nil), do: vl
+
+  defp maybe_add_period_transform(vl, theta, period) when period in @temporal_periods do
+    vl
+    |> Vl.transform(calculate: "toDate(datum[#{Jason.encode!(theta)}])", as: "__polar_date")
+    |> Vl.transform(calculate: period_degrees_expr(period), as: "__polar_period_angle")
+  end
+
+  defp maybe_add_period_transform(vl, theta, period) do
+    Vl.transform(vl,
+      calculate: "((#{to_number(theta)} % #{period}) + #{period}) % #{period} / #{period} * 360",
+      as: "__polar_period_angle"
+    )
+  end
+
+  @seconds_of_day "(hours(datum.__polar_date) * 3600 + minutes(datum.__polar_date) * 60 + " <>
+                    "seconds(datum.__polar_date))"
+
+  defp period_degrees_expr(:day), do: "#{@seconds_of_day} / 86400 * 360"
+
+  defp period_degrees_expr(:week),
+    do: "((day(datum.__polar_date) + 6) % 7 + #{@seconds_of_day} / 86400) / 7 * 360"
+
+  defp period_degrees_expr(:year) do
+    year_start = "time(datetime(year(datum.__polar_date), 0, 1))"
+    next_year_start = "time(datetime(year(datum.__polar_date) + 1, 0, 1))"
+
+    "(time(datum.__polar_date) - #{year_start}) / (#{next_year_start} - #{year_start}) * 360"
   end
 
   defp to_number(field), do: "toNumber(datum[#{Jason.encode!(field)}])"

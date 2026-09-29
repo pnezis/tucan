@@ -63,7 +63,8 @@ wedge are proportional to the value.
 `Tucan.Polar.lineplot/4`, `Tucan.Polar.scatter/4`, `Tucan.Polar.area/4` and
 `Tucan.Polar.radar/4`. The polar grid is drawn in the data coordinates, and
 the maximum radius is inferred from inline data. Angle marks can be labeled in
-degrees, as compass points or with custom labels.
+degrees, as compass points or with custom labels. Cyclic data, e.g. the days of
+a year, are supported through the `:period` option.
 
   ```tucan
   theta = Enum.to_list(0..720//5)
