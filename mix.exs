@@ -84,7 +84,8 @@ defmodule Tucan.MixProject do
         Plots: [
           Tucan,
           Tucan.Geometry,
-          Tucan.Finance
+          Tucan.Finance,
+          Tucan.Polar
         ],
         Layout: [
           Tucan.Layers

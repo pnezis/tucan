@@ -59,6 +59,17 @@ wedge are proportional to the value.
   Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30)
   ```
 
+- Add experimental `Tucan.Polar` module for plots in polar coordinates, starting
+with `Tucan.Polar.lineplot/4`. The polar grid is drawn in the data coordinates, and
+the maximum radius is inferred from inline data.
+
+  ```tucan
+  theta = Enum.to_list(0..720//5)
+  r = Enum.map(theta, &(&1 / 360))
+
+  Tucan.Polar.lineplot([r: r, theta: theta], "r", "theta")
+  ```
+
 - Warn if a column with non-numeric values is encoded in a quantitative channel,
 e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
 empty plot. Set the channel type explicitly to silence the warning.

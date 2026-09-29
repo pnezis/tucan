@@ -585,6 +585,16 @@ defmodule Tucan.Options do
   end
 
   @doc false
+  @spec positive_number(value :: term()) :: {:ok, number()} | {:error, String.t()}
+  def positive_number(value) do
+    if is_number(value) and value > 0 do
+      {:ok, value}
+    else
+      {:error, "expected a positive number, got: #{inspect(value)}"}
+    end
+  end
+
+  @doc false
   @spec tooltip(value :: term()) :: {:ok, boolean() | keyword()} | {:error, String.t()}
   def tooltip(value) do
     cond do
