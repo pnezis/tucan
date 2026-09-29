@@ -627,7 +627,7 @@ defmodule Tucan.Options do
 
       other ->
         {:error,
-         "g expected [min, max] where min, max numbers and max > min, got: #{inspect(other)}"}
+         "expected [min, max] where min, max numbers and max > min, got: #{inspect(other)}"}
     end
   end
 

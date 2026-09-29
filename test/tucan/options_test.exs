@@ -31,6 +31,12 @@ defmodule Tucan.OptionsTest do
     end
   end
 
+  test "global options are valid options" do
+    for option <- Tucan.Options.global_opts() ++ Tucan.Options.global_mark_opts() do
+      assert [{^option, _definition}] = Tucan.Options.take!([option])
+    end
+  end
+
   test "to_nimble_schema!/1" do
     opts = [
       foo: [
@@ -148,6 +154,21 @@ defmodule Tucan.OptionsTest do
       )
     end
 
+    test "positive_number/1" do
+      schema = [x: [type: {:custom, Tucan.Options, :positive_number, []}]]
+
+      assert_valid_option([x: 3], schema, :x, 3)
+      assert_valid_option([x: 0.5], schema, :x, 0.5)
+
+      for value <- [0, -1, "1"] do
+        assert_invalid_option(
+          [x: value],
+          schema,
+          "expected a positive number, got: #{inspect(value)}"
+        )
+      end
+    end
+
     test "tooltip/1" do
       schema =
         opts_schema(
@@ -183,11 +204,15 @@ defmodule Tucan.OptionsTest do
         "expected [min, max] where max > min, got: [10, 5]"
       )
 
-      assert_invalid_option(
-        [extent: :invalid],
-        schema,
-        "expected [min, max] where min, max numbers and max > min, got: :invalid"
-      )
+      assert {:error, "expected [min, max]" <> _rest} = Tucan.Options.extent(:invalid)
+
+      for invalid <- [:invalid, [1, :a], [1, 2, 3]] do
+        assert_invalid_option(
+          [extent: invalid],
+          schema,
+          "expected [min, max] where min, max numbers and max > min, got: #{inspect(invalid)}"
+        )
+      end
     end
 
     test "density_alias/1" do
