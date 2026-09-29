@@ -35,6 +35,7 @@ defmodule Tucan.Polar do
   Polar plots are always square. Use the `:width` option to set their size.
   """
 
+  alias Tucan.Polar.Grid
   alias VegaLite, as: Vl
 
   @polar_opts [
@@ -364,17 +365,32 @@ defmodule Tucan.Polar do
       |> Vl.config(view: [stroke: nil])
       |> Tucan.Utils.put_in_spec(:height, width)
 
-    grid = grid_config(vl, r, opts)
+    grid = Grid.new(opts, fn -> max_abs_value(vl, r) end)
 
     layer =
       layer
       |> Vl.transform(calculate: angle_expr(theta, opts), as: "__polar_angle")
       |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
       |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
-      |> encode_xy("__polar_x", "__polar_y", grid)
+      |> Grid.encode_xy("__polar_x", "__polar_y", grid)
       |> maybe_encode_tooltip(r, theta, opts)
 
-    Vl.layers(vl, grid_layers(grid, opts) ++ [layer])
+    Vl.layers(vl, Grid.layers(grid) ++ [layer])
+  end
+
+  # The maximum absolute value of the field if the data are inline, nil otherwise
+  defp max_abs_value(vl, field) do
+    case get_in(vl.spec, ["data", "values"]) do
+      values when is_list(values) ->
+        values
+        |> Enum.map(&Map.get(&1, field))
+        |> Enum.filter(&is_number/1)
+        |> Enum.map(&abs/1)
+        |> Enum.max(fn -> 0 end)
+
+      _other ->
+        nil
+    end
   end
 
   defp angle_expr(theta, opts) do
@@ -385,18 +401,6 @@ defmodule Tucan.Polar do
   end
 
   defp to_number(field), do: "toNumber(datum[#{Jason.encode!(field)}])"
-
-  defp encode_xy(vl, x, y, grid) do
-    xy_opts = [
-      type: :quantitative,
-      scale: [domain: [-grid.max_radius, grid.max_radius], nice: false, zero: false],
-      axis: nil
-    ]
-
-    vl
-    |> Vl.encode_field(:x, x, xy_opts)
-    |> Vl.encode_field(:y, y, xy_opts)
-  end
 
   defp maybe_encode_field(vl, _channel, nil, _opts, _extra), do: vl
 
@@ -427,203 +431,6 @@ defmodule Tucan.Polar do
     else
       vl
     end
-  end
-
-  ## Grid
-
-  defp grid_config(vl, r, opts) do
-    {max_radius, radius_ticks} =
-      case {opts[:max_radius], opts[:radius_ticks]} do
-        {nil, nil} ->
-          max_radius = infer_max_radius!(vl, r)
-          {max_radius, ticks(max_radius)}
-
-        {nil, ticks} ->
-          {Enum.max(ticks), ticks}
-
-        {max_radius, nil} ->
-          {max_radius, ticks(max_radius)}
-
-        {max_radius, ticks} ->
-          {max_radius, ticks}
-      end
-
-    %{
-      max_radius: max_radius,
-      radius_ticks: radius_ticks,
-      angle_marks: opts[:angle_marks],
-      direction: opts[:direction],
-      angle_offset: opts[:angle_offset]
-    }
-  end
-
-  defp infer_max_radius!(vl, r) do
-    case get_in(vl.spec, ["data", "values"]) do
-      values when is_list(values) ->
-        values
-        |> Enum.map(&Map.get(&1, r))
-        |> Enum.filter(&is_number/1)
-        |> Enum.map(&abs/1)
-        |> Enum.max(fn -> 0 end)
-        |> nice_max()
-
-      _other ->
-        raise ArgumentError,
-              "cannot infer the maximum radius of a polar plot if the data are not " <>
-                "passed inline, set either the :max_radius or the :radius_ticks option"
-    end
-  end
-
-  # Rounds up the maximum radius to a multiple of a round tick step
-  defp nice_max(value) when value == 0, do: 1
-
-  defp nice_max(value) do
-    step = nice_step(value)
-
-    (Float.ceil(value / step - 1.0e-9) * step)
-    |> round_float()
-  end
-
-  # A step of 1, 2, 2.5 or 5 times a power of 10 that splits the value in ~4 ticks
-  defp nice_step(value) do
-    raw = value / 4
-    magnitude = :math.pow(10, Float.floor(:math.log10(raw)))
-
-    factor = Enum.find([1, 2, 2.5, 5, 10], fn f -> f * magnitude >= raw end)
-    factor * magnitude
-  end
-
-  defp ticks(max_radius) do
-    step = divisor_step(max_radius) || nice_step(max_radius)
-    count = trunc(Float.floor(max_radius / step + 1.0e-9))
-
-    for i <- 1..count//1, do: round_float(i * step)
-  end
-
-  # A round step that splits the max radius in 3 to 6 equal ticks, preferring 4 ticks,
-  # so that the outer circle is labeled
-  defp divisor_step(max_radius) do
-    magnitude = :math.pow(10, Float.floor(:math.log10(max_radius)))
-
-    candidates =
-      for m <- [magnitude / 10, magnitude],
-          f <- [1, 2, 2.5, 5],
-          step = f * m,
-          count = max_radius / step,
-          abs(count - round(count)) < 1.0e-9,
-          round(count) in 3..6 do
-        {abs(round(count) - 4), step}
-      end
-
-    case candidates do
-      [] -> nil
-      candidates -> candidates |> Enum.min() |> elem(1)
-    end
-  end
-
-  defp round_float(value) do
-    rounded = Float.round(value * 1.0, 10)
-
-    if rounded == Float.round(rounded), do: trunc(rounded), else: rounded
-  end
-
-  defp grid_layers(grid, opts) do
-    style = [color: opts[:grid_color], opacity: opts[:grid_opacity]]
-    xy = &encode_xy(&1, "x", "y", grid)
-
-    [
-      circles_layer(grid, style, xy),
-      angle_lines_layer(grid, style, xy),
-      angle_labels_layer(grid, opts, xy),
-      radius_labels_layer(grid, xy)
-    ]
-  end
-
-  defp circles_layer(grid, style, xy) do
-    radiuses = Enum.uniq(grid.radius_ticks ++ [grid.max_radius])
-
-    values =
-      for r <- radiuses, i <- 0..180 do
-        angle = deg_to_rad(i * 2)
-        %{r: r, i: i, x: r * :math.cos(angle), y: r * :math.sin(angle)}
-      end
-
-    Vl.new()
-    |> Vl.data_from_values(values)
-    |> Vl.mark(:line, style ++ [stroke_width: 1])
-    |> xy.()
-    |> Vl.encode_field(:detail, "r", type: :nominal)
-    |> Vl.encode_field(:order, "i", type: :quantitative)
-  end
-
-  defp angle_lines_layer(grid, style, xy) do
-    values =
-      for angle <- grid.angle_marks do
-        {x, y} = grid_point(grid.max_radius, angle, grid)
-        %{x: 0, y: 0, x2: x, y2: y}
-      end
-
-    Vl.new()
-    |> Vl.data_from_values(values)
-    |> Vl.mark(:rule, style ++ [stroke_width: 1])
-    |> xy.()
-    |> Vl.encode_field(:x2, "x2")
-    |> Vl.encode_field(:y2, "y2")
-  end
-
-  # Angle labels are placed a fixed number of pixels outside of the outer circle
-  @angle_labels_padding 16
-
-  defp angle_labels_layer(grid, opts, xy) do
-    label_radius = grid.max_radius * (1 + @angle_labels_padding / (opts[:width] / 2))
-
-    values =
-      for angle <- grid.angle_marks do
-        {x, y} = grid_point(label_radius, angle, grid)
-        %{x: x, y: y, label: "#{format_number(angle)}°"}
-      end
-
-    Vl.new()
-    |> Vl.data_from_values(values)
-    |> Vl.mark(:text, align: :center, baseline: :middle)
-    |> xy.()
-    |> Vl.encode_field(:text, "label")
-  end
-
-  # Radius labels are placed between the first two angle marks
-  defp radius_labels_layer(grid, xy) do
-    angle =
-      case Enum.sort(grid.angle_marks) do
-        [first, second | _rest] -> (first + second) / 2
-        [first] -> first + 22.5
-        [] -> 22.5
-      end
-
-    values =
-      for r <- grid.radius_ticks do
-        {x, y} = grid_point(r, angle, grid)
-        %{x: x, y: y, label: format_number(r)}
-      end
-
-    Vl.new()
-    |> Vl.data_from_values(values)
-    |> Vl.mark(:text, align: :center, baseline: :middle, font_size: 10, opacity: 0.8)
-    |> xy.()
-    |> Vl.encode_field(:text, "label")
-  end
-
-  # The cartesian position of a grid element at the given radius and angle in degrees
-  defp grid_point(r, angle, %{direction: direction, angle_offset: offset}) do
-    sign = if direction == :clockwise, do: -1, else: 1
-    phi = deg_to_rad(sign * angle + offset)
-
-    {round_float(r * :math.cos(phi)), round_float(r * :math.sin(phi))}
-  end
-
-  defp format_number(value) when is_integer(value), do: Integer.to_string(value)
-
-  defp format_number(value) do
-    if value == Float.round(value), do: Integer.to_string(trunc(value)), else: to_string(value)
   end
 
   defp deg_to_rad(angle), do: angle * :math.pi() / 180
