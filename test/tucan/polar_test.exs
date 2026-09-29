@@ -1110,5 +1110,122 @@ defmodule Tucan.PolarTest do
 
       assert layer["encoding"]["color"]["title"] == "max(v)"
     end
+
+    test "the radius bins end at the max radius" do
+      layer =
+        Tucan.Polar.heatmap(@heat, "t", "r", "v", max_radius: 5, radius_ticks: [1, 2])
+        |> data_layer()
+
+      assert Enum.at(layer["transform"], 8)["calculate"] == "[0,1,2,5][datum.__r_bin]"
+    end
+
+    test "raises if the max radius cannot be inferred" do
+      assert_raise ArgumentError, ~r/cannot infer the maximum radius/, fn ->
+        Tucan.Polar.heatmap("https://example.com/data.csv", "t", "r", nil)
+      end
+    end
+  end
+
+  describe "inferring from inline data" do
+    test "parses numeric strings and ignores invalid radius values" do
+      data = [%{r: "3.5", t: 0}, %{r: "abc", t: 1}, %{r: nil, t: 2}, %{r: 1, t: 3}]
+
+      # 3.5 cannot be split in 3 to 6 equal round ticks, so it is rounded up to 4
+      layer = Tucan.Polar.lineplot(data, "r", "t") |> data_layer()
+
+      assert get_in(layer, ["encoding", "x", "scale", "domain"]) == [-4, 4]
+    end
+
+    test "parses numeric strings and ignores invalid angles in histograms" do
+      data = [%{t: "10"}, %{t: "20.5"}, %{t: "abc"}, %{t: nil}, %{t: 200}]
+
+      assert domain(Tucan.Polar.histogram(data, "t", bins: 2)) == [0, 2]
+    end
+
+    test "bins datetimes by the time of the day" do
+      data = [
+        %{d: ~N[2024-01-01 01:00:00]},
+        %{d: ~U[2024-01-02 02:00:00Z]},
+        %{d: "2024-01-03T13:00:00"}
+      ]
+
+      assert domain(Tucan.Polar.histogram(data, "d", bins: 2, period: :day)) == [0, 2]
+    end
+
+    test "aggregates and stacks the bar values" do
+      assert domain(Tucan.Polar.bar(@bar_data, "v", "k", aggregate: :max)) == [0, 4]
+
+      # stacked without aggregation, y: 3 + 4 rounded up
+      assert domain(Tucan.Polar.bar(@bar_data, "v", "k", color_by: "g")) == [0, 7.5]
+
+      # invalid values count as zero
+      data = [%{k: "x", v: "2.5"}, %{k: "y", v: "n/a"}]
+      assert domain(Tucan.Polar.bar(data, "v", "k")) == [0, 2.5]
+    end
+
+    test "infers the categories ignoring missing values" do
+      data = [%{k: :x, v: 1}, %{k: nil, v: 2}, %{k: :y, v: 3}]
+
+      assert angle_labels(Tucan.Polar.radar(data, "v", "k")) == ["x", "y"]
+    end
+
+    test "wind rose without observations above the first speed bin" do
+      assert domain(Tucan.Polar.windrose(@wind, "d", "s", speed_bins: [100])) == [0, 1]
+    end
+
+    test "histogram without valid values" do
+      data = [%{t: "abc"}, %{t: nil}]
+
+      assert domain(Tucan.Polar.histogram(data, "t")) == [0, 1]
+      assert domain(Tucan.Polar.histogram(data, "t", period: :year)) == [0, 1]
+    end
+
+    test "wind rose with the default options" do
+      assert domain(Tucan.Polar.windrose(@wind, "d", "s")) == [0, 75]
+    end
+
+    test "raises if the max radius of sector plots cannot be inferred" do
+      url = "https://example.com/data.csv"
+
+      assert_raise ArgumentError, ~r/cannot infer the maximum radius/, fn ->
+        Tucan.Polar.bar(url, "v", "k", categories: ["x"])
+      end
+
+      assert_raise ArgumentError, ~r/cannot infer the maximum radius/, fn ->
+        Tucan.Polar.windrose(url, "d", "s", speed_bins: [0, 5])
+      end
+    end
+  end
+
+  describe "radius labels" do
+    defp radius_label_position(opts) do
+      Tucan.Polar.lineplot(@data, "r", "theta", [max_radius: 1, radius_ticks: [1]] ++ opts)
+      |> named_layer("radius_labels")
+      |> get_in(["data", "values"])
+      |> hd()
+      |> Map.take(["x", "y"])
+    end
+
+    defp point(angle) do
+      radians = angle * :math.pi() / 180
+
+      %{
+        "x" => Float.round(:math.cos(radians), 10),
+        "y" => Float.round(:math.sin(radians), 10)
+      }
+    end
+
+    test "are placed between the first two angle marks" do
+      assert radius_label_position(angle_marks: [0, 90]) == point(45)
+      assert radius_label_position(angle_marks: [90, 0]) == point(45)
+    end
+
+    test "are placed next to a single angle mark" do
+      assert radius_label_position(angle_marks: [30]) == point(52.5)
+    end
+
+    test "are placed at 22.5 degrees without angle marks" do
+      assert radius_label_position(angle_marks: []) == point(22.5)
+    end
   end
 end

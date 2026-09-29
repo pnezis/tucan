@@ -918,8 +918,7 @@ defmodule Tucan.Polar do
     end
   end
 
-  defp to_number_value(value) when is_number(value), do: value
-  defp to_number_value(_value), do: 0
+  defp to_number_value(value), do: to_float(value) || 0
 
   defp aggregate_values(values, nil), do: values
   defp aggregate_values(values, :sum), do: [Enum.sum(values)]
@@ -1727,7 +1726,8 @@ defmodule Tucan.Polar do
 
       values ->
         values
-        |> Enum.filter(&is_number/1)
+        |> Enum.map(&to_float/1)
+        |> Enum.reject(&is_nil/1)
         |> Enum.map(&abs/1)
         |> Enum.max(fn -> 0 end)
     end
