@@ -370,11 +370,114 @@ defmodule Tucan.Polar do
     polar_plot(plotdata, r, theta, layer, opts)
   end
 
+  area_opts = [
+    group_by: [
+      type: :string,
+      doc: "A field to group by the areas without affecting the style of it.",
+      section: :grouping
+    ],
+    interpolate: [default: "linear-closed"],
+    fill_opacity: [default: 0.5]
+  ]
+
+  @area_opts Tucan.Options.take!(
+               [
+                 :fill_opacity,
+                 :tooltip,
+                 :interpolate,
+                 :tension,
+                 :color_by,
+                 :color,
+                 :fill_color,
+                 :line_color,
+                 :stroke_width,
+                 :stroke_dash
+               ],
+               area_opts ++ @polar_opts
+             )
+  @area_schema Tucan.Options.to_nimble_schema!(@area_opts)
+
+  @doc """
+  Draws a filled area in polar coordinates.
+
+  `r` is the field with the radius and `theta` the field with the angle of each
+  point. The points are connected in increasing order of `theta` and the shape is
+  closed by connecting the last point to the first one. To fill the area between a
+  curve and the origin, include a point with a zero radius at the start or the end
+  of the curve.
+
+  The areas are not outlined by default, set `:line_color` to draw an outline.
+
+  See the module documentation for the coordinate conventions and the polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@area_opts)}
+
+  ## Examples
+
+  A cardioid, drawn with an outline:
+
+  ```tucan
+  theta = Enum.to_list(0..355//5)
+  r = Enum.map(theta, fn t -> 1 + :math.cos(t * :math.pi() / 180) end)
+
+  Tucan.Polar.area([r: r, theta: theta], "r", "theta",
+    fill_color: "teal",
+    line_color: "teal",
+    stroke_width: 2
+  )
+  ```
+
+  Two overlapping shapes colored by a field. With a smooth closed interpolation the
+  few points of each shape are connected with curves:
+
+  ```tucan
+  data =
+    for {shape, radiuses} <- [a: [5, 1, 5, 1, 5, 1], b: [1, 4, 1, 4, 1, 4]],
+        {r, i} <- Enum.with_index(radiuses) do
+      %{shape: shape, r: r, theta: i * 60}
+    end
+
+  Tucan.Polar.area(data, "r", "theta",
+    color_by: "shape",
+    interpolate: "cardinal-closed",
+    angle_marks: [0, 60, 120, 180, 240, 300]
+  )
+  ```
+  """
+  @spec area(
+          plotdata :: Tucan.plotdata(),
+          r :: String.t(),
+          theta :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def area(plotdata, r, theta, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @area_schema)
+
+    polar_plot(plotdata, r, theta, area_layer(theta, opts, @area_opts), opts)
+  end
+
+  defp area_layer(theta, opts, schema) do
+    mark_opts =
+      Tucan.Options.take_options(opts, schema, :mark)
+      |> Keyword.put(:filled, true)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Tucan.Keyword.put_not_nil(:stroke, opts[:line_color])
+
+    Vl.new()
+    |> Vl.mark(:line, mark_opts)
+    |> Vl.encode_field(:order, theta, type: :quantitative)
+    |> maybe_encode_detail(opts[:group_by])
+    # filled lines have no stroke, so the default line legend symbols would be empty
+    |> maybe_encode_field(:color, opts[:color_by], opts, legend: [symbol_type: "square"])
+  end
+
   ## Polar plot construction
 
-  # Builds a layered plot with the polar grid and the given data layer on top of it.
-  # The data are set on the top level spec and inherited by the data layer.
-  defp polar_plot(plotdata, r, theta, layer, opts) do
+  # Builds a layered plot with the polar grid and the given data layers on top of it.
+  # The data are set on the top level spec and inherited by the data layers.
+  defp polar_plot(plotdata, r, theta, layers, opts) do
     width = opts[:width]
 
     vl =
@@ -384,15 +487,17 @@ defmodule Tucan.Polar do
 
     grid = Grid.new(opts, fn -> max_abs_value(vl, r) end)
 
-    layer =
-      layer
-      |> Vl.transform(calculate: angle_expr(theta, opts), as: "__polar_angle")
-      |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
-      |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
-      |> Grid.encode_xy("__polar_x", "__polar_y", grid)
-      |> maybe_encode_tooltip(r, theta, opts)
+    layers =
+      for layer <- List.wrap(layers) do
+        layer
+        |> Vl.transform(calculate: angle_expr(theta, opts), as: "__polar_angle")
+        |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
+        |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
+        |> Grid.encode_xy("__polar_x", "__polar_y", grid)
+        |> maybe_encode_tooltip(r, theta, opts)
+      end
 
-    Vl.layers(vl, Grid.layers(grid) ++ [layer])
+    Vl.layers(vl, Grid.layers(grid) ++ layers)
   end
 
   # The maximum absolute value of the field if the data are inline, nil otherwise

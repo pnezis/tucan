@@ -361,4 +361,75 @@ defmodule Tucan.PolarTest do
              }
     end
   end
+
+  describe "area/4" do
+    test "draws a closed filled shape" do
+      vl = Tucan.Polar.area(@data, "r", "theta")
+      layer = data_layer(vl)
+
+      assert length(layers(vl)) == 5
+
+      assert layer["mark"] == %{
+               "type" => "line",
+               "filled" => true,
+               "fillOpacity" => 0.5,
+               "interpolate" => "linear-closed"
+             }
+
+      assert layer["encoding"]["order"] == %{"field" => "theta", "type" => "quantitative"}
+
+      assert Enum.map(layer["transform"], & &1["as"]) == [
+               "__polar_angle",
+               "__polar_x",
+               "__polar_y"
+             ]
+
+      assert get_in(layer, ["encoding", "x", "scale", "domain"]) == [-2, 2]
+    end
+
+    test "with colors and outline" do
+      layer =
+        Tucan.Polar.area(@data, "r", "theta",
+          fill_color: "red",
+          line_color: "black",
+          stroke_width: 2,
+          fill_opacity: 0.3,
+          interpolate: "cardinal-closed"
+        )
+        |> data_layer()
+
+      assert layer["mark"] == %{
+               "type" => "line",
+               "filled" => true,
+               "color" => "red",
+               "stroke" => "black",
+               "strokeWidth" => 2,
+               "fillOpacity" => 0.3,
+               "interpolate" => "cardinal-closed"
+             }
+    end
+
+    test "with color_by and group_by" do
+      layer =
+        Tucan.Polar.area([r: [1, 2], theta: [0, 1], g: ["a", "b"]], "r", "theta",
+          color_by: "g",
+          group_by: "g",
+          tooltip: true
+        )
+        |> data_layer()
+
+      assert layer["encoding"]["color"] == %{
+               "field" => "g",
+               "legend" => %{"symbolType" => "square"}
+             }
+
+      assert layer["encoding"]["detail"] == %{"field" => "g", "type" => "nominal"}
+
+      assert layer["encoding"]["tooltip"] == [
+               %{"field" => "r", "type" => "quantitative"},
+               %{"field" => "theta", "type" => "quantitative"},
+               %{"field" => "g", "type" => "nominal"}
+             ]
+    end
+  end
 end
