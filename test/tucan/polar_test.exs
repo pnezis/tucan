@@ -665,4 +665,141 @@ defmodule Tucan.PolarTest do
       end
     end
   end
+
+  describe "bar/4" do
+    @bar_data [
+      %{k: "x", v: 1, g: "a"},
+      %{k: "y", v: 3, g: "a"},
+      %{k: "x", v: 2, g: "b"},
+      %{k: "y", v: 4, g: "b"},
+      %{k: "z", v: 2, g: "a"}
+    ]
+
+    test "draws a sector per category" do
+      vl = Tucan.Polar.bar(@bar_data, "v", "k")
+      layer = data_layer(vl)
+      index = ~S|indexof(["x","y","z"], datum["k"])|
+
+      assert layer["mark"] == %{"type" => "arc", "fillOpacity" => 1}
+
+      assert Enum.map(layer["transform"], &(&1["as"] || &1["filter"])) == [
+               "#{index} >= 0",
+               "__value",
+               "__start_angle",
+               "__end_angle",
+               "__r_end",
+               "__r_start",
+               "__theta",
+               "__theta2"
+             ]
+
+      assert Enum.at(layer["transform"], 2)["calculate"] == "#{index} * 120.0 - 60.0"
+
+      # clockwise from the top, converted to vega-lite arc angles
+      assert Enum.at(layer["transform"], 6)["calculate"] ==
+               "0.0 - #{-:math.pi() / 180} * (datum.__start_angle)"
+
+      assert layer["encoding"]["theta"] == %{
+               "field" => "__theta",
+               "type" => "quantitative",
+               "scale" => nil,
+               "stack" => nil
+             }
+
+      assert layer["encoding"]["radius"] == %{
+               "field" => "__r_end",
+               "type" => "quantitative",
+               "scale" => %{
+                 "type" => "linear",
+                 "domain" => [0, 4],
+                 "range" => [0, 150.0],
+                 "nice" => false
+               },
+               "stack" => nil
+             }
+
+      assert layer["encoding"]["radius2"] == %{"field" => "__r_start"}
+
+      # grid lines at the sector boundaries and labels at their centers
+      assert get_in(Enum.at(layers(vl), 1), ["data", "values"]) |> length() == 3
+      assert angle_labels(vl) == ["x", "y", "z"]
+    end
+
+    test "stacks the bars by color" do
+      vl =
+        Tucan.Polar.bar(@bar_data, "v", "k",
+          color_by: "g",
+          aggregate: :sum,
+          tooltip: true
+        )
+
+      layer = data_layer(vl)
+
+      assert Enum.at(layer["transform"], 1) == %{
+               "aggregate" => [%{"op" => "sum", "field" => "v", "as" => "__value"}],
+               "groupby" => ["k", "g"]
+             }
+
+      assert Enum.at(layer["transform"], 4) == %{
+               "window" => [%{"op" => "sum", "field" => "__value", "as" => "__r_end"}],
+               "groupby" => ["k"],
+               "sort" => [%{"field" => "g"}],
+               "frame" => [nil, 0]
+             }
+
+      # x: 1 + 2, y: 3 + 4, z: 2 rounded up
+      assert get_in(layer, ["encoding", "radius", "scale", "domain"]) == [0, 7.5]
+      assert layer["encoding"]["color"] == %{"field" => "g", "type" => "nominal"}
+
+      assert layer["encoding"]["tooltip"] == [
+               %{"field" => "k", "type" => "nominal"},
+               %{"field" => "__value", "type" => "quantitative", "title" => "sum(v)"},
+               %{"field" => "g", "type" => "nominal"}
+             ]
+    end
+
+    test "infers the max radius from the aggregated values" do
+      domain = fn opts ->
+        Tucan.Polar.bar(@bar_data, "v", "k", opts)
+        |> data_layer()
+        |> get_in(["encoding", "radius", "scale", "domain"])
+      end
+
+      assert domain.([]) == [0, 4]
+      assert domain.(aggregate: :sum) == [0, 7.5]
+      assert domain.(aggregate: :count) == [0, 2]
+      assert domain.(aggregate: :mean) == [0, 4]
+      assert domain.(aggregate: :min) == [0, 3]
+      assert domain.(categories: ["x"]) == [0, 2]
+    end
+
+    test "with styling options" do
+      vl =
+        Tucan.Polar.bar(@bar_data, "v", "k",
+          fill_color: "red",
+          line_color: "white",
+          stroke_width: 2,
+          fill_opacity: 0.5,
+          width: 200
+        )
+
+      layer = data_layer(vl)
+
+      assert layer["mark"] == %{
+               "type" => "arc",
+               "color" => "red",
+               "stroke" => "white",
+               "strokeWidth" => 2,
+               "fillOpacity" => 0.5
+             }
+
+      assert get_in(layer, ["encoding", "radius", "scale", "range"]) == [0, 100.0]
+    end
+
+    test "raises if the categories cannot be inferred" do
+      assert_raise ArgumentError, ~r/set the :categories option/, fn ->
+        Tucan.Polar.bar("https://example.com/data.csv", "v", "k", max_radius: 1)
+      end
+    end
+  end
 end

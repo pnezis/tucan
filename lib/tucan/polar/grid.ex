@@ -13,6 +13,7 @@ defmodule Tucan.Polar.Grid do
     :radius_ticks,
     :angle_marks,
     :angle_labels,
+    :radius_labels_angle,
     :direction,
     :angle_offset,
     :width,
@@ -53,6 +54,7 @@ defmodule Tucan.Polar.Grid do
       radius_ticks: radius_ticks,
       angle_marks: opts[:angle_marks],
       angle_labels: angle_labels(opts[:angle_marks], opts[:angle_labels]),
+      radius_labels_angle: opts[:radius_labels_angle],
       direction: opts[:direction],
       angle_offset: opts[:angle_offset],
       width: opts[:width],
@@ -115,6 +117,30 @@ defmodule Tucan.Polar.Grid do
     vl
     |> Vl.encode_field(:x, x, xy_opts)
     |> Vl.encode_field(:y, y, xy_opts)
+  end
+
+  @doc """
+  The options of a `:radius` scale matching the grid.
+
+  Arc marks are centered in the plot, so a radius scale mapping `[0, max_radius]`
+  to `[0, width / 2]` pixels is aligned with the grid.
+  """
+  @spec radius_scale(grid :: t()) :: keyword()
+  def radius_scale(grid) do
+    [type: :linear, domain: [0, grid.max_radius], range: [0, grid.width / 2], nice: false]
+  end
+
+  @doc """
+  An expression converting the given expression of an angle in degrees to the
+  radians expected by the `:theta` channel of arc marks.
+
+  Arc angles start at the top and increase clockwise.
+  """
+  @spec arc_theta_expr(degrees :: String.t(), grid :: t()) :: String.t()
+  def arc_theta_expr(degrees, %{direction: direction, angle_offset: offset}) do
+    sign = if direction == :clockwise, do: -1, else: 1
+
+    "#{deg_to_rad(90 - offset)} - #{sign * :math.pi() / 180} * (#{degrees})"
   end
 
   @doc """
@@ -183,13 +209,15 @@ defmodule Tucan.Polar.Grid do
     |> Vl.encode_field(:text, "label")
   end
 
-  # Radius labels are placed between the first two angle marks
+  # Radius labels are placed between the first two angle marks, unless an angle
+  # is explicitly set
   defp radius_labels_layer(grid) do
     angle =
-      case Enum.sort(grid.angle_marks) do
-        [first, second | _rest] -> (first + second) / 2
-        [first] -> first + 22.5
-        [] -> 22.5
+      case {grid.radius_labels_angle, Enum.sort(grid.angle_marks)} do
+        {nil, [first, second | _rest]} -> (first + second) / 2
+        {nil, [first]} -> first + 22.5
+        {nil, []} -> 22.5
+        {angle, _marks} -> angle
       end
 
     values =

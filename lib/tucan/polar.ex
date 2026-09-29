@@ -508,15 +508,17 @@ defmodule Tucan.Polar do
     |> maybe_encode_field(:color, opts[:color_by], opts, legend: [symbol_type: "square"])
   end
 
+  categories_opt = [
+    type: {:list, :string},
+    doc: """
+    The categories in the order they are drawn. If not set they are inferred from
+    the data, in the order they first appear. This is possible only if the data are
+    passed inline.
+    """
+  ]
+
   radar_opts = [
-    categories: [
-      type: {:list, :string},
-      doc: """
-      The categories in the order they are drawn. If not set they are inferred from
-      the data, in the order they first appear. This is possible only if the data are
-      passed inline.
-      """
-    ],
+    categories: categories_opt,
     group_by: [
       type: :string,
       doc: "A field to group by the outlines without affecting the style of it.",
@@ -716,6 +718,243 @@ defmodule Tucan.Polar do
     end
   end
 
+  bar_opts = [
+    categories: categories_opt,
+    aggregate: [
+      type: {:in, [:sum, :count, :mean, :min, :max]},
+      doc: """
+      The statistic used for aggregating the values of each category, and of each
+      `:color_by` group if set. If not set each row is drawn as is.
+      """
+    ],
+    color_by: [
+      doc: """
+      If set a data field used for coloring the bars. The bars of each category are
+      stacked outwards, in the order of the colors in the legend.
+      """
+    ],
+    direction: [default: :clockwise],
+    angle_offset: [default: 90]
+  ]
+
+  @bar_opts Tucan.Options.take!(
+              [
+                :fill_opacity,
+                :tooltip,
+                :color_by,
+                :color,
+                :fill_color,
+                :line_color,
+                :stroke_width
+              ],
+              Tucan.Keyword.deep_merge(
+                Keyword.drop(@polar_opts, [:angle_marks, :angle_labels, :angle_unit, :period]),
+                bar_opts
+              )
+            )
+  @bar_schema Tucan.Options.to_nimble_schema!(@bar_opts)
+
+  @doc """
+  Draws a polar bar chart.
+
+  Each category is drawn as a circular sector of the same angle and a radius equal
+  to its `value`. This is also known as a Nightingale rose or coxcomb chart.
+  Compared to `Tucan.radial/4`, where the angle of each wedge depends on its value,
+  here the values are compared only through the radius.
+
+  The categories are placed at equal angles, starting at the top and going
+  clockwise. If `:color_by` is set, the bars are stacked.
+
+  See the module documentation for more details on the polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@bar_opts)}
+
+  ## Examples
+
+  The monthly rainfall of a city:
+
+  ```tucan
+  months = ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+  rainfall = [120, 95, 80, 60, 45, 30, 20, 25, 50, 90, 130, 140]
+
+  data = Enum.zip_with(months, rainfall, fn month, mm -> %{month: month, rainfall: mm} end)
+
+  Tucan.Polar.bar(data, "rainfall", "month",
+    fill_color: "steelblue",
+    line_color: "white",
+    tooltip: true
+  )
+  ```
+
+  Stacked bars, with the total yield of each barley variety, grouped by site:
+
+  ```tucan
+  Tucan.Polar.bar(:barley, "yield", "variety",
+    color_by: "site",
+    aggregate: :sum,
+    categories: [
+      "Manchuria", "Glabron", "Svansota", "Velvet", "Trebi",
+      "No. 457", "No. 462", "Peatland", "No. 475", "Wisconsin No. 38"
+    ],
+    max_radius: 600,
+    line_color: "white",
+    width: 400
+  )
+  ```
+  """
+  @spec bar(
+          plotdata :: Tucan.plotdata(),
+          value :: String.t(),
+          category :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def bar(plotdata, value, category, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @bar_schema)
+
+    categories = opts[:categories] || infer_categories!(plotdata, category)
+    count = length(categories)
+    step = 360 / max(count, 1)
+    index = index_expr(categories, category)
+
+    # the sectors are centered at the category angles, with grid lines at their
+    # boundaries
+    opts =
+      Keyword.merge(opts,
+        angle_marks: for(i <- 0..(count - 1)//1, do: i * step - step / 2),
+        angle_labels: Enum.with_index(categories, fn category, i -> {i * step, category} end),
+        radius_labels_angle: -step / 2
+      )
+
+    groupby = Enum.reject([category, opts[:color_by]], &is_nil/1)
+
+    layer =
+      Vl.new()
+      |> Vl.transform(filter: "#{index} >= 0")
+      |> aggregate_value(value, groupby, opts[:aggregate])
+      |> Vl.transform(calculate: "#{index} * #{step} - #{step / 2}", as: "__start_angle")
+      |> Vl.transform(calculate: "datum.__start_angle + #{step}", as: "__end_angle")
+      |> stack_radius(category, opts[:color_by])
+
+    tooltip = [
+      [field: category, type: :nominal],
+      [field: "__value", type: :quantitative, title: value_title(value, opts[:aggregate])]
+    ]
+
+    infer_max_radius = fn vl ->
+      max_stacked_value(vl, value, category, categories, opts[:color_by], opts[:aggregate])
+    end
+
+    sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip)
+  end
+
+  defp index_expr(categories, category) do
+    "indexof(#{Jason.encode!(categories)}, datum[#{Jason.encode!(category)}])"
+  end
+
+  defp value_title(value, nil), do: value
+  defp value_title(value, aggregate), do: "#{aggregate}(#{value})"
+
+  # Sets the __value field, aggregated per group if needed
+  defp aggregate_value(vl, value, _groupby, nil) do
+    Vl.transform(vl, calculate: to_number(value), as: "__value")
+  end
+
+  defp aggregate_value(vl, value, groupby, aggregate) do
+    Vl.transform(vl, aggregate: [[op: aggregate, field: value, as: "__value"]], groupby: groupby)
+  end
+
+  # Sets the __r_start and __r_end fields of each sector, stacking the values of
+  # each group if a color field is set
+  defp stack_radius(vl, _group, nil) do
+    vl
+    |> Vl.transform(calculate: "datum.__value", as: "__r_end")
+    |> Vl.transform(calculate: "0", as: "__r_start")
+  end
+
+  defp stack_radius(vl, group, color_by) do
+    vl
+    |> Vl.transform(
+      window: [[op: :sum, field: "__value", as: "__r_end"]],
+      groupby: [group],
+      sort: [[field: color_by]],
+      frame: [nil, 0]
+    )
+    |> Vl.transform(calculate: "datum.__r_end - datum.__value", as: "__r_start")
+  end
+
+  # The maximum stacked value of a group, computed in the same way as the vega-lite
+  # transforms, if the data are inline
+  defp max_stacked_value(vl, value, group, groups, color_by, aggregate) do
+    case get_in(vl.spec, ["data", "values"]) do
+      rows when is_list(rows) ->
+        groups = MapSet.new(groups)
+
+        rows
+        |> Enum.filter(&(to_string(&1[group]) in groups))
+        |> Enum.group_by(&{&1[group], color_by && &1[color_by]}, &to_number_value(&1[value]))
+        |> Enum.flat_map(fn {{group, _color}, values} ->
+          for value <- aggregate_values(values, aggregate), do: {group, value}
+        end)
+        |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+        |> Enum.map(fn {_group, values} ->
+          if color_by, do: Enum.sum(values), else: Enum.max(values)
+        end)
+        |> Enum.max(fn -> 0 end)
+
+      _other ->
+        nil
+    end
+  end
+
+  defp to_number_value(value) when is_number(value), do: value
+  defp to_number_value(_value), do: 0
+
+  defp aggregate_values(values, nil), do: values
+  defp aggregate_values(values, :sum), do: [Enum.sum(values)]
+  defp aggregate_values(values, :count), do: [length(values)]
+  defp aggregate_values(values, :mean), do: [Enum.sum(values) / length(values)]
+  defp aggregate_values(values, :min), do: [Enum.min(values)]
+  defp aggregate_values(values, :max), do: [Enum.max(values)]
+
+  # Builds a polar plot of circular sectors, from a layer that sets the __start_angle,
+  # __end_angle (in degrees) and __r_start, __r_end fields of each sector
+  defp sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip) do
+    {vl, grid, opts} = base_plot(plotdata, opts, infer_max_radius)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @bar_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
+      |> Tucan.Keyword.put_not_nil(:stroke, opts[:line_color])
+
+    tooltip =
+      if opts[:color_by], do: tooltip ++ [[field: opts[:color_by], type: :nominal]], else: tooltip
+
+    layer =
+      layer
+      |> Vl.transform(
+        calculate: Grid.arc_theta_expr("datum.__start_angle", grid),
+        as: "__theta"
+      )
+      |> Vl.transform(calculate: Grid.arc_theta_expr("datum.__end_angle", grid), as: "__theta2")
+      |> Vl.mark(:arc, mark_opts)
+      |> Vl.encode_field(:theta, "__theta", type: :quantitative, scale: nil, stack: nil)
+      |> Vl.encode_field(:theta2, "__theta2")
+      |> Vl.encode_field(:radius, "__r_end",
+        type: :quantitative,
+        scale: Grid.radius_scale(grid),
+        stack: nil
+      )
+      |> Vl.encode_field(:radius2, "__r_start")
+      |> maybe_encode_field(:color, opts[:color_by], opts, type: :nominal)
+      |> then(fn layer ->
+        if opts[:tooltip] == true, do: Vl.encode(layer, :tooltip, tooltip), else: layer
+      end)
+
+    Vl.layers(vl, Grid.layers(grid) ++ [layer])
+  end
+
   ## Polar plot construction
 
   # Builds a layered plot with the polar grid and the given data layers on top of it.
@@ -723,15 +962,7 @@ defmodule Tucan.Polar do
   #
   # `tooltip_theta` is the field and type of the angle shown in the tooltip.
   defp polar_plot(plotdata, r, theta, layers, opts, tooltip_theta \\ nil) do
-    opts = resolve_defaults(opts)
-    width = opts[:width]
-
-    vl =
-      Tucan.new(plotdata, Keyword.take(opts, [:width, :title]))
-      |> Vl.config(view: [stroke: nil])
-      |> Tucan.Utils.put_in_spec(:height, width)
-
-    grid = Grid.new(opts, fn -> max_abs_value(vl, r) end)
+    {vl, grid, opts} = base_plot(plotdata, opts, &max_abs_value(&1, r))
 
     layers =
       for layer <- List.wrap(layers) do
@@ -745,6 +976,22 @@ defmodule Tucan.Polar do
       end
 
     Vl.layers(vl, Grid.layers(grid) ++ layers)
+  end
+
+  # The square top level plot and the grid. `infer_max_radius` is called with the
+  # top level plot if the max radius must be inferred from the data.
+  defp base_plot(plotdata, opts, infer_max_radius) do
+    opts = resolve_defaults(opts)
+    width = opts[:width]
+
+    vl =
+      Tucan.new(plotdata, Keyword.take(opts, [:width, :title]))
+      |> Vl.config(view: [stroke: nil])
+      |> Tucan.Utils.put_in_spec(:height, width)
+
+    grid = Grid.new(opts, fn -> infer_max_radius.(vl) end)
+
+    {vl, grid, opts}
   end
 
   # The maximum absolute value of the field if the data are inline, nil otherwise
