@@ -33,7 +33,8 @@ defmodule Tucan.PolarTest do
 
       assert spec["width"] == 300
       assert spec["height"] == 300
-      assert spec["config"] == %{"view" => %{"stroke" => nil}}
+      # the "0°" label is 16 pixels to the right of the plot plus half its width
+      assert spec["config"] == %{"view" => %{"stroke" => nil}, "legend" => %{"offset" => 33}}
       assert %{"values" => [_, _, _]} = spec["data"]
 
       assert Enum.map(spec["layer"], & &1["mark"]["type"]) == [
@@ -210,6 +211,18 @@ defmodule Tucan.PolarTest do
       assert_raise ArgumentError, ~r/expected as many :angle_labels as :angle_marks/, fn ->
         labels.(angle_marks: [0, 90], angle_labels: ["a"])
       end
+    end
+
+    test "moves the legend to the right of long angle labels" do
+      offset = fn opts ->
+        Tucan.Polar.lineplot(@data, "r", "theta", [max_radius: 1] ++ opts)
+        |> VegaLite.to_spec()
+        |> get_in(["config", "legend", "offset"])
+      end
+
+      assert offset.(angle_marks: [0], angle_labels: ["a long label"]) == 65
+      assert offset.(angle_marks: [180], angle_labels: ["a long label"]) == 18
+      assert offset.(angle_labels: :none) == 18
     end
 
     test "rotates the grid with the direction and offset" do

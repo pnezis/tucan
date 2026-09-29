@@ -1699,6 +1699,10 @@ defmodule Tucan.Polar do
 
     grid = Grid.new(opts, fn -> infer_max_radius.(vl) end)
 
+    # the angle labels are outside of the plot, so the legends must be moved further
+    # to the right, the default legend offset is 18 pixels
+    vl = Vl.config(vl, legend: [offset: round(max(18, Grid.right_overflow(grid) + 10))])
+
     {vl, grid, opts}
   end
 

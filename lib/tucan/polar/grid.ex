@@ -190,6 +190,25 @@ defmodule Tucan.Polar.Grid do
   # Angle labels are placed a fixed number of pixels outside of the outer circle
   @angle_labels_padding 16
 
+  # An estimate of the average character width of the labels in pixels
+  @label_char_width 6.5
+
+  @doc """
+  The estimated number of pixels the angle labels extend to the right of the plot.
+  """
+  @spec right_overflow(grid :: t()) :: number()
+  def right_overflow(grid) do
+    label_radius = grid.width / 2 + @angle_labels_padding
+
+    grid.angle_labels
+    |> Enum.map(fn {angle, label} ->
+      {x, _y} = point(label_radius, angle, grid)
+      x + String.length(label) * @label_char_width / 2 - grid.width / 2
+    end)
+    |> Enum.max(fn -> 0 end)
+    |> max(0)
+  end
+
   defp angle_labels_layer(grid) do
     label_radius = grid.max_radius * (1 + @angle_labels_padding / (grid.width / 2))
 
