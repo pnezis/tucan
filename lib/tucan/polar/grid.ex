@@ -301,10 +301,11 @@ defmodule Tucan.Polar.Grid do
         candidate
       end
 
-    Enum.min(candidates, fn -> round_up(value, nice_step(value)) end)
+    # there is always a candidate, e.g. with a step of twice the magnitude the value is
+    # rounded up to 2, 4, 6, 8 or 10 times the magnitude, all of which can be split in
+    # 3 to 6 equal ticks
+    Enum.min(candidates)
   end
-
-  defp round_up(value, step), do: round_float(Float.ceil(value / step - 1.0e-9) * step)
 
   # A step of 1, 2, 2.5 or 5 times a power of 10 that splits the value in ~4 ticks
   defp nice_step(value) do
