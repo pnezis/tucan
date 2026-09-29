@@ -1031,13 +1031,15 @@ defmodule Tucan.Polar do
 
   ## Examples
 
-  The directions of 400 generated observations, concentrated around 60 degrees:
+  The directions of 400 generated observations, mostly around 60 degrees and some
+  around the opposite direction:
 
   ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
   directions =
     for i <- 1..400 do
-      spread = 50 * :math.sin(i * 12.9898) * :math.cos(i * 4.1414)
-      60 + spread + if(rem(i, 5) == 0, do: 180, else: 0)
+      60 + 25 * :rand.normal() + if(rem(i, 5) == 0, do: 180, else: 0)
     end
 
   Tucan.Polar.histogram([direction: directions], "direction",
@@ -1051,11 +1053,13 @@ defmodule Tucan.Polar do
   percentage per hour and colored by the kind of device:
 
   ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
   purchases =
     for i <- 1..600 do
       device = if rem(i, 3) == 0, do: "mobile", else: "desktop"
       peak = if device == "mobile", do: 21, else: 14
-      hour = peak + 4 * :math.sin(i * 7.31) * :math.cos(i * 2.17)
+      hour = peak + 2.5 * :rand.normal()
 
       %{hour: hour, device: device}
     end
