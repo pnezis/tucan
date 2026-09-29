@@ -59,8 +59,8 @@ wedge are proportional to the value.
   Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30)
   ```
 
-- Add experimental `Tucan.Polar` module for plots in polar coordinates, starting
-with `Tucan.Polar.lineplot/4`. The polar grid is drawn in the data coordinates, and
+- Add experimental `Tucan.Polar` module for plots in polar coordinates, with
+`Tucan.Polar.lineplot/4` and `Tucan.Polar.scatter/4`. The polar grid is drawn in the data coordinates, and
 the maximum radius is inferred from inline data.
 
   ```tucan

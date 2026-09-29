@@ -228,6 +228,7 @@ defmodule Tucan.Polar do
       |> Vl.mark(:line, mark_opts)
       |> Vl.encode_field(:order, theta, type: :quantitative)
       |> maybe_encode_detail(opts[:group_by])
+      |> maybe_encode_field(:color, opts[:color_by], opts, [])
 
     polar_plot(plotdata, r, theta, layer, opts)
   end
@@ -247,6 +248,109 @@ defmodule Tucan.Polar do
 
   defp maybe_encode_detail(vl, nil), do: vl
   defp maybe_encode_detail(vl, field), do: Vl.encode_field(vl, :detail, field, type: :nominal)
+
+  @scatter_opts Tucan.Options.take!(
+                  [
+                    :fill_opacity,
+                    :tooltip,
+                    :filled,
+                    :color_by,
+                    :shape_by,
+                    :size_by,
+                    :color,
+                    :shape,
+                    :size,
+                    :point_color,
+                    :point_size,
+                    :point_shape
+                  ],
+                  @polar_opts
+                )
+  @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
+
+  @doc """
+  Draws a scatter plot in polar coordinates.
+
+  `r` is the field with the radius and `theta` the field with the angle of each
+  point. Similarly to `Tucan.scatter/4` the points can be colored, shaped and sized
+  by data fields.
+
+  See the module documentation for the coordinate conventions and the polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@scatter_opts)}
+
+  ## Examples
+
+  Seeds of a sunflower head are placed at successive multiples of the golden angle,
+  at a radius proportional to the square root of their index:
+
+  ```tucan
+  seeds = 1..300
+  theta = Enum.map(seeds, &(&1 * 137.508))
+  r = Enum.map(seeds, &:math.sqrt/1)
+
+  Tucan.Polar.scatter([r: r, theta: theta], "r", "theta",
+    point_color: "darkorange",
+    point_size: 20,
+    filled: true,
+    angle_marks: []
+  )
+  ```
+
+  Wind measurements, where the angle is the direction the wind blows from and the
+  radius its speed. The angle offset and direction match the compass, with North
+  on top and angles increasing clockwise:
+
+  ```tucan
+  data = [
+    %{speed: 4.2, direction: 10, station: "A"},
+    %{speed: 6.1, direction: 35, station: "A"},
+    %{speed: 3.5, direction: 80, station: "A"},
+    %{speed: 7.8, direction: 200, station: "A"},
+    %{speed: 5.4, direction: 230, station: "A"},
+    %{speed: 2.1, direction: 300, station: "B"},
+    %{speed: 3.3, direction: 320, station: "B"},
+    %{speed: 6.7, direction: 250, station: "B"},
+    %{speed: 8.9, direction: 270, station: "B"},
+    %{speed: 4.8, direction: 150, station: "B"}
+  ]
+
+  Tucan.Polar.scatter(data, "speed", "direction",
+    color_by: "station",
+    shape_by: "station",
+    point_size: 80,
+    angle_offset: 90,
+    direction: :clockwise,
+    tooltip: true
+  )
+  ```
+  """
+  @spec scatter(
+          plotdata :: Tucan.plotdata(),
+          r :: String.t(),
+          theta :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def scatter(plotdata, r, theta, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    mark_opts =
+      Tucan.Options.take_options(opts, @scatter_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+      |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
+
+    layer =
+      Vl.new()
+      |> Vl.mark(:point, mark_opts)
+      |> maybe_encode_field(:color, opts[:color_by], opts, type: :nominal)
+      |> maybe_encode_field(:shape, opts[:shape_by], opts, type: :nominal)
+      |> maybe_encode_field(:size, opts[:size_by], opts, type: :quantitative)
+
+    polar_plot(plotdata, r, theta, layer, opts)
+  end
 
   ## Polar plot construction
 
@@ -268,7 +372,6 @@ defmodule Tucan.Polar do
       |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
       |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
       |> encode_xy("__polar_x", "__polar_y", grid)
-      |> maybe_encode_color(opts)
       |> maybe_encode_tooltip(r, theta, opts)
 
     Vl.layers(vl, grid_layers(grid, opts) ++ [layer])
@@ -295,13 +398,10 @@ defmodule Tucan.Polar do
     |> Vl.encode_field(:y, y, xy_opts)
   end
 
-  defp maybe_encode_color(vl, opts) do
-    if opts[:color_by] do
-      Tucan.Utils.encode_field(vl, :color, opts[:color_by], opts)
-    else
-      vl
-    end
-  end
+  defp maybe_encode_field(vl, _channel, nil, _opts, _extra), do: vl
+
+  defp maybe_encode_field(vl, channel, field, opts, extra),
+    do: Tucan.Utils.encode_field(vl, channel, field, opts, extra)
 
   # The default tooltip would show the cartesian coordinates, instead we show the
   # polar coordinates and the grouping fields
@@ -312,11 +412,18 @@ defmodule Tucan.Polar do
           [field: r, type: :quantitative],
           [field: theta, type: :quantitative]
         ] ++
-          for field <- [opts[:color_by], opts[:group_by]], field != nil, uniq: true do
-            [field: field, type: :nominal]
+          for {option, type} <- [
+                color_by: :nominal,
+                group_by: :nominal,
+                shape_by: :nominal,
+                size_by: :quantitative
+              ],
+              field = opts[option],
+              field != nil do
+            [field: field, type: type]
           end
 
-      Vl.encode(vl, :tooltip, fields)
+      Vl.encode(vl, :tooltip, Enum.uniq_by(fields, & &1[:field]))
     else
       vl
     end

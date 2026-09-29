@@ -259,4 +259,84 @@ defmodule Tucan.PolarTest do
       end
     end
   end
+
+  describe "scatter/4" do
+    test "draws the points on top of the polar grid" do
+      vl = Tucan.Polar.scatter(@data, "r", "theta")
+      spec = VegaLite.to_spec(vl)
+      layer = data_layer(vl)
+
+      assert spec["width"] == 300
+      assert spec["height"] == 300
+
+      assert Enum.map(spec["layer"], & &1["mark"]["type"]) == [
+               "line",
+               "rule",
+               "text",
+               "text",
+               "point"
+             ]
+
+      assert layer["mark"] == %{"type" => "point", "fillOpacity" => 1}
+
+      assert Enum.map(layer["transform"], & &1["as"]) == [
+               "__polar_angle",
+               "__polar_x",
+               "__polar_y"
+             ]
+
+      assert get_in(layer, ["encoding", "x", "scale", "domain"]) == [-2, 2]
+      refute Map.has_key?(layer["encoding"], "order")
+    end
+
+    test "with grouping and styling options" do
+      layer =
+        Tucan.Polar.scatter([r: [1, 2], theta: [0, 1], g: ["a", "b"]], "r", "theta",
+          color_by: "g",
+          shape_by: "g",
+          size_by: "r",
+          point_color: "red",
+          point_shape: "square",
+          point_size: 30,
+          filled: true,
+          tooltip: true
+        )
+        |> data_layer()
+
+      assert layer["mark"] == %{
+               "type" => "point",
+               "color" => "red",
+               "shape" => "square",
+               "size" => 30,
+               "filled" => true,
+               "fillOpacity" => 1,
+               "tooltip" => true
+             }
+
+      assert layer["encoding"]["color"] == %{"field" => "g", "type" => "nominal"}
+      assert layer["encoding"]["shape"] == %{"field" => "g", "type" => "nominal"}
+      assert layer["encoding"]["size"] == %{"field" => "r", "type" => "quantitative"}
+
+      assert layer["encoding"]["tooltip"] == [
+               %{"field" => "r", "type" => "quantitative"},
+               %{"field" => "theta", "type" => "quantitative"},
+               %{"field" => "g", "type" => "nominal"}
+             ]
+    end
+
+    test "with custom encoding options" do
+      layer =
+        Tucan.Polar.scatter([r: [1, 2], theta: [0, 1], g: ["a", "b"]], "r", "theta",
+          color_by: "g",
+          color: [scale: [scheme: "set1"]]
+        )
+        |> data_layer()
+
+      assert layer["encoding"]["color"] == %{
+               "field" => "g",
+               "type" => "nominal",
+               "scale" => %{"scheme" => "set1"}
+             }
+    end
+  end
 end
