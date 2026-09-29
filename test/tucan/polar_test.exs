@@ -12,6 +12,8 @@ defmodule Tucan.PolarTest do
     vl |> layers() |> Enum.find(fn layer -> layer["mark"]["type"] == mark end)
   end
 
+  defp domain(vl), do: get_in(data_layer(vl), ["encoding", "radius", "scale", "domain"])
+
   defp angle_labels(vl) do
     vl |> layers() |> Enum.at(-2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
   end
@@ -805,8 +807,6 @@ defmodule Tucan.PolarTest do
   end
 
   describe "histogram/3" do
-    defp domain(vl), do: get_in(data_layer(vl), ["encoding", "radius", "scale", "domain"])
-
     test "bins the angles and counts the values" do
       vl = Tucan.Polar.histogram([t: [10, 20, 100, 370, -80]], "t", bins: 4)
       layer = data_layer(vl)
@@ -911,6 +911,90 @@ defmodule Tucan.PolarTest do
     test "raises if the max radius cannot be inferred" do
       assert_raise ArgumentError, ~r/cannot infer the maximum radius/, fn ->
         Tucan.Polar.histogram("https://example.com/data.csv", "t")
+      end
+    end
+  end
+
+  describe "windrose/4" do
+    @wind [
+      %{d: 0, s: 1},
+      %{d: 350, s: 5},
+      %{d: 10, s: 9},
+      %{d: 90, s: 2},
+      %{d: 180, s: -1}
+    ]
+
+    test "bins the observations by direction and speed" do
+      vl = Tucan.Polar.windrose(@wind, "d", "s", directions: 4, speed_bins: [0, 4, 8])
+      layer = data_layer(vl)
+
+      assert [
+               %{"as" => "__degrees"},
+               %{"calculate" => speed_index, "as" => "__speed_index"},
+               %{"filter" => "datum.__speed_index >= 0"},
+               %{"calculate" => ~S|["0–4","4–8","8+"][datum.__speed_index]|, "as" => "__speed"},
+               %{"calculate" => bin, "as" => "__bin"},
+               %{"groupby" => ["__bin", "__speed_index", "__speed"]},
+               %{"joinaggregate" => _},
+               %{"as" => "__value"},
+               %{"calculate" => "datum.__bin * 90.0 - 45.0", "as" => "__start_angle"},
+               %{"as" => "__end_angle"},
+               %{"window" => _, "sort" => [%{"field" => "__speed_index"}]} | _
+             ] = layer["transform"]
+
+      s = ~S|toNumber(datum["s"])|
+      assert speed_index == "#{s} >= 8 ? 2 : (#{s} >= 4 ? 1 : (#{s} >= 0 ? 0 : (-1)))"
+      assert bin == "floor(((datum.__degrees + 45.0) % 360) / 90.0)"
+
+      assert layer["encoding"]["color"] == %{
+               "field" => "__speed",
+               "type" => "ordinal",
+               "sort" => ["0–4", "4–8", "8+"],
+               "title" => "s"
+             }
+
+      # 3 of the 4 valid observations are in the North bin
+      assert domain(vl) == [0, 75]
+      assert angle_labels(vl) == ~w(N NE E SE S SW W NW)
+    end
+
+    test "with counts and default speed bins" do
+      vl = Tucan.Polar.windrose(@wind, "d", "s", relative: false, tooltip: true)
+      layer = data_layer(vl)
+
+      # the max speed 9 is rounded to 10
+      assert get_in(layer, ["encoding", "color", "sort"]) == ["0–2", "2–4", "4–6", "6–8", "8+"]
+      refute Enum.any?(layer["transform"], &Map.has_key?(&1, "joinaggregate"))
+      assert domain(vl) == [0, 3]
+
+      assert layer["encoding"]["tooltip"] == [
+               %{
+                 "field" => "__value",
+                 "type" => "quantitative",
+                 "title" => "Count",
+                 "format" => ".3~f"
+               },
+               %{"field" => "__speed", "type" => "ordinal"}
+             ]
+    end
+
+    test "with custom colors" do
+      layer =
+        Tucan.Polar.windrose(@wind, "d", "s", color: [scale: [scheme: "viridis"]])
+        |> data_layer()
+
+      assert get_in(layer, ["encoding", "color", "scale"]) == %{"scheme" => "viridis"}
+    end
+
+    test "raises with invalid speed bins" do
+      for bins <- [[], [4, 2], [1, 1]] do
+        assert_raise ArgumentError, ~r/expected :speed_bins/, fn ->
+          Tucan.Polar.windrose(@wind, "d", "s", speed_bins: bins)
+        end
+      end
+
+      assert_raise ArgumentError, ~r/set the :speed_bins option/, fn ->
+        Tucan.Polar.windrose("https://example.com/data.csv", "d", "s", max_radius: 1)
       end
     end
   end

@@ -922,7 +922,10 @@ defmodule Tucan.Polar do
 
   # Builds a polar plot of circular sectors, from a layer that sets the __start_angle,
   # __end_angle (in degrees) and __r_start, __r_end fields of each sector
-  defp sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip) do
+  #
+  # `color` is the field and the encoding options of the color, by default the
+  # `:color_by` field if set.
+  defp sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip, color \\ nil) do
     {vl, grid, opts} = base_plot(plotdata, opts, infer_max_radius)
 
     mark_opts =
@@ -930,8 +933,13 @@ defmodule Tucan.Polar do
       |> Tucan.Keyword.put_not_nil(:color, opts[:fill_color])
       |> Tucan.Keyword.put_not_nil(:stroke, opts[:line_color])
 
+    {color_field, color_opts} =
+      color || {opts[:color_by], [type: :nominal]}
+
     tooltip =
-      if opts[:color_by], do: tooltip ++ [[field: opts[:color_by], type: :nominal]], else: tooltip
+      if color_field,
+        do: tooltip ++ [[field: color_field, type: color_opts[:type]]],
+        else: tooltip
 
     layer =
       layer
@@ -949,7 +957,7 @@ defmodule Tucan.Polar do
         stack: nil
       )
       |> Vl.encode_field(:radius2, "__r_start")
-      |> maybe_encode_field(:color, opts[:color_by], opts, type: :nominal)
+      |> maybe_encode_field(:color, color_field, opts, color_opts)
       |> then(fn layer ->
         if opts[:tooltip] == true, do: Vl.encode(layer, :tooltip, tooltip), else: layer
       end)
@@ -1236,6 +1244,232 @@ defmodule Tucan.Polar do
   end
 
   defp to_naive_datetime(_value), do: nil
+
+  windrose_opts = [
+    directions: [
+      type: :pos_integer,
+      default: 16,
+      doc: """
+      The number of direction bins. The bins are centered at the directions, e.g. with
+      the default 16 bins the North bin spans from -11.25 to 11.25 degrees.
+      """
+    ],
+    speed_bins: [
+      type: {:list, {:or, [:integer, :float]}},
+      type_doc: "list of `t:number/0`",
+      doc: """
+      The increasing lower limits of the speed bins. The last bin contains all speeds
+      above the last limit and speeds below the first limit are ignored. If not set,
+      five equal bins starting from `0` are used, which is possible only if the data
+      are passed inline.
+      """
+    ],
+    relative: [
+      type: :boolean,
+      default: true,
+      doc: """
+      If set the radius is the percentage of the observations in each bin, otherwise
+      their count.
+      """
+    ],
+    direction: [default: :clockwise],
+    angle_offset: [default: 90],
+    angle_labels: [default: :compass]
+  ]
+
+  @windrose_opts Tucan.Options.take!(
+                   [
+                     :fill_opacity,
+                     :tooltip,
+                     :color,
+                     :line_color,
+                     :stroke_width
+                   ],
+                   Tucan.Keyword.deep_merge(
+                     Keyword.drop(@polar_opts, [:angle_unit, :period]),
+                     windrose_opts
+                   )
+                 )
+  @windrose_schema Tucan.Options.to_nimble_schema!(@windrose_opts)
+
+  @doc """
+  Draws a wind rose.
+
+  A wind rose shows how the observations of wind speed and direction are distributed.
+  The observations are binned by direction, and the bar of each direction is split
+  by speed, with the lower speeds closer to the center. By default the radius is the
+  percentage of the observations in each bin.
+
+  `direction` is the field with the direction the wind blows from, in degrees, and
+  `speed` the field with the wind speed. The plot follows the compass, with North on
+  top and directions increasing clockwise.
+
+  See the module documentation for more details on the polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@windrose_opts)}
+
+  ## Examples
+
+  Generated observations with a prevailing south west wind:
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  data =
+    for _i <- 1..500 do
+      direction = 225 + 45 * :rand.normal()
+      speed = abs(6 + 3 * :rand.normal() + 2 * :math.cos((direction - 225) * :math.pi() / 180))
+
+      %{direction: direction, speed: speed}
+    end
+
+  Tucan.Polar.windrose(data, "direction", "speed", line_color: "white", tooltip: true)
+  ```
+
+  With custom speed bins, eight directions, counts instead of percentages and a
+  different color scheme:
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  data =
+    for _i <- 1..300 do
+      direction = if :rand.uniform() < 0.6, do: 20 * :rand.normal(), else: 360 * :rand.uniform()
+      %{direction: direction, speed: 12 * :rand.uniform()}
+    end
+
+  Tucan.Polar.windrose(data, "direction", "speed",
+    directions: 8,
+    speed_bins: [0, 3, 6, 9],
+    relative: false,
+    color: [scale: [scheme: "viridis"]]
+  )
+  ```
+  """
+  @spec windrose(
+          plotdata :: Tucan.plotdata(),
+          direction :: String.t(),
+          speed :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def windrose(plotdata, direction, speed, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @windrose_schema)
+
+    thresholds = validate_speed_bins!(opts[:speed_bins]) || default_speed_bins!(plotdata, speed)
+    labels = speed_labels(thresholds)
+    bin_width = 360 / opts[:directions]
+
+    # the index of the highest threshold not greater than the speed, -1 if none
+    speed_index =
+      thresholds
+      |> Enum.with_index()
+      |> Enum.reduce("-1", fn {threshold, i}, acc ->
+        "#{to_number(speed)} >= #{threshold} ? #{i} : (#{acc})"
+      end)
+
+    layer =
+      Vl.new()
+      |> add_degrees_transform(direction, opts)
+      |> Vl.transform(calculate: speed_index, as: "__speed_index")
+      |> Vl.transform(filter: "datum.__speed_index >= 0")
+      |> Vl.transform(
+        calculate: "#{Jason.encode!(labels)}[datum.__speed_index]",
+        as: "__speed"
+      )
+      |> Vl.transform(
+        calculate: "floor(((datum.__degrees + #{bin_width / 2}) % 360) / #{bin_width})",
+        as: "__bin"
+      )
+      |> Vl.transform(
+        aggregate: [[op: :count, as: "__value"]],
+        groupby: ["__bin", "__speed_index", "__speed"]
+      )
+      |> maybe_relative(opts[:relative])
+      |> Vl.transform(
+        calculate: "datum.__bin * #{bin_width} - #{bin_width / 2}",
+        as: "__start_angle"
+      )
+      |> Vl.transform(calculate: "datum.__start_angle + #{bin_width}", as: "__end_angle")
+      |> stack_radius("__bin", "__speed_index")
+
+    value_title = if opts[:relative], do: "Percentage", else: "Count"
+
+    tooltip = [[field: "__value", type: :quantitative, title: value_title, format: ".3~f"]]
+
+    infer_max_radius = fn vl ->
+      max_windrose_value(vl, direction, speed, thresholds, bin_width, opts[:relative])
+    end
+
+    color = {"__speed", [type: :ordinal, sort: labels, title: speed]}
+
+    sectors_plot(plotdata, layer, opts, infer_max_radius, tooltip, color)
+  end
+
+  defp validate_speed_bins!(nil), do: nil
+
+  defp validate_speed_bins!(bins) do
+    if bins == [] or bins != Enum.sort(Enum.uniq(bins)) do
+      raise ArgumentError,
+            "expected :speed_bins to be a non empty list of increasing numbers, " <>
+              "got: #{inspect(bins)}"
+    end
+
+    bins
+  end
+
+  defp default_speed_bins!(plotdata, speed) do
+    case inline_values(Tucan.new(plotdata), speed) do
+      nil ->
+        raise ArgumentError,
+              "cannot infer the speed bins of a wind rose if the data are not passed " <>
+                "inline, set the :speed_bins option"
+
+      values ->
+        max = values |> Enum.map(&to_float/1) |> Enum.reject(&is_nil/1) |> Enum.max(fn -> 0 end)
+        step = Grid.nice_max(max) / 5
+
+        for i <- 0..4, do: round_number(i * step)
+    end
+  end
+
+  defp round_number(value) do
+    rounded = Float.round(value * 1.0, 10)
+    if rounded == Float.round(rounded), do: trunc(rounded), else: rounded
+  end
+
+  defp speed_labels(thresholds) do
+    ranges =
+      thresholds
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.map(fn [from, to] -> "#{format_number(from)}–#{format_number(to)}" end)
+
+    ranges ++ ["#{format_number(List.last(thresholds))}+"]
+  end
+
+  defp max_windrose_value(vl, direction, speed, thresholds, bin_width, relative) do
+    case get_in(vl.spec, ["data", "values"]) do
+      rows when is_list(rows) ->
+        min_speed = hd(thresholds)
+
+        bins =
+          for row <- rows,
+              speed = to_float(row[speed]),
+              speed != nil and speed >= min_speed,
+              degrees = degrees(row[direction], angle_unit: :degrees),
+              degrees != nil do
+            trunc(positive_mod(degrees + bin_width / 2, 360) / bin_width)
+          end
+
+        max = bins |> Enum.frequencies() |> Map.values() |> Enum.max(fn -> 0 end)
+
+        if relative and bins != [], do: max / length(bins) * 100, else: max
+
+      _other ->
+        nil
+    end
+  end
 
   ## Polar plot construction
 
