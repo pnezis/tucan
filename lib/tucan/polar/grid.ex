@@ -226,17 +226,30 @@ defmodule Tucan.Polar.Grid do
   ## Radius ticks
 
   @doc """
-  Rounds up the given radius to a multiple of a round tick step.
+  Rounds up the given radius to a round number.
+
+  The smallest multiple of a round step that can be split in 3 to 6 equal ticks is
+  preferred, e.g. `5` is kept as is and `1.7` is rounded up to `2`.
   """
   @spec nice_max(value :: number()) :: number()
   def nice_max(value) when value == 0, do: 1
 
   def nice_max(value) do
-    step = nice_step(value)
+    magnitude = :math.pow(10, Float.floor(:math.log10(value)))
 
-    (Float.ceil(value / step - 1.0e-9) * step)
-    |> round_float()
+    candidates =
+      for m <- [magnitude / 10, magnitude],
+          f <- [1, 2, 2.5, 5],
+          step = f * m,
+          candidate = round_float(Float.ceil(value / step - 1.0e-9) * step),
+          divisor_step(candidate) != nil do
+        candidate
+      end
+
+    Enum.min(candidates, fn -> round_up(value, nice_step(value)) end)
   end
+
+  defp round_up(value, step), do: round_float(Float.ceil(value / step - 1.0e-9) * step)
 
   # A step of 1, 2, 2.5 or 5 times a power of 10 that splits the value in ~4 ticks
   defp nice_step(value) do

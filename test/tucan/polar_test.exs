@@ -101,6 +101,16 @@ defmodule Tucan.PolarTest do
       assert get_in(data_layer(vl), ["encoding", "x", "scale", "domain"]) == [-40, 40]
       assert radius_labels(vl) == ["10", "20", "30", "40"]
 
+      # round radiuses are not rounded up
+      for {max, expected} <- [{5, 5}, {4.2, 5}, {9, 10}, {0.3, 0.3}, {17.3, 20}, {130, 150}] do
+        vl = Tucan.Polar.lineplot([r: [max], theta: [0]], "r", "theta")
+
+        assert get_in(data_layer(vl), ["encoding", "x", "scale", "domain"]) == [
+                 -expected,
+                 expected
+               ]
+      end
+
       vl = Tucan.Polar.lineplot([r: [0, 0], theta: [0, 1]], "r", "theta")
 
       assert get_in(data_layer(vl), ["encoding", "x", "scale", "domain"]) == [-1, 1]
