@@ -442,4 +442,138 @@ defmodule Tucan.PolarTest do
              ]
     end
   end
+
+  describe "radar/4" do
+    @radar_data [
+      %{s: "a", k: "x", v: 1},
+      %{s: "a", k: "y", v: 3},
+      %{s: "a", k: "z", v: 2},
+      %{s: "b", k: "x", v: 2},
+      %{s: "b", k: "y", v: 1},
+      %{s: "b", k: "z", v: 4}
+    ]
+
+    defp angle_labels(vl) do
+      vl |> layers() |> Enum.at(2) |> get_in(["data", "values"]) |> Enum.map(& &1["label"])
+    end
+
+    test "places the categories at equal angles" do
+      vl = Tucan.Polar.radar(@radar_data, "v", "k")
+      layer = data_layer(vl)
+      index = ~S|indexof(["x","y","z"], datum["k"])|
+
+      assert length(layers(vl)) == 5
+      assert angle_labels(vl) == ["x", "y", "z"]
+
+      assert [
+               %{"filter" => filter},
+               %{"calculate" => angle, "as" => "__radar_angle"},
+               %{"calculate" => theta_expr, "as" => "__polar_angle"} | _
+             ] = layer["transform"]
+
+      assert filter == "#{index} >= 0"
+      assert angle == "#{index} * 120.0"
+
+      # clockwise from the top by default
+      assert theta_expr ==
+               ~s|#{-:math.pi() / 180} * toNumber(datum["__radar_angle"]) + #{:math.pi() / 2}|
+
+      assert layer["mark"] == %{
+               "type" => "line",
+               "interpolate" => "linear-closed",
+               "point" => true
+             }
+
+      assert layer["encoding"]["order"] == %{"field" => "__radar_angle", "type" => "quantitative"}
+      assert get_in(layer, ["encoding", "x", "scale", "domain"]) == [-4, 4]
+
+      rules = vl |> layers() |> Enum.at(1) |> get_in(["data", "values"])
+      assert length(rules) == 3
+    end
+
+    test "with explicit categories" do
+      vl = Tucan.Polar.radar(@radar_data, "v", "k", categories: ["z", "x"])
+
+      assert angle_labels(vl) == ["z", "x"]
+
+      assert [%{"filter" => ~S|indexof(["z","x"], datum["k"]) >= 0|} | _] =
+               data_layer(vl)["transform"]
+    end
+
+    test "raises if the categories cannot be inferred" do
+      assert_raise ArgumentError, ~r/set the :categories option/, fn ->
+        Tucan.Polar.radar("https://example.com/data.csv", "v", "k", max_radius: 1)
+      end
+
+      assert %VegaLite{} =
+               Tucan.Polar.radar("https://example.com/data.csv", "v", "k",
+                 max_radius: 1,
+                 categories: ["x"]
+               )
+    end
+
+    test "filled radar adds a fill layer below the outlines" do
+      vl =
+        Tucan.Polar.radar(@radar_data, "v", "k",
+          color_by: "s",
+          filled: true,
+          fill_opacity: 0.2,
+          points: false,
+          stroke_width: 3,
+          tooltip: true
+        )
+
+      [fill, line] = vl |> layers() |> Enum.drop(4)
+
+      assert fill["mark"] == %{
+               "type" => "line",
+               "filled" => true,
+               "interpolate" => "linear-closed",
+               "fillOpacity" => 0.2
+             }
+
+      assert line["mark"] == %{
+               "type" => "line",
+               "interpolate" => "linear-closed",
+               "strokeWidth" => 3,
+               "tooltip" => true
+             }
+
+      for layer <- [fill, line] do
+        assert layer["encoding"]["color"] == %{"field" => "s"}
+        assert hd(layer["transform"])["filter"] =~ "indexof"
+      end
+
+      assert line["encoding"]["tooltip"] == [
+               %{"field" => "v", "type" => "quantitative"},
+               %{"field" => "k", "type" => "nominal"},
+               %{"field" => "s", "type" => "nominal"}
+             ]
+    end
+
+    test "with styling options" do
+      layer =
+        Tucan.Polar.radar(@radar_data, "v", "k",
+          group_by: "s",
+          line_color: "red",
+          point_color: "black",
+          point_size: 40,
+          direction: :counter_clockwise,
+          angle_offset: 0
+        )
+        |> data_layer()
+
+      assert layer["mark"] == %{
+               "type" => "line",
+               "color" => "red",
+               "interpolate" => "linear-closed",
+               "point" => %{"color" => "black", "size" => 40}
+             }
+
+      assert layer["encoding"]["detail"] == %{"field" => "s", "type" => "nominal"}
+
+      assert Enum.at(layer["transform"], 2)["calculate"] ==
+               ~s|#{:math.pi() / 180} * toNumber(datum["__radar_angle"]) + 0.0|
+    end
+  end
 end

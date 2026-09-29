@@ -198,32 +198,7 @@ defmodule Tucan.Polar do
   Tucan.Polar.lineplot([r: r, theta: theta], "r", "theta", line_color: "purple")
   ```
 
-  A radar chart comparing two players across six skills. The angle marks are set
-  to the skills' angles and `"linear-closed"` closes each outline:
-
-  ```tucan
-  skills = ["Speed", "Shooting", "Passing", "Dribbling", "Defense", "Stamina"]
-
-  data =
-    for {player, scores} <- [
-          {"Alice", [8, 6, 9, 7, 4, 8]},
-          {"Bob", [5, 9, 6, 8, 7, 6]}
-        ],
-        {{skill, score}, i} <- Enum.with_index(Enum.zip(skills, scores)) do
-      %{player: player, skill: skill, score: score, angle: i * 60}
-    end
-
-  Tucan.Polar.lineplot(data, "score", "angle",
-    color_by: "player",
-    interpolate: "linear-closed",
-    points: true,
-    max_radius: 10,
-    angle_marks: [0, 60, 120, 180, 240, 300],
-    angle_offset: 90,
-    direction: :clockwise,
-    tooltip: true
-  )
-  ```
+  For radar charts see `radar/4`.
   """
   @spec lineplot(
           plotdata :: Tucan.plotdata(),
@@ -473,11 +448,221 @@ defmodule Tucan.Polar do
     |> maybe_encode_field(:color, opts[:color_by], opts, legend: [symbol_type: "square"])
   end
 
+  radar_opts = [
+    categories: [
+      type: {:list, :string},
+      doc: """
+      The categories in the order they are drawn. If not set they are inferred from
+      the data, in the order they first appear. This is possible only if the data are
+      passed inline.
+      """
+    ],
+    group_by: [
+      type: :string,
+      doc: "A field to group by the outlines without affecting the style of it.",
+      section: :grouping
+    ],
+    filled: [
+      type: :boolean,
+      default: false,
+      doc: "Whether the outlines will be filled.",
+      section: :style
+    ],
+    fill_opacity: [
+      default: 0.3,
+      doc: "The opacity of the fill, if `:filled` is set."
+    ],
+    points: [
+      type: :boolean,
+      doc: "Whether points will be drawn at the values.",
+      default: true,
+      section: :style
+    ],
+    point_color: [
+      type: :string,
+      doc: "The color of the points, if `:points` is set to `true`.",
+      section: :style
+    ],
+    point_size: [
+      type: :pos_integer,
+      doc: "The size of the points, if `:points` is set to `true`.",
+      section: :style
+    ],
+    direction: [default: :clockwise],
+    angle_offset: [default: 90]
+  ]
+
+  @radar_opts Tucan.Options.take!(
+                [
+                  :fill_opacity,
+                  :tooltip,
+                  :color_by,
+                  :color,
+                  :line_color,
+                  :stroke_width,
+                  :stroke_dash
+                ],
+                Tucan.Keyword.deep_merge(
+                  Keyword.drop(@polar_opts, [:angle_marks, :angle_labels, :angle_unit]),
+                  radar_opts
+                )
+              )
+  @radar_schema Tucan.Options.to_nimble_schema!(@radar_opts)
+
+  @doc """
+  Draws a radar chart.
+
+  A radar chart, also known as a spider or star chart, compares the values of
+  several categories. Each category has its own axis starting from the center and
+  the values of each series are connected into a closed outline. The data must have
+  one row per category and series, with the `value` of the category.
+
+  The categories are placed at equal angles, starting at the top and going
+  clockwise, and the grid lines are labeled with the category names.
+
+  See the module documentation for more details on the polar grid.
+
+  ## Options
+
+  #{Tucan.Options.docs(@radar_opts)}
+
+  ## Examples
+
+  Two players compared across six skills:
+
+  ```tucan
+  data =
+    for {player, scores} <- [
+          {"Alice", [8, 6, 9, 7, 4, 8]},
+          {"Bob", [5, 9, 6, 8, 7, 6]}
+        ],
+        {skill, score} <-
+          Enum.zip(["Speed", "Shooting", "Passing", "Dribbling", "Defense", "Stamina"], scores) do
+      %{player: player, skill: skill, score: score}
+    end
+
+  Tucan.Polar.radar(data, "score", "skill",
+    color_by: "player",
+    filled: true,
+    max_radius: 10,
+    tooltip: true
+  )
+  ```
+
+  The monthly average temperatures of Seattle. The `:categories` option sets the
+  order of the categories explicitly, which is required if the data are not passed
+  inline:
+
+  ```tucan
+  months = ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+
+  data =
+    Enum.zip_with(
+      months,
+      [5.5, 6.5, 8.4, 10.8, 14.4, 17.0, 19.9, 20.1, 17.2, 12.6, 8.2, 5.8],
+      fn month, temp -> %{month: month, temp: temp} end
+    )
+
+  Tucan.Polar.radar(data, "temp", "month",
+    categories: months,
+    line_color: "firebrick",
+    point_color: "firebrick",
+    max_radius: 25,
+    radius_ticks: [5, 10, 15, 20, 25]
+  )
+  ```
+  """
+  @spec radar(
+          plotdata :: Tucan.plotdata(),
+          value :: String.t(),
+          category :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def radar(plotdata, value, category, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @radar_schema)
+
+    categories = opts[:categories] || infer_categories!(plotdata, category)
+    step = 360 / max(length(categories), 1)
+    angle_marks = for i <- 0..(length(categories) - 1)//1, do: i * step
+
+    opts =
+      Keyword.merge(opts,
+        angle_marks: angle_marks,
+        angle_labels: categories,
+        angle_unit: :degrees
+      )
+
+    index = "indexof(#{Jason.encode!(categories)}, datum[#{Jason.encode!(category)}])"
+
+    layers =
+      for layer <- radar_layers(opts) do
+        layer
+        |> Vl.transform(filter: "#{index} >= 0")
+        |> Vl.transform(calculate: "#{index} * #{step}", as: "__radar_angle")
+      end
+
+    polar_plot(plotdata, value, "__radar_angle", layers, opts, {category, :nominal})
+  end
+
+  defp infer_categories!(plotdata, category) do
+    case inline_values(Tucan.new(plotdata), category) do
+      nil ->
+        raise ArgumentError,
+              "cannot infer the categories of a radar chart if the data are not passed " <>
+                "inline, set the :categories option"
+
+      values ->
+        values
+        |> Enum.reject(&is_nil/1)
+        |> Enum.map(&to_string/1)
+        |> Enum.uniq()
+    end
+  end
+
+  defp radar_layers(opts) do
+    line_mark_opts =
+      Tucan.Options.take_options(opts, @radar_opts, :mark)
+      |> Keyword.drop([:fill_opacity])
+      |> Keyword.put(:interpolate, "linear-closed")
+      |> maybe_add_point_opts(opts)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    line_layer =
+      Vl.new()
+      |> Vl.mark(:line, line_mark_opts)
+      |> Vl.encode_field(:order, "__radar_angle", type: :quantitative)
+      |> maybe_encode_detail(opts[:group_by])
+      |> maybe_encode_field(:color, opts[:color_by], opts, [])
+
+    if opts[:filled] do
+      fill_mark_opts =
+        [
+          filled: true,
+          interpolate: "linear-closed",
+          fill_opacity: opts[:fill_opacity]
+        ]
+        |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+      fill_layer =
+        Vl.new()
+        |> Vl.mark(:line, fill_mark_opts)
+        |> Vl.encode_field(:order, "__radar_angle", type: :quantitative)
+        |> maybe_encode_detail(opts[:group_by])
+        |> maybe_encode_field(:color, opts[:color_by], opts, [])
+
+      [fill_layer, line_layer]
+    else
+      [line_layer]
+    end
+  end
+
   ## Polar plot construction
 
   # Builds a layered plot with the polar grid and the given data layers on top of it.
   # The data are set on the top level spec and inherited by the data layers.
-  defp polar_plot(plotdata, r, theta, layers, opts) do
+  #
+  # `tooltip_theta` is the field and type of the angle shown in the tooltip.
+  defp polar_plot(plotdata, r, theta, layers, opts, tooltip_theta \\ nil) do
     width = opts[:width]
 
     vl =
@@ -494,7 +679,7 @@ defmodule Tucan.Polar do
         |> Vl.transform(calculate: "#{to_number(r)} * cos(datum.__polar_angle)", as: "__polar_x")
         |> Vl.transform(calculate: "#{to_number(r)} * sin(datum.__polar_angle)", as: "__polar_y")
         |> Grid.encode_xy("__polar_x", "__polar_y", grid)
-        |> maybe_encode_tooltip(r, theta, opts)
+        |> maybe_encode_tooltip(r, tooltip_theta || {theta, :quantitative}, opts)
       end
 
     Vl.layers(vl, Grid.layers(grid) ++ layers)
@@ -502,16 +687,23 @@ defmodule Tucan.Polar do
 
   # The maximum absolute value of the field if the data are inline, nil otherwise
   defp max_abs_value(vl, field) do
-    case get_in(vl.spec, ["data", "values"]) do
-      values when is_list(values) ->
+    case inline_values(vl, field) do
+      nil ->
+        nil
+
+      values ->
         values
-        |> Enum.map(&Map.get(&1, field))
         |> Enum.filter(&is_number/1)
         |> Enum.map(&abs/1)
         |> Enum.max(fn -> 0 end)
+    end
+  end
 
-      _other ->
-        nil
+  # The values of the field if the data are inline, nil otherwise
+  defp inline_values(%VegaLite{} = vl, field) do
+    case get_in(vl.spec, ["data", "values"]) do
+      values when is_list(values) -> Enum.map(values, &Map.get(&1, field))
+      _other -> nil
     end
   end
 
@@ -531,12 +723,12 @@ defmodule Tucan.Polar do
 
   # The default tooltip would show the cartesian coordinates, instead we show the
   # polar coordinates and the grouping fields
-  defp maybe_encode_tooltip(vl, r, theta, opts) do
+  defp maybe_encode_tooltip(vl, r, {theta, theta_type}, opts) do
     if opts[:tooltip] == true do
       fields =
         [
           [field: r, type: :quantitative],
-          [field: theta, type: :quantitative]
+          [field: theta, type: theta_type]
         ] ++
           for {option, type} <- [
                 color_by: :nominal,
