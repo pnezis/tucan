@@ -64,6 +64,21 @@ defmodule Tucan.Polar do
       degrees, regardless of the `:angle_unit`.
       """
     ],
+    angle_labels: [
+      type: {:or, [{:in, [:degrees, :compass, :none]}, {:list, :string}]},
+      type_doc: "`t:atom/0` or list of `t:String.t/0`",
+      default: :degrees,
+      doc: """
+      The labels of the angle marks. One of:
+
+      * `:degrees` - the angle in degrees, e.g. `"45°"`.
+      * `:compass` - the compass point of the angle, e.g. `"NE"`, for multiples of
+      22.5 degrees. The angles are treated as compass bearings, so you should usually
+      also set `direction: :clockwise` and `angle_offset: 90`.
+      * `:none` - no labels.
+      * a list of strings, one for each angle mark.
+      """
+    ],
     angle_unit: [
       type: {:in, [:degrees, :radians]},
       default: :degrees,
@@ -302,7 +317,8 @@ defmodule Tucan.Polar do
 
   Wind measurements, where the angle is the direction the wind blows from and the
   radius its speed. The angle offset and direction match the compass, with North
-  on top and angles increasing clockwise:
+  on top and angles increasing clockwise, and the angle marks are labeled with the
+  compass points:
 
   ```tucan
   data = [
@@ -324,6 +340,7 @@ defmodule Tucan.Polar do
     point_size: 80,
     angle_offset: 90,
     direction: :clockwise,
+    angle_labels: :compass,
     tooltip: true
   )
   ```

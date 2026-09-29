@@ -12,6 +12,7 @@ defmodule Tucan.Polar.Grid do
     :max_radius,
     :radius_ticks,
     :angle_marks,
+    :angle_labels,
     :direction,
     :angle_offset,
     :width,
@@ -51,12 +52,46 @@ defmodule Tucan.Polar.Grid do
       max_radius: max_radius,
       radius_ticks: radius_ticks,
       angle_marks: opts[:angle_marks],
+      angle_labels: angle_labels(opts[:angle_marks], opts[:angle_labels]),
       direction: opts[:direction],
       angle_offset: opts[:angle_offset],
       width: opts[:width],
       color: opts[:grid_color],
       opacity: opts[:grid_opacity]
     }
+  end
+
+  # Returns a list of {angle, label} tuples
+  defp angle_labels(marks, :degrees), do: Enum.map(marks, &{&1, "#{format_number(&1)}°"})
+  defp angle_labels(marks, :compass), do: Enum.map(marks, &{&1, compass_label(&1)})
+  defp angle_labels(_marks, :none), do: []
+
+  defp angle_labels(marks, labels) when is_list(labels) do
+    cond do
+      Enum.all?(labels, &is_tuple/1) ->
+        labels
+
+      length(labels) == length(marks) ->
+        Enum.zip(marks, labels)
+
+      true ->
+        raise ArgumentError,
+              "expected as many :angle_labels as :angle_marks, got #{length(labels)} " <>
+                "labels for #{length(marks)} angle marks"
+    end
+  end
+
+  @compass_points ~w(N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW)
+
+  # Compass points for multiples of 22.5 degrees, degrees otherwise
+  defp compass_label(angle) do
+    index = angle / 22.5
+
+    if index == Float.round(index * 1.0) do
+      Enum.at(@compass_points, Integer.mod(trunc(index), 16))
+    else
+      "#{format_number(angle)}°"
+    end
   end
 
   defp raise_no_max_radius! do
@@ -136,9 +171,9 @@ defmodule Tucan.Polar.Grid do
     label_radius = grid.max_radius * (1 + @angle_labels_padding / (grid.width / 2))
 
     values =
-      for angle <- grid.angle_marks do
+      for {angle, label} <- grid.angle_labels do
         {x, y} = point(label_radius, angle, grid)
-        %{x: x, y: y, label: "#{format_number(angle)}°"}
+        %{x: x, y: y, label: label}
       end
 
     Vl.new()

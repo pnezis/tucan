@@ -61,7 +61,8 @@ wedge are proportional to the value.
 
 - Add experimental `Tucan.Polar` module for plots in polar coordinates, with
 `Tucan.Polar.lineplot/4` and `Tucan.Polar.scatter/4`. The polar grid is drawn in the data coordinates, and
-the maximum radius is inferred from inline data.
+the maximum radius is inferred from inline data. Angle marks can be labeled in
+degrees, as compass points or with custom labels.
 
   ```tucan
   theta = Enum.to_list(0..720//5)

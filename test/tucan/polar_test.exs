@@ -173,6 +173,28 @@ defmodule Tucan.PolarTest do
       assert Enum.map(labels, & &1["label"]) == ["0°", "90°"]
     end
 
+    test "with angle labels" do
+      labels = fn opts ->
+        Tucan.Polar.lineplot(@data, "r", "theta", [max_radius: 1] ++ opts)
+        |> layers()
+        |> Enum.at(2)
+        |> get_in(["data", "values"])
+        |> Enum.map(& &1["label"])
+      end
+
+      assert labels.(angle_marks: [0, 22.5, 90]) == ["0°", "22.5°", "90°"]
+
+      assert labels.(angle_marks: [0, 22.5, 45, 90, 180, 270, 360, 10], angle_labels: :compass) ==
+               ["N", "NNE", "NE", "E", "S", "W", "N", "10°"]
+
+      assert labels.(angle_marks: [0, 90], angle_labels: ["a", "b"]) == ["a", "b"]
+      assert labels.(angle_labels: :none) == []
+
+      assert_raise ArgumentError, ~r/expected as many :angle_labels as :angle_marks/, fn ->
+        labels.(angle_marks: [0, 90], angle_labels: ["a"])
+      end
+    end
+
     test "rotates the grid with the direction and offset" do
       vl =
         Tucan.Polar.lineplot(@data, "r", "theta",
