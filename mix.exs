@@ -21,7 +21,7 @@ defmodule Tucan.MixProject do
           "GitHub" => @scm_url,
           "Changelog" => @scm_url <> "/blob/main/CHANGELOG.md"
         },
-        files: ~w(lib themes mix.exs README.md)
+        files: ~w(lib themes mix.exs README.md usage-rules.md)
       ],
       source_url: @scm_url,
       description: "A plotting library on top of VegaLite",
