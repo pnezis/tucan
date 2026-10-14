@@ -2,7 +2,314 @@
 
 ## [Unreleased]
 
+A big release that adds interactive plots, plots in polar coordinates and maps, each
+in its own module:
+
+- `Tucan.Interactive` adds interactions to existing plots: linked brushing, a
+crosshair, sliders and dropdowns that filter the data, an overview for exploring long
+series and selectable legends.
+- `Tucan.Polar` draws line, scatter, area, radar, bar, histogram, wind rose and
+heatmap plots in polar coordinates.
+- `Tucan.Geo` draws maps in any cartographic projection: base maps, choropleths,
+points, connections and paths, along with new geographic datasets.
+
+It also adds violin and radial plots, geometric shapes for annotating plots, a volume
+panel for candlestick charts, and a number of smaller improvements and fixes.
+
+### Interactivity
+
+The new `Tucan.Interactive` module adds interactions to existing plots. Its
+documentation is the starting point for all interactive features of Tucan, including
+zooming and tooltips.
+
+- `Tucan.Interactive.brush/2` links the plots of a concatenated plot with a brush. The
+rows selected on any plot are highlighted in all of them.
+
+  ```tucan
+  Tucan.hconcat([
+    Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon", color_by: "Origin", width: 250),
+    Tucan.scatter(:cars, "Weight_in_lbs", "Acceleration", color_by: "Origin", width: 250)
+  ])
+  |> Tucan.Interactive.brush()
+  ```
+
+  `Tucan.pairplot/3` supports linked brushing through its `:brush` option:
+
+  ```tucan
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram, brush: true)
+  |> Tucan.color_by("species", recursive: true)
+  ```
+
+- `Tucan.Interactive.crosshair/2` draws a vertical rule following the mouse, which
+highlights the values of all series at the hovered _x_ value.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.crosshair()
+  ```
+
+- `Tucan.Interactive.slider/3` adds a slider below the plot, which filters its rows by
+the value of a numeric field. Move the slider to see how the fertility and the life
+expectancy of the countries changed over the years:
+
+  ```tucan
+  "https://vega.github.io/vega-datasets/data/gapminder.json"
+  |> Tucan.bubble("fertility", "life_expect", "pop", color_by: "cluster", width: 400)
+  |> Tucan.Interactive.slider("year", min: 1955, max: 2005, step: 5)
+  |> Tucan.Scale.set_x_domain(0, 9)
+  |> Tucan.Scale.set_y_domain(20, 85)
+  ```
+
+- `Tucan.Interactive.dropdown/3` adds a dropdown below the plot, which filters its rows
+by the selected value of a field.
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
+  ```
+
+- `Tucan.Interactive.overview_detail/2` adds a small overview below the plot. Drag on
+it to select the interval of the _x_ axis shown in the plot.
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 500)
+  |> Tucan.Interactive.overview_detail()
+  ```
+
+- `Tucan.Legend.set_selectable/3` highlights the data of the clicked legend entries.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Legend.set_selectable(:color)
+  ```
+
+### Polar plots
+
+The new experimental `Tucan.Polar` module draws plots in polar coordinates, with
+`Tucan.Polar.lineplot/4`, `Tucan.Polar.scatter/4`, `Tucan.Polar.area/4`,
+`Tucan.Polar.radar/4`, `Tucan.Polar.bar/4`, `Tucan.Polar.histogram/3`,
+`Tucan.Polar.windrose/4` and `Tucan.Polar.heatmap/5`. The polar grid is drawn in the
+data coordinates, and the maximum radius is inferred from inline data. Angle marks can
+be labeled in degrees, as compass points or with custom labels.
+
+Two players compared across six skills with a radar chart:
+
+  ```tucan
+  data =
+    for {player, scores} <- [
+          {"Alice", [8, 6, 9, 7, 4, 8]},
+          {"Bob", [5, 9, 6, 8, 7, 6]}
+        ],
+        {skill, score} <-
+          Enum.zip(["Speed", "Shooting", "Passing", "Dribbling", "Defense", "Stamina"], scores) do
+      %{player: player, skill: skill, score: score}
+    end
+
+  Tucan.Polar.radar(data, "score", "skill",
+    color_by: "player",
+    filled: true,
+    max_radius: 10,
+    tooltip: true
+  )
+  ```
+
+A wind rose of observations with a prevailing south west wind:
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  data =
+    for _i <- 1..500 do
+      direction = 225 + 45 * :rand.normal()
+      speed = abs(6 + 3 * :rand.normal() + 2 * :math.cos((direction - 225) * :math.pi() / 180))
+
+      %{direction: direction, speed: speed}
+    end
+
+  Tucan.Polar.windrose(data, "direction", "speed", line_color: "white", tooltip: true)
+  ```
+
+Cyclic data, e.g. the days of a year, are supported through the `:period` option:
+
+  ```tucan
+  data =
+    for {city, mean, amplitude} <- [{"Dublin", 10, 5}, {"Madrid", 16, 10}],
+        date <- Date.range(~D[2024-01-01], ~D[2024-12-31]) do
+      day = Date.day_of_year(date)
+      wiggle = :math.sin(day / 3) + 0.6 * :math.sin(day / 1.7)
+      temp = mean - amplitude * :math.cos(2 * :math.pi() * (day - 20) / 366) + wiggle
+
+      %{city: city, date: date, temp: temp}
+    end
+
+  Tucan.Polar.lineplot(data, "temp", "date", period: :year, color_by: "city")
+  ```
+
+### Geographic plots
+
+The new `Tucan.Geo` module draws maps of GeoJSON or TopoJSON features in any
+cartographic projection supported by Vega-Lite. The `:airports`, `:flights_airport`,
+`:us_10m`, `:us_county_unemployment`, `:us_state_population` and `:world_110m`
+geographic datasets are added as well.
+
+- `Tucan.Geo.basemap/2` draws the features, e.g. the countries of the world,
+optionally with the outline of the globe and a graticule.
+
+  ```tucan
+  Tucan.Geo.basemap(:world_110m, sphere: true, graticule: true)
+  ```
+
+- `Tucan.Geo.choropleth/5` colors the features by a value, joined from any data
+supported by `Tucan.new/2`.
+
+  ```tucan
+  Tucan.Geo.choropleth(:us_10m, :us_county_unemployment, "id", "rate",
+    feature: "counties",
+    color_scheme: :reds
+  )
+  ```
+
+- `Tucan.Geo.scatter/4` draws points at geographic locations, e.g. bubble maps on top
+of a base map.
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geo.basemap(:us_10m),
+    Tucan.Geo.scatter(:airports, "longitude", "latitude", point_size: 4, point_color: "firebrick")
+  ])
+  ```
+
+- `Tucan.Geo.connections/6` draws lines between pairs of locations, e.g. flight
+routes.
+
+  ```tucan
+  routes =
+    for {lon, lat} <- [{-73.78, 40.64}, {55.36, 25.25}, {103.99, 1.36}, {28.24, -26.13}] do
+      %{lon: -0.45, lat: 51.47, lon2: lon, lat2: lat}
+    end
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m),
+    Tucan.Geo.connections(routes, "lon", "lat", "lon2", "lat2", line_color: "firebrick")
+  ])
+  ```
+
+- `Tucan.Geo.path/4` draws paths connecting locations, e.g. the route of a trip or
+the track of a storm.
+
+  ```tucan
+  trip = [
+    %{city: "Lisbon", lon: -9.14, lat: 38.72, day: 1},
+    %{city: "Madrid", lon: -3.70, lat: 40.42, day: 3},
+    %{city: "Paris", lon: 2.35, lat: 48.86, day: 6},
+    %{city: "Berlin", lon: 13.40, lat: 52.52, day: 9},
+    %{city: "Vienna", lon: 16.37, lat: 48.21, day: 12}
+  ]
+
+  projection = [projection: :mercator, projection_opts: [scale: 600, center: [4, 46]]]
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m, projection),
+    Tucan.Geo.path(trip, "lon", "lat", [order_by: "day", points: true] ++ projection)
+  ])
+  ```
+
+### New plots
+
+- Add `Tucan.violin/3` for drawing violin plots, optionally grouped and colored by a
+categorical field.
+
+  ```tucan
+  Tucan.violin(:penguins, "Body Mass (g)", group_by: "Species", color_by: "Species")
+  ```
+
+- Add `Tucan.radial/4` for radial plots, where both the angle and the radius of each
+wedge are proportional to the value.
+
+  ```tucan
+  Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30)
+  ```
+
+- Add `Tucan.Geometry.line/3` for drawing line segments.
+
+  ```tucan
+  data = for i <- 1..50, do: %{actual: i, predicted: i + 8 * :math.sin(i)}
+
+  Tucan.layers([
+    Tucan.scatter(data, "actual", "predicted"),
+    Tucan.Geometry.line({0, 0}, {50, 50}, line_color: "gray", stroke_dash: [4, 4])
+  ])
+  ```
+
+- Add `Tucan.Geometry.arrow/3` for drawing arrows, e.g. to point to a part of a plot.
+The arrow head follows the direction of the arrow on the screen, even if the x and y
+scales differ.
+
+  ```tucan
+  Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon")
+  |> Tucan.Layers.append(Tucan.Geometry.arrow({180, 35}, {225, 16}, line_color: "red"))
+  |> Tucan.annotate(180, 37, "The most powerful car", color: "red")
+  ```
+
+- Add `Tucan.Geometry.regular_polygon/4` for drawing regular polygons.
+
+  ```tucan
+  Tucan.Geometry.regular_polygon({0, 0}, 1, 6, fill_color: "teal")
+  |> Tucan.set_size(200, 200)
+  ```
+
+- Add `Tucan.Geometry.function/3` for drawing the curves of functions. The curve is
+broken where the function is not defined.
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.function(&:math.sin/1, {-2 * :math.pi(), 2 * :math.pi()}),
+    Tucan.Geometry.function(&:math.sqrt(&1 * &1 - 4), {-6, 6}, line_color: "red")
+  ])
+  |> Tucan.set_width(400)
+  ```
+
 ### Added
+
+- Add a `:volume` option to `Tucan.Finance.candlestick/7` for drawing the traded
+volume as a bar chart below the prices, sharing their time axis.
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  {data, _close} =
+    Enum.map_reduce(Date.range(~D[2024-03-01], ~D[2024-04-30]), 100.0, fn date, previous ->
+      close = previous + 2 * :rand.normal()
+      high = max(previous, close) + abs(:rand.normal())
+      low = min(previous, close) - abs(:rand.normal())
+      volume = round(1_000_000 * (0.5 + :rand.uniform()))
+
+      {%{date: date, open: previous, high: high, low: low, close: close, volume: volume}, close}
+    end)
+
+  Tucan.Finance.candlestick(data, "date", "open", "high", "low", "close",
+    volume: "volume",
+    width: 400
+  )
+  ```
+
+- Support connected scatter plots in `Tucan.lineplot/4` through the `:order_by`
+option, which orders the points of the lines by a field other than `x`.
+
+  ```tucan
+  data =
+    for {year, unemployment, inflation} <- [
+          {2019, 3.7, 1.8}, {2020, 8.1, 1.2}, {2021, 5.4, 4.7}, {2022, 3.6, 8.0}, {2023, 3.6, 4.1}
+        ] do
+      %{year: year, unemployment: unemployment, inflation: inflation}
+    end
+
+  Tucan.lineplot(data, "unemployment", "inflation", order_by: "year", points: true)
+  ```
 
 - Add `:tick_color` and `:tick_width` options to `Tucan.errorbar/3` for styling the
 error bar end ticks.
@@ -45,244 +352,9 @@ error bar end ticks.
   Tucan.imshow(image, width: 240, height: 120)
   ```
 
-- Add `Tucan.violin/3` for drawing violin plots, optionally grouped and colored by a
-categorical field.
-
-  ```tucan
-  Tucan.violin(:penguins, "Body Mass (g)", group_by: "Species", color_by: "Species")
-  ```
-
-- Add `Tucan.radial/4` for radial plots, where both the angle and the radius of each
-wedge are proportional to the value.
-
-  ```tucan
-  Tucan.radial(:barley, "yield", "site", aggregate: :sum, inner_radius: 30)
-  ```
-
-- Add experimental `Tucan.Polar` module for plots in polar coordinates, with
-`Tucan.Polar.lineplot/4`, `Tucan.Polar.scatter/4`, `Tucan.Polar.area/4`,
-`Tucan.Polar.radar/4`, `Tucan.Polar.bar/4`, `Tucan.Polar.histogram/3`,
-`Tucan.Polar.windrose/4` and `Tucan.Polar.heatmap/5`. The polar grid is drawn in the data coordinates, and
-the maximum radius is inferred from inline data. Angle marks can be labeled in
-degrees, as compass points or with custom labels. Cyclic data, e.g. the days of
-a year, are supported through the `:period` option.
-
-  ```tucan
-  theta = Enum.to_list(0..720//5)
-  r = Enum.map(theta, &(&1 / 360))
-
-  Tucan.Polar.lineplot([r: r, theta: theta], "r", "theta")
-  ```
-
 - Warn if a column with non-numeric values is encoded in a quantitative channel,
 e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
 empty plot. Set the channel type explicitly to silence the warning.
-
-- Support connected scatter plots in `Tucan.lineplot/4` through the `:order_by`
-option, which orders the points of the lines by a field other than `x`.
-
-  ```tucan
-  data =
-    for {year, unemployment, inflation} <- [
-          {2019, 3.7, 1.8}, {2020, 8.1, 1.2}, {2021, 5.4, 4.7}, {2022, 3.6, 8.0}, {2023, 3.6, 4.1}
-        ] do
-      %{year: year, unemployment: unemployment, inflation: inflation}
-    end
-
-  Tucan.lineplot(data, "unemployment", "inflation", order_by: "year", points: true)
-  ```
-
-- Add `Tucan.Geometry.line/3` for drawing line segments.
-
-  ```tucan
-  data = for i <- 1..50, do: %{actual: i, predicted: i + 8 * :math.sin(i)}
-
-  Tucan.layers([
-    Tucan.scatter(data, "actual", "predicted"),
-    Tucan.Geometry.line({0, 0}, {50, 50}, line_color: "gray", stroke_dash: [4, 4])
-  ])
-  ```
-
-- Add `Tucan.Geometry.arrow/3` for drawing arrows, e.g. to point to a part of a plot.
-The arrow head follows the direction of the arrow on the screen, even if the x and y
-scales differ.
-
-  ```tucan
-  Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon")
-  |> Tucan.Layers.append(Tucan.Geometry.arrow({180, 35}, {225, 16}, line_color: "red"))
-  |> Tucan.annotate(180, 37, "The most powerful car", color: "red")
-  ```
-
-- Add `Tucan.Geometry.regular_polygon/4` for drawing regular polygons.
-
-  ```tucan
-  Tucan.Geometry.regular_polygon({0, 0}, 1, 6, fill_color: "teal")
-  |> Tucan.set_size(200, 200)
-  ```
-
-- Add `Tucan.Geometry.function/3` for drawing the curves of functions. The curve is
-broken where the function is not defined.
-
-  ```tucan
-  Tucan.layers([
-    Tucan.Geometry.function(&:math.sin/1, {-2 * :math.pi(), 2 * :math.pi()}),
-    Tucan.Geometry.function(&:math.sqrt(&1 * &1 - 4), {-6, 6}, line_color: "red")
-  ])
-  |> Tucan.set_width(400)
-  ```
-
-- Add the `:airports`, `:flights_airport`, `:us_10m`, `:us_county_unemployment`,
-`:us_state_population` and `:world_110m` geographic datasets.
-
-- Add `Tucan.Geo` module for geographic plots, starting with `Tucan.Geo.basemap/2` for
-drawing maps of geographic features.
-
-  ```tucan
-  Tucan.Geo.basemap(:world_110m, sphere: true, graticule: true)
-  ```
-
-- Add `Tucan.Geo.choropleth/5` for coloring geographic features by a value. The
-features are joined with the rows of any data supported by `Tucan.new/2`.
-
-  ```tucan
-  Tucan.Geo.choropleth(:us_10m, :us_county_unemployment, "id", "rate",
-    feature: "counties",
-    color_scheme: :reds
-  )
-  ```
-
-- Add `Tucan.Geo.scatter/4` for drawing points at geographic locations, e.g. bubble
-maps on top of a `Tucan.Geo.basemap/2`.
-
-  ```tucan
-  Tucan.layers([
-    Tucan.Geo.basemap(:us_10m),
-    Tucan.Geo.scatter(:airports, "longitude", "latitude", point_size: 4, point_color: "firebrick")
-  ])
-  ```
-
-- Add `Tucan.Geo.connections/6` for drawing lines between pairs of geographic
-locations, e.g. flight routes.
-
-  ```tucan
-  routes =
-    for {lon, lat} <- [{-73.78, 40.64}, {55.36, 25.25}, {103.99, 1.36}, {28.24, -26.13}] do
-      %{lon: -0.45, lat: 51.47, lon2: lon, lat2: lat}
-    end
-
-  Tucan.layers([
-    Tucan.Geo.basemap(:world_110m),
-    Tucan.Geo.connections(routes, "lon", "lat", "lon2", "lat2", line_color: "firebrick")
-  ])
-  ```
-
-- Add `Tucan.Geo.path/4` for drawing paths connecting geographic locations, e.g. the
-track of a storm or the route of a trip.
-
-  ```tucan
-  trip = [
-    %{city: "Lisbon", lon: -9.14, lat: 38.72, day: 1},
-    %{city: "Madrid", lon: -3.70, lat: 40.42, day: 3},
-    %{city: "Paris", lon: 2.35, lat: 48.86, day: 6},
-    %{city: "Berlin", lon: 13.40, lat: 52.52, day: 9},
-    %{city: "Vienna", lon: 16.37, lat: 48.21, day: 12}
-  ]
-
-  projection = [projection: :mercator, projection_opts: [scale: 600, center: [4, 46]]]
-
-  Tucan.layers([
-    Tucan.Geo.basemap(:world_110m, projection),
-    Tucan.Geo.path(trip, "lon", "lat", [order_by: "day", points: true] ++ projection)
-  ])
-  ```
-
-- Add a `:volume` option to `Tucan.Finance.candlestick/7` for drawing the traded
-volume as a bar chart below the prices, sharing their time axis.
-
-  ```tucan
-  :rand.seed(:exsss, {1, 2, 3})
-
-  {data, _close} =
-    Enum.map_reduce(Date.range(~D[2024-03-01], ~D[2024-04-30]), 100.0, fn date, previous ->
-      close = previous + 2 * :rand.normal()
-      high = max(previous, close) + abs(:rand.normal())
-      low = min(previous, close) - abs(:rand.normal())
-      volume = round(1_000_000 * (0.5 + :rand.uniform()))
-
-      {%{date: date, open: previous, high: high, low: low, close: close, volume: volume}, close}
-    end)
-
-  Tucan.Finance.candlestick(data, "date", "open", "high", "low", "close",
-    volume: "volume",
-    width: 400
-  )
-  ```
-
-- Add `Tucan.Interactive` module for interactive plots, starting with
-`Tucan.Interactive.brush/2` for linking the plots of a concatenated plot with a brush.
-The rows selected on any plot are highlighted in all of them.
-
-  ```tucan
-  Tucan.hconcat([
-    Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon", color_by: "Origin", width: 250),
-    Tucan.scatter(:cars, "Weight_in_lbs", "Acceleration", color_by: "Origin", width: 250)
-  ])
-  |> Tucan.Interactive.brush()
-  ```
-
-- Add a `:brush` option to `Tucan.pairplot/3` for linking its subplots with a brush.
-
-  ```tucan
-  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
-
-  Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram, brush: true)
-  |> Tucan.color_by("species", recursive: true)
-  ```
-
-- Add `Tucan.Interactive.crosshair/2`, a vertical rule following the mouse that
-highlights the values of all series at the hovered _x_ value.
-
-  ```tucan
-  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
-  |> Tucan.Interactive.crosshair()
-  ```
-
-- Add `Tucan.Interactive.slider/3`, a slider below the plot filtering its rows by
-the value of a numeric field.
-
-  ```tucan
-  "https://vega.github.io/vega-datasets/data/gapminder.json"
-  |> Tucan.bubble("fertility", "life_expect", "pop", color_by: "cluster", width: 400)
-  |> Tucan.Interactive.slider("year", min: 1955, max: 2005, step: 5)
-  |> Tucan.Scale.set_x_domain(0, 9)
-  |> Tucan.Scale.set_y_domain(20, 85)
-  ```
-
-- Add `Tucan.Interactive.dropdown/3`, a dropdown below the plot filtering its rows by
-the selected value of a field.
-
-  ```tucan
-  :stocks
-  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
-  |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
-  ```
-
-- Add `Tucan.Interactive.overview_detail/2`, a small overview below the plot on which
-the interval of the _x_ axis shown in the plot is selected.
-
-  ```tucan
-  :stocks
-  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 500)
-  |> Tucan.Interactive.overview_detail()
-  ```
-
-- Add `Tucan.Legend.set_selectable/3` for highlighting the data of the clicked legend
-entries.
-
-  ```tucan
-  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
-  |> Tucan.Legend.set_selectable(:color)
-  ```
 
 ### Changed
 
