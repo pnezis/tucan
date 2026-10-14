@@ -40,6 +40,19 @@ defmodule Tucan.Interactive do
   |> Tucan.Interactive.crosshair()
   ```
 
+  ## Widgets
+
+  `slider/3` adds a slider below the plot that filters its rows, e.g. to show the data
+  of a single year.
+
+  ```tucan
+  data = for x <- 0..100, do: %{x: x, y: :math.sin(x / 10)}
+
+  Tucan.lineplot(data, "x", "y", width: 400)
+  |> Tucan.Interactive.slider("x", mode: :up_to, value: 50)
+  |> Tucan.Scale.set_x_domain(0, 100)
+  ```
+
   ## Linked brushing
 
   `brush/2` links the plots of a concatenated plot: the rows selected by dragging a
@@ -50,6 +63,8 @@ defmodule Tucan.Interactive do
   > Zooming, panning and brushing are all controlled by dragging the mouse, so a plot
   > should use only one of them.
   """
+
+  alias VegaLite, as: Vl
 
   brush_opts = [
     unselected_opacity: [
@@ -228,6 +243,147 @@ defmodule Tucan.Interactive do
       spec
       |> Map.drop(["mark", "encoding", "params"])
       |> Map.put("layer", layers)
+    end)
+  end
+
+  slider_opts = [
+    min: [
+      type: {:or, [:integer, :float]},
+      doc: """
+      The minimum value of the slider. If not set it is the minimum value of the field,
+      which is possible only if the data are passed inline.
+      """
+    ],
+    max: [
+      type: {:or, [:integer, :float]},
+      doc: """
+      The maximum value of the slider. If not set it is the maximum value of the field,
+      which is possible only if the data are passed inline.
+      """
+    ],
+    step: [
+      type: {:or, [:integer, :float]},
+      default: 1,
+      doc: "The step of the slider."
+    ],
+    value: [
+      type: {:or, [:integer, :float]},
+      doc: "The initial value of the slider. Defaults to the minimum value."
+    ],
+    mode: [
+      type: {:in, [:equal, :up_to]},
+      default: :equal,
+      doc: """
+      How the data are filtered, `:equal` shows only the rows with the selected value,
+      `:up_to` shows the rows up to and including the selected value.
+      """
+    ],
+    label: [
+      type: :string,
+      doc: "The label of the slider. Defaults to the field."
+    ]
+  ]
+
+  @slider_schema NimbleOptions.new!(slider_opts)
+
+  @doc """
+  Adds a slider that filters the data of the plot by the value of a numeric `field`.
+
+  Moving the slider updates the plot, e.g. to show the data of a single year. The
+  slider is drawn below the plot.
+
+  The rows are filtered before any other transform of the plot, so aggregations, e.g.
+  of a histogram, are computed on the filtered rows. Plots whose layers have their own
+  data are not filtered.
+
+  ## Options
+
+  #{NimbleOptions.docs(@slider_schema)}
+
+  ## Examples
+
+  The famous Gapminder chart, move the slider to see how the fertility and the life
+  expectancy of the countries changed over the years:
+
+  ```tucan
+  "https://vega.github.io/vega-datasets/data/gapminder.json"
+  |> Tucan.bubble("fertility", "life_expect", "pop", color_by: "cluster", width: 400)
+  |> Tucan.Interactive.slider("year", min: 1955, max: 2005, step: 5)
+  |> Tucan.Scale.set_x_domain(0, 9)
+  |> Tucan.Scale.set_y_domain(20, 85)
+  ```
+
+  Showing all the data up to the selected value:
+
+  ```tucan
+  data = for x <- 0..100, do: %{x: x, y: :math.sin(x / 10)}
+
+  Tucan.lineplot(data, "x", "y", width: 400)
+  |> Tucan.Interactive.slider("x", mode: :up_to, value: 50)
+  |> Tucan.Scale.set_x_domain(0, 100)
+  ```
+  """
+  @spec slider(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
+  def slider(vl, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @slider_schema)
+
+    {min, max} =
+      case {opts[:min], opts[:max]} do
+        {min, max} when is_number(min) and is_number(max) -> {min, max}
+        {min, max} -> inferred_extent!(vl, field, min, max)
+      end
+
+    name = control_param_name("slider", field)
+
+    operator =
+      case opts[:mode] do
+        :equal -> "=="
+        :up_to -> "<="
+      end
+
+    vl
+    |> Vl.param(name,
+      value: opts[:value] || min,
+      bind: [
+        input: :range,
+        min: min,
+        max: max,
+        step: opts[:step],
+        name: "#{opts[:label] || field} "
+      ]
+    )
+    |> prepend_filter("datum[#{Jason.encode!(field)}] #{operator} #{name}")
+  end
+
+  defp inferred_extent!(vl, field, min, max) do
+    values =
+      case get_in(vl.spec, ["data", "values"]) do
+        rows when is_list(rows) -> rows |> Enum.map(& &1[field]) |> Enum.filter(&is_number/1)
+        _other -> []
+      end
+
+    if values == [] do
+      raise ArgumentError,
+            "cannot infer the range of #{inspect(field)}, set the :min and :max options"
+    end
+
+    {min || Enum.min(values), max || Enum.max(values)}
+  end
+
+  # the names of the params of the controls must be valid identifiers
+  defp control_param_name(prefix, field) do
+    "#{prefix}_" <> String.replace(field, ~r/[^A-Za-z0-9_]/, "_")
+  end
+
+  # the filters of the controls are applied before any other transform
+  defp prepend_filter(vl, expression) do
+    update_in(vl.spec, fn spec ->
+      Map.update(
+        spec,
+        "transform",
+        [%{"filter" => expression}],
+        &[%{"filter" => expression} | &1]
+      )
     end)
   end
 

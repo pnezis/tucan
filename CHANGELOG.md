@@ -247,6 +247,17 @@ highlights the values of all series at the hovered _x_ value.
   |> Tucan.Interactive.crosshair()
   ```
 
+- Add `Tucan.Interactive.slider/3`, a slider below the plot filtering its rows by
+the value of a numeric field.
+
+  ```tucan
+  "https://vega.github.io/vega-datasets/data/gapminder.json"
+  |> Tucan.bubble("fertility", "life_expect", "pop", color_by: "cluster", width: 400)
+  |> Tucan.Interactive.slider("year", min: 1955, max: 2005, step: 5)
+  |> Tucan.Scale.set_x_domain(0, 9)
+  |> Tucan.Scale.set_y_domain(20, 85)
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree
