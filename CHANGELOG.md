@@ -120,6 +120,17 @@ scales differ.
   |> Tucan.set_size(200, 200)
   ```
 
+- Add `Tucan.Geometry.function/3` for drawing the curves of functions. The curve is
+broken where the function is not defined.
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.function(&:math.sin/1, {-2 * :math.pi(), 2 * :math.pi()}),
+    Tucan.Geometry.function(&:math.sqrt(&1 * &1 - 4), {-6, 6}, line_color: "red")
+  ])
+  |> Tucan.set_width(400)
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

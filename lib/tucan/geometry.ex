@@ -570,4 +570,96 @@ defmodule Tucan.Geometry do
 
     polyline(vertices, Keyword.put(Keyword.delete(opts, :rotation), :closed, true))
   end
+
+  sampled_opts = [
+    samples: [
+      type: :pos_integer,
+      default: 200,
+      doc: "The number of points the curve is sampled at."
+    ]
+  ]
+
+  @function_opts Tucan.Options.take!(
+                   [:stroke_width, :stroke_dash, :line_color, :opacity, :stroke_opacity],
+                   sampled_opts ++ [stroke_width: [default: 2]]
+                 )
+  @function_schema Tucan.Options.to_nimble_schema!(@function_opts)
+
+  @doc """
+  Draws the curve of the function `fun` in the `{min, max}` range of `x`.
+
+  The function is sampled at `:samples` equally spaced points. The curve is broken
+  at the points where the function is not defined, i.e. it raises an arithmetic error
+  or it returns a value that is not a number, e.g. `:math.sqrt(x * x - 1)` is drawn
+  as two separate branches.
+
+  > #### Asymptotes {: .warning}
+  >
+  > The curve connects consecutive samples, so a vertical asymptote between two
+  > samples, e.g. of `1 / x`, is drawn as a steep line. Split the range around it, or
+  > return `nil` near it.
+
+  ## Options
+
+  #{Tucan.Options.docs(@function_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.function(&:math.sin/1, {-2 * :math.pi(), 2 * :math.pi()}),
+    Tucan.Geometry.function(&:math.cos/1, {-2 * :math.pi(), 2 * :math.pi()}, line_color: "red")
+  ])
+  |> Tucan.set_width(400)
+  ```
+
+  The probability density of a normal distribution on top of a histogram of samples:
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+  samples = for _i <- 1..1000, do: %{x: :rand.normal()}
+
+  pdf = fn x -> :math.exp(-x * x / 2) / :math.sqrt(2 * :math.pi()) end
+
+  Tucan.layers([
+    Tucan.histogram(samples, "x", relative: true, extent: [-4, 4], step: 0.25),
+    Tucan.Geometry.function(fn x -> pdf.(x) * 0.25 end, {-4, 4}, line_color: "red")
+  ])
+  ```
+  """
+  @spec function(fun :: (number() -> number()), range :: {number(), number()}, opts :: keyword()) ::
+          VegaLite.t()
+  def function(fun, {min, max} = _range, opts \\ [])
+      when is_function(fun, 1) and is_number(min) and is_number(max) and min < max do
+    opts = NimbleOptions.validate!(opts, @function_schema)
+    samples = opts[:samples]
+
+    # undefined points are kept with a nil value, so that the line is broken there
+    values =
+      for i <- 0..(samples - 1) do
+        x = min + (max - min) * i / max(samples - 1, 1)
+        %{x: x, y: defined_value(fun, x)}
+      end
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@function_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    Vl.new()
+    |> Vl.data_from_values(values)
+    |> Vl.mark(:line, mark_opts)
+    |> Vl.encode_field(:x, "x", type: :quantitative)
+    |> Vl.encode_field(:y, "y", type: :quantitative)
+  end
+
+  # nil if the function is not defined at x
+  defp defined_value(fun, x) do
+    case fun.(x) do
+      y when is_number(y) -> y
+      _other -> nil
+    end
+  rescue
+    ArithmeticError -> nil
+  end
 end

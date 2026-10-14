@@ -390,6 +390,78 @@ defmodule Tucan.GeometryTest do
     end
   end
 
+  describe "function/3" do
+    test "samples the function at equally spaced points of the range" do
+      fun = fn x -> x * x - 3 * x end
+
+      for samples <- [2, 3, 50] do
+        values =
+          Tucan.Geometry.function(fun, {-1, 4}, samples: samples)
+          |> VegaLite.to_spec()
+          |> get_in(["data", "values"])
+
+        xs = Enum.map(values, & &1["x"])
+
+        assert length(values) == samples
+        assert hd(xs) == -1
+        assert List.last(xs) == 4
+
+        step = 5 / (samples - 1)
+
+        for [x1, x2] <- Enum.chunk_every(xs, 2, 1, :discard) do
+          assert_in_delta x2 - x1, step, 1.0e-9
+        end
+
+        for %{"x" => x, "y" => y} <- values do
+          assert y == fun.(x)
+        end
+      end
+    end
+
+    test "with the default number of samples and style options" do
+      spec =
+        Tucan.Geometry.function(&:math.sin/1, {0, 1}, line_color: "red", stroke_dash: [4, 4])
+        |> VegaLite.to_spec()
+
+      assert length(spec["data"]["values"]) == 200
+      assert spec["mark"]["type"] == "line"
+      assert spec["mark"]["color"] == "red"
+      assert spec["mark"]["strokeDash"] == [4, 4]
+      assert spec["mark"]["strokeWidth"] == 2
+    end
+
+    test "the points where the function is not defined have no value" do
+      values =
+        Tucan.Geometry.function(fn x -> 1 / x end, {-1, 1}, samples: 3)
+        |> VegaLite.to_spec()
+        |> get_in(["data", "values"])
+
+      assert Enum.map(values, & &1["y"]) == [-1.0, nil, 1.0]
+
+      values =
+        Tucan.Geometry.function(fn _x -> :nan end, {0, 1}, samples: 2)
+        |> VegaLite.to_spec()
+        |> get_in(["data", "values"])
+
+      assert Enum.map(values, & &1["y"]) == [nil, nil]
+    end
+
+    test "the curve is broken where the function is not defined" do
+      # sqrt(x^2 - 1) is not defined in (-1, 1), so it has two branches
+      svg =
+        Tucan.Geometry.function(&:math.sqrt(&1 * &1 - 1), {-2, 2}, samples: 41)
+        |> Tucan.Export.to_svg()
+
+      [path] = Regex.run(~r/class="mark-line.*?d="([^"]*)"/s, svg, capture: :all_but_first)
+
+      assert length(Regex.scan(~r/M/, path)) == 2
+    end
+
+    test "raises with an invalid range" do
+      assert_raise FunctionClauseError, fn -> Tucan.Geometry.function(& &1, {1, 1}) end
+    end
+  end
+
   defp polygon_points(vl) do
     vl
     |> VegaLite.to_spec()
