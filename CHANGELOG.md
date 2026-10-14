@@ -131,6 +131,9 @@ broken where the function is not defined.
   |> Tucan.set_width(400)
   ```
 
+- Add the `:airports`, `:flights_airport`, `:us_10m`, `:us_county_unemployment`,
+`:us_state_population` and `:world_110m` geographic datasets.
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

@@ -13,17 +13,29 @@ defmodule Tucan.Datasets.Docs do
 
     #{opts[:doc]} [[Data]](#{opts[:url]}).
 
-    **Columns: ** #{Enum.map_join(opts[:columns], ", ", fn col -> "`#{col}`" end)}
+    #{fields_docs(opts)}
     """
   end
+
+  # geographic datasets in TopoJSON format have objects instead of columns
+  defp fields_docs(opts) do
+    case opts[:objects] do
+      nil -> "**Columns: ** #{code_list(opts[:columns])}"
+      objects -> "**TopoJSON objects: ** #{code_list(objects)}"
+    end
+  end
+
+  defp code_list(items), do: Enum.map_join(items, ", ", fn item -> "`#{item}`" end)
 end
 
 defmodule Tucan.Datasets do
   @type t ::
-          :barley
+          :airports
+          | :barley
           | :cars
           | :corruption
           | :flights
+          | :flights_airport
           | :gapminder
           | :glue
           | :iris
@@ -34,10 +46,21 @@ defmodule Tucan.Datasets do
           | :tips
           | :titanic
           | :unemployment
+          | :us_10m
+          | :us_county_unemployment
+          | :us_state_population
           | :weather
+          | :world_110m
 
   # add datasets in alphabetical order
   @datasets [
+    airports: [
+      url: "https://vega.github.io/vega-datasets/data/airports.csv",
+      columns: ~w[iata name city state country latitude longitude],
+      doc: """
+      The airports of the United States and its territories with their location.
+      """
+    ],
     barley: [
       url: "https://vega.github.io/editor/data/barley.json",
       columns: ~w[yield variety year site],
@@ -71,6 +94,14 @@ defmodule Tucan.Datasets do
       columns: ~w[year month passengers],
       doc: """
       Monthly airline passengers from 1949 to 1960.
+      """
+    ],
+    flights_airport: [
+      url: "https://vega.github.io/vega-datasets/data/flights-airport.csv",
+      columns: ~w[origin destination count],
+      doc: """
+      The number of flights between pairs of US airports in 2008. The airports are
+      identified by their IATA codes, which can be joined with the `:airports` dataset.
       """
     ],
     gapminder: [
@@ -191,11 +222,44 @@ defmodule Tucan.Datasets do
       US unemployment data across various industries from 2000 to 2009.
       """
     ],
+    us_10m: [
+      url: "https://vega.github.io/vega-datasets/data/us-10m.json",
+      objects: ~w[states counties land],
+      doc: """
+      The boundaries of the US states and counties in TopoJSON format. The states and
+      counties are identified by their FIPS codes.
+      """
+    ],
+    us_county_unemployment: [
+      url: "https://vega.github.io/vega-datasets/data/unemployment.tsv",
+      columns: ~w[id rate],
+      doc: """
+      The unemployment rate of the US counties in 2009 as a fraction, e.g. `0.097`. The
+      counties are identified by their FIPS codes.
+      """
+    ],
+    us_state_population: [
+      url: "https://vega.github.io/vega-datasets/data/population_engineers_hurricanes.csv",
+      columns: ~w[state id population engineers hurricanes],
+      doc: """
+      The population of the US states in 2016, the share of engineers in their employed
+      population in 2016 and the number of hurricane landfalls since 1851. The states
+      are identified by their FIPS codes.
+      """
+    ],
     weather: [
       url: "https://vega.github.io/editor/data/weather.csv",
       columns: ~w[date precipitation temp_max temp_min wind weather],
       doc: """
       Daily weather records from Seattle with metric units. [Data from NOAA](https://www.ncdc.noaa.gov/cdo-web/datatools/records).
+      """
+    ],
+    world_110m: [
+      url: "https://vega.github.io/vega-datasets/data/world-110m.json",
+      objects: ~w[countries land],
+      doc: """
+      The boundaries of the countries of the world in TopoJSON format. The countries are
+      identified by their ISO 3166-1 numeric codes.
       """
     ]
   ]

@@ -4,10 +4,12 @@ defmodule Tucan.DatasetsTest do
   alias Tucan.Datasets.Docs, as: DatasetsDocs
 
   @valid_datasets [
+    :airports,
     :barley,
     :cars,
     :corruption,
     :flights,
+    :flights_airport,
     :gapminder,
     :glue,
     :iris,
@@ -18,7 +20,11 @@ defmodule Tucan.DatasetsTest do
     :tips,
     :titanic,
     :unemployment,
-    :weather
+    :us_10m,
+    :us_county_unemployment,
+    :us_state_population,
+    :weather,
+    :world_110m
   ]
 
   test "returns the url to a valid dataset" do
@@ -46,5 +52,20 @@ defmodule Tucan.DatasetsTest do
     assert DatasetsDocs.docs(
              foo: [url: "http://foo.bar", doc: "a dataset", columns: ~w[hello bar]]
            ) == expected
+  end
+
+  test "renders the objects of topojson datasets" do
+    expected = """
+    #### map
+
+    a map [[Data]](http://foo.bar).
+
+    **TopoJSON objects: ** `states`, `counties`
+    """
+
+    assert DatasetsDocs.docs(
+             map: [url: "http://foo.bar", doc: "a map", objects: ~w[states counties]]
+           ) ==
+             expected
   end
 end
