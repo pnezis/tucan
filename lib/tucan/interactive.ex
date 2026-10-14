@@ -51,6 +51,18 @@ defmodule Tucan.Interactive do
   |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
   ```
 
+  ## Overview and detail
+
+  `overview_detail/2` adds a small overview of the whole plot below it. Dragging on the
+  overview selects the interval of the _x_ axis shown in the plot, which is useful for
+  exploring long series.
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 500)
+  |> Tucan.Interactive.overview_detail()
+  ```
+
   ## Linked brushing
 
   `brush/2` links the plots of a concatenated plot: the rows selected by dragging a
@@ -496,6 +508,144 @@ defmodule Tucan.Interactive do
     end
 
     values
+  end
+
+  overview_detail_opts = [
+    overview_height: [
+      type: :pos_integer,
+      default: 60,
+      doc: "The height of the overview plot in pixels."
+    ],
+    spacing: [
+      type: :non_neg_integer,
+      default: 20,
+      doc: "The spacing between the detail and the overview plots in pixels."
+    ]
+  ]
+
+  @overview_detail_schema NimbleOptions.new!(overview_detail_opts)
+
+  @overview_param "_overview"
+
+  @doc """
+  Adds an overview of the plot below it, selecting an interval on the overview zooms
+  the detail plot to it.
+
+  It is useful for long series, e.g. time series spanning many years. The overview
+  is a smaller copy of the plot showing all the data. Drag on it to select the x-axis
+  interval shown in the detail plot, drag the selection to move it and double click
+  to reset it.
+
+  > #### Supported plots {: .info}
+  >
+  > The overview is a copy of the plot, so it works with single view and layered plots
+  > with a quantitative or temporal x-axis, e.g. line, area and scatter plots. It
+  > raises for concatenated and faceted plots. The overview replaces the zoom of
+  > zoomable plots, and the other interactions of the plot, e.g. a selectable legend,
+  > are kept only on the detail plot.
+
+  ## Options
+
+  #{NimbleOptions.docs(@overview_detail_schema)}
+
+  ## Examples
+
+  Select an interval of the overview to see the prices of the stocks in detail:
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 500)
+  |> Tucan.Interactive.overview_detail()
+  ```
+
+  Layered plots are supported as well:
+
+  ```tucan
+  data = for x <- 0..200, do: %{x: x, y: :math.sin(x / 8) * x}
+
+  Tucan.layers([
+    Tucan.area(data, "x", "y", fill_opacity: 0.3),
+    Tucan.lineplot(data, "x", "y")
+  ])
+  |> Tucan.set_size(500, 200)
+  |> Tucan.Interactive.overview_detail(overview_height: 80)
+  ```
+  """
+  @spec overview_detail(vl :: VegaLite.t(), opts :: keyword()) :: VegaLite.t()
+  def overview_detail(vl, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @overview_detail_schema)
+
+    if Enum.any?(["concat", "hconcat", "vconcat", "facet", "repeat"], &Map.has_key?(vl.spec, &1)) do
+      raise ArgumentError,
+            "overview_detail/2 expects a single view or layered plot, got: #{inspect(vl)}"
+    end
+
+    {top, view} = Map.split(vl.spec, ["$schema", "data", "title", "config"])
+
+    # the zoom of zoomable plots binds the scales, overriding the domain selected on the
+    # overview, so it is dropped from the detail as well
+    detail =
+      update_views(view, fn view ->
+        view
+        |> drop_scale_bindings()
+        |> put_in_x_scale("domain", %{"param" => @overview_param})
+        |> clip_mark()
+      end)
+
+    # the overview is used only for selecting the interval, so the params of the plot,
+    # e.g. the zoom of zoomable plots, are dropped from it
+    overview =
+      view
+      |> update_views(&Map.delete(&1, "params"))
+      |> Map.put("height", opts[:overview_height])
+      |> update_first_view(&add_overview_param/1)
+
+    %VegaLite{
+      vl
+      | spec: Map.merge(top, %{"vconcat" => [detail, overview], "spacing" => opts[:spacing]})
+    }
+  end
+
+  defp drop_scale_bindings(%{"params" => params} = view) do
+    case Enum.reject(params, &(&1["bind"] == "scales")) do
+      [] -> Map.delete(view, "params")
+      params -> %{view | "params" => params}
+    end
+  end
+
+  defp drop_scale_bindings(view), do: view
+
+  defp update_views(%{"layer" => layers} = view, fun),
+    do: %{view | "layer" => Enum.map(layers, &update_views(&1, fun))}
+
+  defp update_views(view, fun), do: fun.(view)
+
+  defp update_first_view(%{"layer" => [first | rest]} = view, fun),
+    do: %{view | "layer" => [update_first_view(first, fun) | rest]}
+
+  defp update_first_view(view, fun), do: fun.(view)
+
+  defp put_in_x_scale(%{"encoding" => %{"x" => _x}} = view, key, value) do
+    update_in(view, ["encoding", "x"], fn x ->
+      Map.update(x, "scale", %{key => value}, &Map.put(&1, key, value))
+    end)
+  end
+
+  defp put_in_x_scale(view, _key, _value), do: view
+
+  # marks outside the zoomed domain should not be drawn outside the plot
+  defp clip_mark(%{"mark" => mark} = view) when is_binary(mark),
+    do: %{view | "mark" => %{"type" => mark, "clip" => true}}
+
+  defp clip_mark(%{"mark" => mark} = view), do: %{view | "mark" => Map.put(mark, "clip", true)}
+
+  defp add_overview_param(view) do
+    param = %{
+      "name" => @overview_param,
+      "select" => %{"type" => "interval", "encodings" => ["x"]}
+    }
+
+    Map.update(view, "params", [param], &(&1 ++ [param]))
   end
 
   @brush_param "_brush"

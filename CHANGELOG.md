@@ -267,6 +267,15 @@ the selected value of a field.
   |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
   ```
 
+- Add `Tucan.Interactive.overview_detail/2`, a small overview below the plot on which
+the interval of the _x_ axis shown in the plot is selected.
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 500)
+  |> Tucan.Interactive.overview_detail()
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

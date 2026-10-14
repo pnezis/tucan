@@ -412,6 +412,108 @@ defmodule Tucan.InteractiveTest do
     end
   end
 
+  describe "overview_detail/2" do
+    test "with a single view plot" do
+      spec =
+        Tucan.lineplot(@dataset, "x", "y", width: 400, title: "Plot")
+        |> Tucan.Interactive.overview_detail()
+        |> VegaLite.to_spec()
+
+      assert spec["title"] == "Plot"
+      assert spec["data"] == %{"url" => @dataset}
+      assert spec["spacing"] == 20
+      refute Map.has_key?(spec, "mark")
+
+      assert [detail, overview] = spec["vconcat"]
+
+      assert detail["width"] == 400
+      assert detail["mark"]["clip"] == true
+      assert detail["encoding"]["x"]["scale"] == %{"domain" => %{"param" => "_overview"}}
+      refute Map.has_key?(detail, "params")
+
+      assert overview["width"] == 400
+      assert overview["height"] == 60
+      refute Map.has_key?(overview["mark"], "clip")
+      refute Map.has_key?(overview["encoding"]["x"], "scale")
+
+      assert overview["params"] == [
+               %{"name" => "_overview", "select" => %{"type" => "interval", "encodings" => ["x"]}}
+             ]
+    end
+
+    test "with a layered plot" do
+      spec =
+        Tucan.layers([
+          Tucan.scatter(@dataset, "x", "y", x: [scale: [type: :log]]),
+          VegaLite.new() |> VegaLite.mark(:rule) |> VegaLite.encode(:y, datum: 1)
+        ])
+        |> Tucan.Interactive.overview_detail(overview_height: 100, spacing: 5)
+        |> VegaLite.to_spec()
+
+      assert spec["spacing"] == 5
+      assert [detail, overview] = spec["vconcat"]
+
+      assert [points, rule] = detail["layer"]
+      assert points["mark"]["clip"] == true
+
+      assert points["encoding"]["x"]["scale"] == %{
+               "type" => "log",
+               "zero" => false,
+               "domain" => %{"param" => "_overview"}
+             }
+
+      assert rule["mark"] == %{"type" => "rule", "clip" => true}
+      refute Map.has_key?(rule["encoding"], "x")
+
+      assert overview["height"] == 100
+      assert [%{"params" => [%{"name" => "_overview"}]}, rule] = overview["layer"]
+      refute Map.has_key?(rule, "params")
+    end
+
+    test "raises for concatenated plots" do
+      assert_raise ArgumentError, ~r"expects a single view or layered plot", fn ->
+        Tucan.vconcat([Tucan.scatter(@dataset, "x", "y")]) |> Tucan.Interactive.overview_detail()
+      end
+    end
+
+    test "drops the zoom of zoomable plots and keeps the other params on the detail" do
+      spec =
+        Tucan.lineplot(@dataset, "x", "y", color_by: "c", zoomable: true)
+        |> VegaLite.param("selection", select: [type: :point, fields: ["c"]])
+        |> Tucan.Interactive.overview_detail()
+        |> VegaLite.to_spec()
+
+      assert [detail, overview] = spec["vconcat"]
+      assert [%{"name" => "selection"}] = detail["params"]
+      assert [%{"name" => "_overview"}] = overview["params"]
+
+      spec =
+        Tucan.lineplot(@dataset, "x", "y", zoomable: true)
+        |> Tucan.Interactive.overview_detail()
+        |> VegaLite.to_spec()
+
+      assert [detail, _overview] = spec["vconcat"]
+      refute Map.has_key?(detail, "params")
+    end
+
+    test "the detail shows the interval selected on the overview" do
+      data = for x <- 0..50, do: %{x: x, y: x}
+
+      for zoomable <- [false, true] do
+        svg =
+          Tucan.lineplot(data, "x", "y", zoomable: zoomable)
+          |> Tucan.Interactive.overview_detail()
+          |> render_with_param("_overview", %{"x" => [10, 20]})
+
+        assert Regex.scan(
+                 ~r/aria-label="X-axis titled 'x' for a linear scale (with [^"]*)"/,
+                 svg,
+                 capture: :all_but_first
+               ) == [["with values from 10 to 20"], ["with values from 0 to 50"]]
+      end
+    end
+  end
+
   # renders the plot with the brush of the given view set to the given intervals and
   # returns the marks of each view with their opacity. All views share the same
   # brush, whose initial value is taken from the first view defining it.
