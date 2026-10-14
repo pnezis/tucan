@@ -96,6 +96,135 @@ defmodule Tucan.InteractiveTest do
     end
   end
 
+  describe "crosshair/2" do
+    test "adds a rule and points at the nearest x value" do
+      spec =
+        Tucan.lineplot(@dataset, "x", "y", color_by: "c")
+        |> Tucan.Interactive.crosshair()
+        |> VegaLite.to_spec()
+
+      refute Map.has_key?(spec, "mark")
+      assert spec["data"] == %{"url" => @dataset}
+
+      x = %{"field" => "x", "type" => "quantitative"}
+      y = %{"field" => "y", "type" => "quantitative"}
+      color = %{"field" => "c"}
+
+      highlighted = %{
+        "condition" => %{"param" => "_hover", "empty" => false, "value" => 1},
+        "value" => 0
+      }
+
+      assert [line, selector, rule, points] = spec["layer"]
+
+      assert line == %{
+               "mark" => %{"type" => "line", "fillOpacity" => 1},
+               "encoding" => %{"x" => x, "y" => y, "color" => color}
+             }
+
+      assert selector == %{
+               "params" => [
+                 %{
+                   "name" => "_hover",
+                   "select" => %{
+                     "type" => "point",
+                     "fields" => ["x"],
+                     "nearest" => true,
+                     "on" => "pointerover",
+                     "clear" => "pointerout"
+                   }
+                 }
+               ],
+               "mark" => %{"type" => "point", "opacity" => 0},
+               "encoding" => %{"x" => x}
+             }
+
+      assert rule == %{
+               "mark" => %{"type" => "rule", "color" => "gray"},
+               "encoding" => %{"x" => x, "opacity" => highlighted}
+             }
+
+      assert points == %{
+               "mark" => %{"type" => "point", "filled" => true, "size" => 50},
+               "encoding" => %{
+                 "x" => x,
+                 "y" => y,
+                 "color" => color,
+                 "opacity" => highlighted,
+                 "tooltip" => [x, y, color]
+               }
+             }
+    end
+
+    test "with options and without colors" do
+      spec =
+        Tucan.area(@dataset, "x", "y")
+        |> Tucan.Interactive.crosshair(rule_color: "red", point_size: 20)
+        |> VegaLite.to_spec()
+
+      [_area, _selector, rule, points] = spec["layer"]
+
+      assert rule["mark"]["color"] == "red"
+      assert points["mark"]["size"] == 20
+      refute Map.has_key?(points["encoding"], "color")
+    end
+
+    test "raises for invalid plots" do
+      assert_raise ArgumentError, ~r/x encoding/, fn ->
+        Tucan.Interactive.crosshair(Tucan.new())
+      end
+
+      assert_raise ArgumentError, ~r/y encoding/, fn ->
+        Tucan.new() |> VegaLite.encode_field(:x, "x") |> Tucan.Interactive.crosshair()
+      end
+
+      assert_raise ArgumentError, fn ->
+        Tucan.layers([Tucan.lineplot(@dataset, "x", "y")]) |> Tucan.Interactive.crosshair()
+      end
+    end
+
+    test "keeps the zoom of zoomable plots in the layer of the marks" do
+      spec =
+        Tucan.lineplot(@dataset, "x", "y", zoomable: true)
+        |> Tucan.Interactive.crosshair()
+        |> VegaLite.to_spec()
+
+      refute Map.has_key?(spec, "params")
+      assert [line, selector, _rule, _points] = spec["layer"]
+      assert [%{"name" => "_grid"}] = line["params"]
+      assert [%{"name" => "_hover"}] = selector["params"]
+    end
+
+    test "highlights the points of all series at the hovered x value" do
+      data =
+        for x <- 1..5, series <- ["a", "b"] do
+          %{x: x, y: if(series == "a", do: x, else: 10 - x), series: series}
+        end
+
+      svg =
+        Tucan.lineplot(data, "x", "y", color_by: "series")
+        |> Tucan.Interactive.crosshair()
+        |> render_with_param("_hover", [%{"x" => 3}])
+
+      [rules] = Regex.run(~r/class="mark-rule role-mark.*?<\/g>/s, svg)
+      [points] = Regex.run(~r/class="mark-symbol[^"]*layer_3.*?<\/g>/s, svg)
+
+      # the visible rules, one per row at x = 3, are drawn at the same position
+      positions =
+        for [x, "1"] <-
+              Regex.scan(~r/translate\(([^,]+),[^"]*"[^>]*\sopacity="([^"]*)"/, rules,
+                capture: :all_but_first
+              ),
+            uniq: true,
+            do: x
+
+      assert length(positions) == 1
+
+      # the points of both series at x = 3 are highlighted
+      assert visible(points) == ["x: 3; y: 3; series: a", "x: 3; y: 7; series: b"]
+    end
+  end
+
   # renders the plot with the brush of the given view set to the given intervals and
   # returns the marks of each view with their opacity. All views share the same
   # brush, whose initial value is taken from the first view defining it.
@@ -120,4 +249,35 @@ defmodule Tucan.InteractiveTest do
   end
 
   defp selected(marks), do: for([label, "1"] <- marks, do: label)
+
+  # renders the plot with the value of every param with the given name set, as if the
+  # user had interacted with the plot
+  defp render_with_param(vl, name, value) do
+    vl
+    |> VegaLite.to_spec()
+    |> put_param_value(name, value)
+    |> Jason.encode!()
+    |> VegaLite.from_json()
+    |> Tucan.Export.to_svg()
+  end
+
+  defp put_param_value(%{"name" => name, "select" => _select} = param, name, value),
+    do: Map.put(param, "value", value)
+
+  defp put_param_value(%{} = map, name, value),
+    do: Map.new(map, fn {key, item} -> {key, put_param_value(item, name, value)} end)
+
+  defp put_param_value(list, name, value) when is_list(list),
+    do: Enum.map(list, &put_param_value(&1, name, value))
+
+  defp put_param_value(other, _name, _value), do: other
+
+  defp visible(marks) do
+    for [label, opacity] <-
+          Regex.scan(~r/aria-label="([^"]*)"[^>]*\sopacity="([^"]*)"/, marks,
+            capture: :all_but_first
+          ),
+        opacity != "0",
+        do: label
+  end
 end

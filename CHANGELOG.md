@@ -239,6 +239,14 @@ The rows selected on any plot are highlighted in all of them.
   |> Tucan.color_by("species", recursive: true)
   ```
 
+- Add `Tucan.Interactive.crosshair/2`, a vertical rule following the mouse that
+highlights the values of all series at the hovered _x_ value.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.crosshair()
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

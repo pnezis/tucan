@@ -30,6 +30,16 @@ defmodule Tucan.Interactive do
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species", tooltip: :data)
   ```
 
+  ## Hover
+
+  `crosshair/2` follows the mouse with a vertical rule, highlighting the values of all
+  series at the hovered _x_ value, e.g. for comparing several time series.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.crosshair()
+  ```
+
   ## Linked brushing
 
   `brush/2` links the plots of a concatenated plot: the rows selected by dragging a
@@ -109,6 +119,116 @@ defmodule Tucan.Interactive do
         raise ArgumentError, "brush/2 expects a concatenated plot, got: #{inspect(vl)}"
 
     update_in(vl.spec[key], fn views -> Enum.map(views, &brush_view(&1, opts)) end)
+  end
+
+  crosshair_opts = [
+    rule_color: [
+      type: :string,
+      default: "gray",
+      doc: "The color of the vertical rule."
+    ],
+    point_size: [
+      type: :pos_integer,
+      default: 50,
+      doc: "The size of the highlighted points."
+    ]
+  ]
+
+  @crosshair_schema NimbleOptions.new!(crosshair_opts)
+
+  @doc """
+  Adds an interactive crosshair to a plot.
+
+  When hovering over the plot, a vertical rule is drawn at the nearest _x_ value, and
+  the points of all series at this value are highlighted, with a tooltip showing their
+  values. It is useful for comparing the values of several series, e.g. of a line
+  plot, at the same point in time.
+
+  The plot must be a single view plot with an _x_ and a _y_ field encoding, e.g. a
+  `Tucan.lineplot/4` or a `Tucan.area/4`. Its color encoding, if any, is used for the
+  points. The plot is turned into a layered plot, with the original marks as its first
+  layer.
+
+  ## Options
+
+  #{NimbleOptions.docs(@crosshair_schema)}
+
+  ## Examples
+
+  Hover over the plot to compare the prices of the stocks:
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.crosshair()
+  ```
+  """
+  @spec crosshair(vl :: VegaLite.t(), opts :: keyword()) :: VegaLite.t()
+  def crosshair(vl, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @crosshair_schema)
+    Tucan.Utils.validate_single_view!(vl, "crosshair/2")
+
+    mark = vl.spec["mark"]
+    encoding = vl.spec["encoding"] || %{}
+
+    x = encoding["x"] || raise ArgumentError, "crosshair/2 expects a plot with an x encoding"
+    y = encoding["y"] || raise ArgumentError, "crosshair/2 expects a plot with a y encoding"
+    color = encoding["color"]
+
+    hover = %{
+      "name" => "_hover",
+      "select" => %{
+        "type" => "point",
+        "fields" => [x["field"]],
+        "nearest" => true,
+        "on" => "pointerover",
+        "clear" => "pointerout"
+      }
+    }
+
+    highlighted = fn value ->
+      %{"condition" => %{"param" => "_hover", "empty" => false, "value" => value}, "value" => 0}
+    end
+
+    tooltip =
+      [x, y, color]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&Map.take(&1, ["field", "type", "aggregate", "timeUnit", "title"]))
+
+    # the params of the plot, e.g. the zoom of zoomable plots, are moved to the layer
+    # of its marks, since a layered plot cannot have selection params
+    plot_layer =
+      Map.merge(
+        %{"mark" => mark, "encoding" => encoding},
+        Map.take(vl.spec, ["params"])
+      )
+
+    layers = [
+      plot_layer,
+      # the invisible points that select the nearest x value
+      %{
+        "params" => [hover],
+        "mark" => %{"type" => "point", "opacity" => 0},
+        "encoding" => %{"x" => x}
+      },
+      %{
+        "mark" => %{"type" => "rule", "color" => opts[:rule_color]},
+        "encoding" => %{"x" => x, "opacity" => highlighted.(1)}
+      },
+      %{
+        "mark" => %{"type" => "point", "filled" => true, "size" => opts[:point_size]},
+        "encoding" =>
+          Map.merge(
+            %{"x" => x, "y" => y, "opacity" => highlighted.(1), "tooltip" => tooltip},
+            if(color, do: %{"color" => color}, else: %{})
+          )
+      }
+    ]
+
+    update_in(vl.spec, fn spec ->
+      spec
+      |> Map.drop(["mark", "encoding", "params"])
+      |> Map.put("layer", layers)
+    end)
   end
 
   @brush_param "_brush"
