@@ -236,6 +236,155 @@ defmodule Tucan.Geo do
     end
   end
 
+  choropleth_opts = [
+    feature_key: [
+      type: :string,
+      default: "id",
+      doc: """
+      The field of the geographic features that is matched with the `key` field of the
+      data, e.g. `"properties.name"`. TopoJSON features usually have an `"id"`.
+      """
+    ],
+    fields: [
+      type: {:list, :string},
+      default: [],
+      doc: """
+      Additional fields of the data that are joined to the features, e.g. to be shown
+      in the tooltip.
+      """
+    ],
+    color_scheme: [
+      type: :atom,
+      doc: "The color scheme to use, for supported color schemes check `Tucan.Scale`.",
+      section: :style
+    ],
+    missing_color: [
+      type: :string,
+      default: "#e3e3e3",
+      doc: "The fill color of the features without a value.",
+      section: :style
+    ],
+    line_color: [
+      type: :string,
+      default: "white",
+      doc: "The color of the borders of the features.",
+      section: :style
+    ],
+    stroke_width: [
+      type: {:or, [:integer, :float]},
+      default: 0.3,
+      doc: "The width of the borders in pixels.",
+      section: :style
+    ]
+  ]
+
+  @choropleth_opts Tucan.Options.take!(
+                     [:tooltip],
+                     choropleth_opts ++ @feature_opts ++ @projection_opts
+                   )
+  @choropleth_schema Tucan.Options.to_nimble_schema!(@choropleth_opts)
+
+  @doc """
+  Draws a choropleth map.
+
+  A choropleth map colors each geographic feature, e.g. the states of a country, by a
+  value. The features of `geodata` are matched with the rows of `data`, by their
+  `:feature_key` and the `key` field of the data, and colored by the `value` field.
+  Features without a matching row, or without a valid value, are drawn with the
+  `:missing_color`.
+
+  `geodata` is a dataset or the URL of a GeoJSON or TopoJSON file, see the module
+  documentation for details, and `data` any data supported by `Tucan.new/2`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@choropleth_opts)}
+
+  ## Examples
+
+  The unemployment rate of the US counties:
+
+  ```tucan
+  Tucan.Geo.choropleth(:us_10m, :us_county_unemployment, "id", "rate",
+    feature: "counties",
+    color_scheme: :reds
+  )
+  ```
+
+  The population of the US states, with a tooltip:
+
+  ```tucan
+  Tucan.Geo.choropleth(:us_10m, :us_state_population, "id", "population",
+    fields: ["state"],
+    color_scheme: :blues,
+    tooltip: true
+  )
+  ```
+
+  With inline data, where the states without a value are drawn in gray. The states
+  are identified by their FIPS codes, e.g. `6` for California:
+
+  ```tucan
+  data = [
+    %{fips: 6, score: 9},
+    %{fips: 53, score: 7},
+    %{fips: 41, score: 6},
+    %{fips: 32, score: 4},
+    %{fips: 8, score: 5},
+    %{fips: 36, score: 3},
+    %{fips: 12, score: 2},
+    %{fips: 48, score: 1}
+  ]
+
+  Tucan.Geo.choropleth(:us_10m, data, "fips", "score", color_scheme: :greens)
+  ```
+  """
+  @spec choropleth(
+          geodata :: atom() | String.t(),
+          data :: Tucan.plotdata(),
+          key :: String.t(),
+          value :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def choropleth(geodata, data, key, value, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @choropleth_schema)
+
+    mark_opts =
+      [stroke: opts[:line_color], stroke_width: opts[:stroke_width]]
+      |> Tucan.Keyword.put_not_nil(:tooltip, opts[:tooltip])
+
+    # the data spec of the lookup, e.g. the url or the inline values
+    lookup_data = Tucan.new(data).spec["data"]
+    fields = [value | opts[:fields]]
+
+    # all features are drawn with the missing color, and the features with a value are
+    # drawn on top of them, since features without a value are filtered out
+    missing_layer =
+      Vl.new()
+      |> geo_data(geodata, opts)
+      |> Vl.mark(:geoshape, Keyword.put(mark_opts, :fill, opts[:missing_color]))
+
+    values_layer =
+      Vl.new()
+      |> geo_data(geodata, opts)
+      |> Vl.transform(
+        lookup: opts[:feature_key],
+        from: [data: lookup_data, key: key, fields: fields]
+      )
+      |> Vl.mark(:geoshape, mark_opts)
+      |> Vl.encode_field(:color, value, type: :quantitative)
+      |> maybe_set_color_scheme(opts[:color_scheme])
+      |> maybe_tooltip(opts[:tooltip], Enum.map(fields, &[field: &1]))
+
+    layered_geo_view([missing_layer, values_layer], geodata, opts)
+  end
+
+  defp maybe_tooltip(vl, true, fields), do: Vl.encode(vl, :tooltip, fields)
+  defp maybe_tooltip(vl, _tooltip, _fields), do: vl
+
+  defp maybe_set_color_scheme(vl, nil), do: vl
+  defp maybe_set_color_scheme(vl, scheme), do: Tucan.Scale.set_color_scheme(vl, scheme)
+
   ## Helpers
 
   # Sets the size, the title and the projection of a plot

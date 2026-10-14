@@ -141,6 +141,16 @@ drawing maps of geographic features.
   Tucan.Geo.basemap(:world_110m, sphere: true, graticule: true)
   ```
 
+- Add `Tucan.Geo.choropleth/5` for coloring geographic features by a value. The
+features are joined with the rows of any data supported by `Tucan.new/2`.
+
+  ```tucan
+  Tucan.Geo.choropleth(:us_10m, :us_county_unemployment, "id", "rate",
+    feature: "counties",
+    color_scheme: :reds
+  )
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

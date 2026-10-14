@@ -138,17 +138,126 @@ defmodule Tucan.GeoTest do
     end
   end
 
+  describe "choropleth/5" do
+    @unemployment Tucan.Datasets.dataset(:us_county_unemployment)
+
+    test "colors the features by the joined values" do
+      spec =
+        Tucan.Geo.choropleth(:us_10m, :us_county_unemployment, "id", "rate", feature: "counties")
+        |> VegaLite.to_spec()
+
+      data = %{"url" => @us, "format" => %{"type" => "topojson", "feature" => "counties"}}
+
+      assert spec["projection"] == %{"type" => "albersUsa"}
+      assert %{"width" => 500, "height" => 300} = spec
+
+      assert [missing, values] = spec["layer"]
+
+      assert missing == %{
+               "projection" => %{"type" => "albersUsa"},
+               "data" => data,
+               "mark" => %{
+                 "type" => "geoshape",
+                 "fill" => "#e3e3e3",
+                 "stroke" => "white",
+                 "strokeWidth" => 0.3
+               }
+             }
+
+      assert values == %{
+               "projection" => %{"type" => "albersUsa"},
+               "data" => data,
+               "transform" => [
+                 %{
+                   "lookup" => "id",
+                   "from" => %{
+                     "data" => %{"url" => @unemployment},
+                     "key" => "id",
+                     "fields" => ["rate"]
+                   }
+                 }
+               ],
+               "mark" => %{"type" => "geoshape", "stroke" => "white", "strokeWidth" => 0.3},
+               "encoding" => %{"color" => %{"field" => "rate", "type" => "quantitative"}}
+             }
+    end
+
+    test "with the default options" do
+      spec = Tucan.Geo.choropleth(:us_10m, :us_state_population, "id", "population")
+      [missing, _values] = VegaLite.to_spec(spec)["layer"]
+
+      assert missing["data"]["format"]["feature"] == "states"
+    end
+
+    test "with inline data, extra fields, tooltips and styling options" do
+      data = [%{name: "a", fips: 1, v: 2}]
+
+      spec =
+        Tucan.Geo.choropleth("https://example.com/map.geojson", data, "name", "v",
+          feature_key: "properties.name",
+          fields: ["fips"],
+          color_scheme: :greens,
+          missing_color: "white",
+          line_color: "black",
+          stroke_width: 1,
+          projection: :mercator,
+          tooltip: true
+        )
+        |> VegaLite.to_spec()
+
+      assert spec["projection"] == %{"type" => "mercator"}
+      assert [missing, values] = spec["layer"]
+
+      assert missing["data"]["format"] == %{"type" => "json", "property" => "features"}
+      assert missing["mark"]["fill"] == "white"
+
+      assert hd(values["transform"]) == %{
+               "lookup" => "properties.name",
+               "from" => %{
+                 "data" => %{"values" => [%{"name" => "a", "fips" => 1, "v" => 2}]},
+                 "key" => "name",
+                 "fields" => ["v", "fips"]
+               }
+             }
+
+      assert values["mark"] == %{
+               "type" => "geoshape",
+               "stroke" => "black",
+               "strokeWidth" => 1,
+               "tooltip" => true
+             }
+
+      assert values["encoding"] == %{
+               "color" => %{
+                 "field" => "v",
+                 "type" => "quantitative",
+                 "scale" => %{"scheme" => "greens", "reverse" => false}
+               },
+               "tooltip" => [%{"field" => "v"}, %{"field" => "fips"}]
+             }
+    end
+
+    test "raises with an invalid color scheme" do
+      assert_raise ArgumentError, ~r/invalid scheme/, fn ->
+        Tucan.Geo.choropleth(:us_10m, :us_state_population, "id", "population",
+          color_scheme: :rainbows
+        )
+      end
+    end
+  end
+
   describe "combining maps" do
     test "layered maps keep their projection when combined" do
       vl =
         Tucan.layers([
           Tucan.Geo.basemap(:world_110m, sphere: true, graticule: true, projection: :mercator),
+          Tucan.Geo.choropleth(:world_110m, [%{id: 4, v: 1}], "id", "v", projection: :mercator),
           Tucan.Geo.basemap(:world_110m, mesh: "countries", projection: :mercator)
         ])
 
       layers = VegaLite.to_spec(vl)["layer"]
 
-      assert length(layers) == 4
+      assert length(layers) == 6
 
       for layer <- layers do
         assert layer["projection"] == %{"type" => "mercator"}
