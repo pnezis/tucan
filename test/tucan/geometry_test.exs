@@ -8,7 +8,7 @@ defmodule Tucan.GeometryTest do
       expected =
         Vl.new()
         |> Vl.mark(:line, stroke_width: 1, fill_opacity: 1, stroke_opacity: 1)
-        |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+        |> Vl.data(sequence: [start: 0, stop: 361, step: 1, as: "theta"])
         |> Vl.transform(calculate: "-1 + cos(datum.theta*PI/180) * 2.5", as: "x")
         |> Vl.transform(calculate: "3 + sin(datum.theta*PI/180) * 2.5", as: "y")
         |> Vl.encode_field(:x, "x", type: :quantitative)
@@ -57,7 +57,7 @@ defmodule Tucan.GeometryTest do
       expected =
         Vl.new()
         |> Vl.mark(:line, stroke_width: 1, fill_opacity: 1, stroke_opacity: 1)
-        |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+        |> Vl.data(sequence: [start: 0, stop: 361, step: 1, as: "theta"])
         |> Vl.transform(
           calculate:
             "-1 + cos(datum.theta*PI/180) * cos(32*PI/180) * 2.5 -sin(datum.theta*PI/180) * sin(32*PI/180) * 3",
@@ -106,6 +106,22 @@ defmodule Tucan.GeometryTest do
                "fill" => "green",
                "strokeOpacity" => 0.5
              }
+    end
+  end
+
+  describe "circle and ellipse sampling" do
+    test "the shapes are closed with one point per degree" do
+      for vl <- [Tucan.Geometry.circle({0, 0}, 1), Tucan.Geometry.ellipse({0, 0}, 2, 1, 30)] do
+        %{"start" => start, "stop" => stop, "step" => step} =
+          VegaLite.to_spec(vl)["data"]["sequence"]
+
+        thetas = Enum.to_list(start..(stop - step)//step)
+
+        # the last point coincides with the first one, closing the shape
+        assert hd(thetas) == 0
+        assert List.last(thetas) == 360
+        assert length(thetas) == 361
+      end
     end
   end
 

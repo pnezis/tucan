@@ -94,6 +94,9 @@ option, which orders the points of the lines by a field other than `x`.
 
 ### Changed
 
+- `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree
+instead of every tenth of a degree. Each shape is drawn with 361 points instead of
+3610, without a visible difference.
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
 raises instead of silently producing a broken plot.
 - `Tucan.Scale.set_domain/3` validates the domain and raises if it is not valid,

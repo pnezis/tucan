@@ -121,7 +121,7 @@ defmodule Tucan.Geometry do
       |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
     Vl.new()
-    |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+    |> Vl.data(sequence: [start: 0, stop: 361, step: 1, as: "theta"])
     |> Vl.transform(calculate: "#{x} + cos(datum.theta*PI/180) * #{radius}", as: "x")
     |> Vl.transform(calculate: "#{y} + sin(datum.theta*PI/180) * #{radius}", as: "y")
     |> Vl.mark(:line, mark_opts)
@@ -190,7 +190,7 @@ defmodule Tucan.Geometry do
       |> Tucan.Keyword.put_not_nil(:fill, opts[:fill_color])
 
     Vl.new()
-    |> Vl.data(sequence: [start: 0, stop: 361, step: 0.1, as: "theta"])
+    |> Vl.data(sequence: [start: 0, stop: 361, step: 1, as: "theta"])
     |> Vl.transform(calculate: ellipse_x(x, x_radius, y_radius, rotation_angle), as: "x")
     |> Vl.transform(calculate: ellipse_y(y, x_radius, y_radius, rotation_angle), as: "y")
     |> Vl.mark(:line, mark_opts)
