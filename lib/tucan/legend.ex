@@ -111,6 +111,90 @@ defmodule Tucan.Legend do
     put_legend_options(vl, channel, opts, "put_legend_options/3")
   end
 
+  selectable_opts = [
+    unselected_opacity: [
+      type: {:custom, Tucan.Options, :number_between, [0, 1]},
+      type_doc: "`t:number/0`",
+      default: 0.15,
+      doc: "The opacity of the data that are not selected."
+    ]
+  ]
+
+  @selectable_schema NimbleOptions.new!(selectable_opts)
+
+  @doc """
+  Makes the legend of the given channel selectable.
+
+  Clicking on an entry of the legend highlights the data of this entry and fades the
+  rest. Shift-click selects multiple entries and a double click clears the selection.
+
+  It is applicable on single view and layered plots, with a legend on a field of the
+  given channel. In layered plots all layers with the same field are highlighted.
+
+  See also `Tucan.Interactive` for more interactive plots.
+
+  ## Options
+
+  #{NimbleOptions.docs(@selectable_schema)}
+
+  ## Examples
+
+  Click on a symbol of the legend to highlight its stock:
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Legend.set_selectable(:color)
+  ```
+
+  Legends of other channels can be selectable as well:
+
+  ```tucan
+  Tucan.scatter(:penguins, "Beak Length (mm)", "Beak Depth (mm)", shape_by: "Island")
+  |> Tucan.Legend.set_selectable(:shape, unselected_opacity: 0.05)
+  ```
+  """
+  @spec set_selectable(vl :: VegaLite.t(), channel :: atom(), opts :: keyword()) ::
+          VegaLite.t()
+  def set_selectable(vl, channel, opts \\ []) when channel in @legend_channels do
+    opts = NimbleOptions.validate!(opts, @selectable_schema)
+    channel = to_string(channel)
+
+    views = if Utils.layered_view?(vl), do: vl.spec["layer"], else: [vl.spec]
+
+    field =
+      Enum.find_value(views, &get_in(&1, ["encoding", channel, "field"])) ||
+        raise ArgumentError, "expected a plot with a legend for the #{channel} channel"
+
+    param = %{
+      "name" => "_legend",
+      "select" => %{"type" => "point", "fields" => [field]},
+      "bind" => "legend"
+    }
+
+    opacity = %{
+      "condition" => %{"param" => "_legend", "value" => 1},
+      "value" => opts[:unselected_opacity]
+    }
+
+    # the param is added to the first view with the legend field
+    {views, _added?} =
+      Enum.map_reduce(views, false, fn view, added? ->
+        if get_in(view, ["encoding", channel, "field"]) == field do
+          view = put_in(view, ["encoding", "opacity"], opacity)
+
+          if added?,
+            do: {view, true},
+            else: {Map.update(view, "params", [param], &(&1 ++ [param])), true}
+        else
+          {view, added?}
+        end
+      end)
+
+    if Utils.layered_view?(vl),
+      do: put_in(vl.spec["layer"], views),
+      else: %{vl | spec: hd(views)}
+  end
+
   defp put_legend_options(vl, channel, opts, caller) do
     validate_inclusion!(channel, @legend_channels, "#{caller}: invalid legend channel")
 

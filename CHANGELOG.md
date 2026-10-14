@@ -276,6 +276,14 @@ the interval of the _x_ axis shown in the plot is selected.
   |> Tucan.Interactive.overview_detail()
   ```
 
+- Add `Tucan.Legend.set_selectable/3` for highlighting the data of the clicked legend
+entries.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Legend.set_selectable(:color)
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

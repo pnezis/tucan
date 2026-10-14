@@ -119,4 +119,97 @@ defmodule Tucan.LegendTest do
       assert get_in(vl.spec, ["encoding", "color", "legend"]) == %{"bar" => 0, "foo" => 1}
     end
   end
+
+  describe "set_selectable/3" do
+    @selection %{
+      "name" => "_legend",
+      "select" => %{"type" => "point", "fields" => ["c"]},
+      "bind" => "legend"
+    }
+
+    @selection_opacity %{
+      "condition" => %{"param" => "_legend", "value" => 1},
+      "value" => 0.15
+    }
+
+    test "highlights the selected legend entries of a single view plot" do
+      spec =
+        Tucan.scatter("data.csv", "x", "y", color_by: "c")
+        |> Tucan.Legend.set_selectable(:color)
+        |> VegaLite.to_spec()
+
+      assert spec["params"] == [@selection]
+      assert spec["encoding"]["opacity"] == @selection_opacity
+    end
+
+    test "keeps the existing params" do
+      spec =
+        Tucan.scatter("data.csv", "x", "y", color_by: "c", zoomable: true)
+        |> Tucan.Legend.set_selectable(:color)
+        |> VegaLite.to_spec()
+
+      assert [%{"name" => "_grid"}, @selection] = spec["params"]
+    end
+
+    test "highlights all layers with the legend field" do
+      spec =
+        Tucan.layers([
+          Tucan.scatter("data.csv", "x", "y", shape_by: "c"),
+          Tucan.lineplot("data.csv", "x", "y"),
+          Tucan.scatter("data.csv", "x", "z", shape_by: "c", zoomable: true)
+        ])
+        |> Tucan.Legend.set_selectable(:shape, unselected_opacity: 0.3)
+        |> VegaLite.to_spec()
+
+      [first, second, third] = spec["layer"]
+      opacity = %{@selection_opacity | "value" => 0.3}
+
+      assert first["params"] == [@selection]
+      assert first["encoding"]["opacity"] == opacity
+      refute Map.has_key?(second, "params")
+      refute Map.has_key?(second["encoding"], "opacity")
+      assert [%{"name" => "_grid"}] = third["params"]
+      assert third["encoding"]["opacity"] == opacity
+    end
+
+    test "raises without a legend field" do
+      assert_raise ArgumentError, ~r/legend for the color channel/, fn ->
+        Tucan.scatter("data.csv", "x", "y") |> Tucan.Legend.set_selectable(:color)
+      end
+
+      for opts <- [[invalid: 1], [unselected_opacity: 2]] do
+        assert_raise NimbleOptions.ValidationError, fn ->
+          Tucan.scatter("data.csv", "x", "y", color_by: "c")
+          |> Tucan.Legend.set_selectable(:color, opts)
+        end
+      end
+    end
+
+    test "the marks of the selected entries are highlighted" do
+      data = for {c, x} <- [{"a", 1}, {"b", 2}, {"a", 3}], do: %{c: c, x: x, y: x}
+
+      svg =
+        Tucan.scatter(data, "x", "y", color_by: "c")
+        |> Tucan.Legend.set_selectable(:color)
+        |> VegaLite.to_spec()
+        # as if the user had clicked on the "a" entry of the legend
+        |> update_in(["params", Access.at(0)], &Map.put(&1, "value", [%{"c" => "a"}]))
+        |> Jason.encode!()
+        |> VegaLite.from_json()
+        |> Tucan.Export.to_svg()
+
+      [symbols] = Regex.run(~r/class="mark-symbol role-mark.*?<\/g>/s, svg)
+
+      opacities =
+        Regex.scan(~r/aria-label="([^"]*)"[^>]*\sopacity="([^"]*)"/, symbols,
+          capture: :all_but_first
+        )
+
+      assert opacities == [
+               ["x: 1; y: 1; c: a", "1"],
+               ["x: 2; y: 2; c: b", "0.15"],
+               ["x: 3; y: 3; c: a", "1"]
+             ]
+    end
+  end
 end

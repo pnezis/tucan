@@ -30,6 +30,17 @@ defmodule Tucan.Interactive do
   Tucan.scatter(:iris, "petal_width", "petal_length", color_by: "species", tooltip: :data)
   ```
 
+  ## Selectable legends
+
+  `Tucan.Legend.set_selectable/3` makes the entries of a legend clickable: clicking an
+  entry highlights its data and fades the rest, which helps with plots of many
+  overlapping series.
+
+  ```tucan
+  Tucan.lineplot(:stocks, "date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Legend.set_selectable(:color)
+  ```
+
   ## Hover
 
   `crosshair/2` follows the mouse with a vertical rule, highlighting the values of all
