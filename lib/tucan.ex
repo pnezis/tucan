@@ -3215,6 +3215,14 @@ defmodule Tucan do
       doc: "Whether the points will be filled or not. Valid only if `:points` is set.",
       default: true,
       section: :style
+    ],
+    order_by: [
+      type: :string,
+      doc: """
+      A field used for ordering the points of the lines, e.g. a date. By default the
+      points are ordered by the `x` field. Use it for connected scatter plots, where
+      the line follows the order of a third field and it may go back and forth.
+      """
     ]
   ]
 
@@ -3328,6 +3336,26 @@ defmodule Tucan do
 
   Tucan.concat(plots, columns: 2)
   ```
+
+  A connected scatter plot shows how two variables change together over time. With the
+  `:order_by` option the points are connected by year and not by the `x` field:
+
+  ```tucan
+  data =
+    for {year, unemployment, inflation} <- [
+          {2014, 6.2, 1.6}, {2015, 5.3, 0.1}, {2016, 4.9, 1.3}, {2017, 4.4, 2.1},
+          {2018, 3.9, 2.4}, {2019, 3.7, 1.8}, {2020, 8.1, 1.2}, {2021, 5.4, 4.7},
+          {2022, 3.6, 8.0}, {2023, 3.6, 4.1}, {2024, 4.0, 2.9}
+        ] do
+      %{year: year, unemployment: unemployment, inflation: inflation}
+    end
+
+  Tucan.lineplot(data, "unemployment", "inflation",
+    order_by: "year",
+    points: true,
+    width: 400
+  )
+  ```
   """
   @doc section: :plots
   @spec lineplot(plotdata :: plotdata(), x :: field(), y :: field(), opts :: keyword()) ::
@@ -3355,7 +3383,22 @@ defmodule Tucan do
       [detail: []],
       type: :nominal
     )
+    |> maybe_encode_order(opts[:order_by])
     |> Utils.maybe_zoomable(opts[:zoomable])
+  end
+
+  defp maybe_encode_order(vl, nil), do: vl
+
+  # text fields are ordered alphabetically, inferred dates are promoted to temporal
+  # by encode_field
+  defp maybe_encode_order(vl, field) do
+    type =
+      case get_in(vl.spec, ["__tucan__", "types", field]) do
+        "nominal" -> :ordinal
+        _other -> :quantitative
+      end
+
+    encode_field(vl, :order, field, [order: []], type: type)
   end
 
   defp maybe_add_point_opts(mark_opts, false, _opts), do: mark_opts

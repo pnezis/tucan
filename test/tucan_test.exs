@@ -1597,6 +1597,33 @@ defmodule TucanTest do
     end
   end
 
+  describe "lineplot/4 with order_by" do
+    test "orders the points by the given field" do
+      order = fn data, field ->
+        Tucan.lineplot(data, "x", "y", order_by: field)
+        |> VegaLite.to_spec()
+        |> get_in(["encoding", "order"])
+      end
+
+      assert order.([%{x: 1, y: 2, t: 3}], "t") == %{"field" => "t", "type" => "quantitative"}
+
+      assert order.([%{x: 1, y: 2, t: ~D[2020-01-01]}], "t") == %{
+               "field" => "t",
+               "type" => "temporal"
+             }
+
+      assert order.([%{x: 1, y: 2, t: ~T[10:00:00]}], "t") == %{
+               "field" => "t",
+               "type" => "temporal"
+             }
+
+      assert order.([%{x: 1, y: 2, t: "a"}], "t") == %{"field" => "t", "type" => "ordinal"}
+      assert order.(@dataset, "t") == %{"field" => "t", "type" => "quantitative"}
+
+      refute Map.has_key?(Tucan.lineplot(@dataset, "x", "y").spec["encoding"], "order")
+    end
+  end
+
   describe "heatmap/5" do
     test "with default values" do
       expected =

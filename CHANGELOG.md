@@ -78,6 +78,20 @@ a year, are supported through the `:period` option.
 e.g. `Tucan.scatter(data, "category", "value")`, instead of silently rendering an
 empty plot. Set the channel type explicitly to silence the warning.
 
+- Support connected scatter plots in `Tucan.lineplot/4` through the `:order_by`
+option, which orders the points of the lines by a field other than `x`.
+
+  ```tucan
+  data =
+    for {year, unemployment, inflation} <- [
+          {2019, 3.7, 1.8}, {2020, 8.1, 1.2}, {2021, 5.4, 4.7}, {2022, 3.6, 8.0}, {2023, 3.6, 4.1}
+        ] do
+      %{year: year, unemployment: unemployment, inflation: inflation}
+    end
+
+  Tucan.lineplot(data, "unemployment", "inflation", order_by: "year", points: true)
+  ```
+
 ### Changed
 
 - `Tucan.pie/4` validates the `:aggregate` option. An unsupported statistic, e.g. `:avg`,
