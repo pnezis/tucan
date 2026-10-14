@@ -426,6 +426,82 @@ defmodule Tucan.GeoTest do
     end
   end
 
+  describe "path/4" do
+    @track [%{lon: 1, lat: 2, t: 0, s: "a"}]
+
+    test "draws a line through the locations" do
+      spec = Tucan.Geo.path(@track, "lon", "lat") |> VegaLite.to_spec()
+
+      assert spec["mark"] == %{"type" => "line", "strokeWidth" => 2}
+
+      assert spec["encoding"] == %{
+               "longitude" => %{"field" => "lon", "type" => "quantitative"},
+               "latitude" => %{"field" => "lat", "type" => "quantitative"}
+             }
+
+      assert spec["projection"] == %{"type" => "equalEarth"}
+    end
+
+    test "with ordering, grouping and styling options" do
+      spec =
+        Tucan.Geo.path(@track, "lon", "lat",
+          order_by: "t",
+          group_by: "s",
+          color_by: "s",
+          line_color: "red",
+          stroke_width: 1,
+          tooltip: true
+        )
+        |> VegaLite.to_spec()
+
+      assert spec["mark"] == %{
+               "type" => "line",
+               "strokeWidth" => 1,
+               "color" => "red",
+               "tooltip" => true
+             }
+
+      assert spec["encoding"]["order"] == %{"field" => "t", "type" => "quantitative"}
+      assert spec["encoding"]["detail"] == %{"field" => "s", "type" => "nominal"}
+      assert spec["encoding"]["color"] == %{"field" => "s", "type" => "nominal"}
+    end
+
+    test "draws the points in a separate layer" do
+      spec =
+        Tucan.Geo.path(@track, "lon", "lat", points: true, color_by: "s", projection: :mercator)
+        |> VegaLite.to_spec()
+
+      assert %{"width" => 500, "height" => 300, "projection" => %{"type" => "mercator"}} = spec
+      assert [line, points] = spec["layer"]
+
+      assert line["mark"] == %{"type" => "line", "strokeWidth" => 2}
+      assert points["mark"] == %{"type" => "circle", "opacity" => 1}
+
+      for layer <- [line, points] do
+        assert layer["projection"] == %{"type" => "mercator"}
+        assert layer["data"] == %{"values" => [%{"lon" => 1, "lat" => 2, "t" => 0, "s" => "a"}]}
+        assert layer["encoding"]["color"] == %{"field" => "s", "type" => "nominal"}
+      end
+    end
+
+    test "the points are connected in the order of the order field" do
+      # the longitudes are projected linearly on x, so the order of the path vertices
+      # is the order of their longitudes
+      data = [%{lon: 0, lat: 0, t: 2}, %{lon: 10, lat: 0, t: 0}, %{lon: 20, lat: 10, t: 1}]
+
+      assert path_longitude_ranks(data, order_by: "t") == [1, 2, 0]
+      assert path_longitude_ranks(data, []) == [0, 1, 2]
+
+      # dates are ordered chronologically and text alphabetically
+      dates = [~D[2024-03-01], ~D[2023-12-01], ~D[2024-01-15]]
+      data = Enum.zip_with(data, dates, &Map.put(&1, :date, &2))
+      assert path_longitude_ranks(data, order_by: "date") == [1, 2, 0]
+
+      data = Enum.zip_with(data, ["c", "a", "b"], &Map.put(&1, :name, &2))
+      assert path_longitude_ranks(data, order_by: "name") == [1, 2, 0]
+    end
+  end
+
   describe "combining maps" do
     test "layered maps keep their projection when combined" do
       vl =
@@ -449,5 +525,22 @@ defmodule Tucan.GeoTest do
   defp round_number(string) do
     {number, ""} = Float.parse(string)
     Float.round(number, 6)
+  end
+
+  # the ranks of the longitudes of the vertices of a rendered path, in drawing order
+  defp path_longitude_ranks(data, opts) do
+    svg =
+      Tucan.Geo.path(data, "lon", "lat", [projection: :equirectangular] ++ opts)
+      |> Tucan.Export.to_svg()
+
+    [d] = Regex.run(~r/class="mark-line.*?d="([^"]*)"/s, svg, capture: :all_but_first)
+
+    xs =
+      ~r/[ML]([^,]+),/
+      |> Regex.scan(d, capture: :all_but_first)
+      |> Enum.map(fn [x] -> round_number(x) end)
+
+    sorted = Enum.sort(xs)
+    Enum.map(xs, fn x -> Enum.find_index(sorted, &(&1 == x)) end)
   end
 end

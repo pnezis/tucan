@@ -614,6 +614,122 @@ defmodule Tucan.Geo do
     |> geo_view(plotdata, opts)
   end
 
+  path_opts = [
+    order_by: [
+      type: :string,
+      doc: """
+      A field used for ordering the points of each path, e.g. a timestamp. If not set
+      the points are connected in the order of the data.
+      """
+    ],
+    group_by: [
+      type: :string,
+      doc: "A field used for drawing a separate path for each group.",
+      section: :grouping
+    ],
+    points: [
+      type: :boolean,
+      default: false,
+      doc: "Whether a point is drawn at each location.",
+      section: :style
+    ],
+    color_by: [doc: "A field used for coloring the paths. A separate path is drawn per color."],
+    stroke_width: [
+      type: {:or, [:integer, :float]},
+      default: 2,
+      doc: "The width of the paths in pixels."
+    ]
+  ]
+
+  @path_opts Tucan.Options.take!(
+               [:color_by, :line_color, :stroke_width, :tooltip],
+               path_opts ++ @projection_opts
+             )
+  @path_schema Tucan.Options.to_nimble_schema!(@path_opts)
+
+  @doc """
+  Draws paths connecting geographic locations, e.g. the track of a storm or the
+  route of a trip.
+
+  `longitude` and `latitude` are the fields with the coordinates of the points of
+  each path.
+
+  The paths are drawn without a map, combine them with a `basemap/2` using
+  `Tucan.layers/1`, see the module documentation.
+
+  ## Options
+
+  #{Tucan.Options.docs(@path_opts)}
+
+  ## Examples
+
+  The (approximate) tracks of two Atlantic hurricanes:
+
+  ```tucan
+  tracks =
+    for {storm, points} <- [
+          {"Katrina",
+           [{-75.1, 23.1}, {-77.6, 24.8}, {-80.1, 26.0}, {-82.6, 25.1}, {-85.3, 25.2},
+            {-87.8, 26.2}, {-89.6, 28.2}, {-89.6, 30.8}, {-88.6, 34.0}, {-86.0, 37.0}]},
+          {"Ike",
+           [{-37.0, 17.2}, {-50.0, 21.0}, {-60.2, 22.8}, {-68.0, 21.4}, {-74.3, 21.1},
+            {-79.0, 21.8}, {-84.6, 23.1}, {-89.4, 25.6}, {-94.7, 29.3}, {-93.0, 35.4}]}
+        ],
+        {{lon, lat}, step} <- Enum.with_index(points) do
+      %{storm: storm, lon: lon, lat: lat, step: step}
+    end
+
+  projection = [projection: :mercator, projection_opts: [scale: 420, center: [-66, 27]]]
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m, projection),
+    Tucan.Geo.path(tracks, "lon", "lat", [order_by: "step", color_by: "storm", points: true] ++ projection)
+  ])
+  ```
+  """
+  @spec path(
+          plotdata :: Tucan.plotdata(),
+          longitude :: String.t(),
+          latitude :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def path(plotdata, longitude, latitude, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @path_schema)
+
+    mark_opts =
+      opts
+      |> Keyword.take([:tooltip])
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    encode = fn vl ->
+      vl
+      |> encode_coordinates(longitude, latitude)
+      |> Tucan.Utils.maybe_encode_order(opts[:order_by])
+      |> maybe_encode(:detail, opts[:group_by], type: :nominal)
+      |> maybe_encode(:color, opts[:color_by], type: :nominal)
+    end
+
+    line =
+      plotdata
+      |> Tucan.new()
+      |> Vl.mark(:line, Keyword.put(mark_opts, :stroke_width, opts[:stroke_width]))
+      |> encode.()
+
+    # the point overlay of line marks ignores the projection, so the points are drawn
+    # in a separate layer
+    points =
+      plotdata
+      |> Tucan.new()
+      |> Vl.mark(:circle, Keyword.put(mark_opts, :opacity, 1))
+      |> encode.()
+
+    if opts[:points] do
+      layered_geo_view([line, points], plotdata, opts)
+    else
+      geo_view(line, plotdata, opts)
+    end
+  end
+
   ## Helpers
 
   # Sets the size, the title and the projection of a plot

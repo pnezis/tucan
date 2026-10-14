@@ -3383,22 +3383,8 @@ defmodule Tucan do
       [detail: []],
       type: :nominal
     )
-    |> maybe_encode_order(opts[:order_by])
+    |> Utils.maybe_encode_order(opts[:order_by])
     |> Utils.maybe_zoomable(opts[:zoomable])
-  end
-
-  defp maybe_encode_order(vl, nil), do: vl
-
-  # text fields are ordered alphabetically, inferred dates are promoted to temporal
-  # by encode_field
-  defp maybe_encode_order(vl, field) do
-    type =
-      case get_in(vl.spec, ["__tucan__", "types", field]) do
-        "nominal" -> :ordinal
-        _other -> :quantitative
-      end
-
-    encode_field(vl, :order, field, [order: []], type: type)
   end
 
   defp maybe_add_point_opts(mark_opts, false, _opts), do: mark_opts

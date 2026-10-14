@@ -310,6 +310,27 @@ defmodule Tucan.Utils do
   end
 
   @doc """
+  Encodes the `order` channel with the given field, if it is not `nil`.
+
+  The type of the order follows the inferred type of the field: text fields are
+  ordered alphabetically, dates and times chronologically and anything else as
+  numbers.
+  """
+  @spec maybe_encode_order(vl :: VegaLite.t(), field :: String.t() | nil) :: VegaLite.t()
+  def maybe_encode_order(vl, nil), do: vl
+
+  def maybe_encode_order(vl, field) do
+    # inferred dates are promoted to temporal by encode_field
+    type =
+      case get_in(vl.spec, ["__tucan__", "types", field]) do
+        "nominal" -> :ordinal
+        _other -> :quantitative
+      end
+
+    encode_field(vl, :order, field, [order: []], type: type)
+  end
+
+  @doc """
   Similar override to `encode_field/5`
   """
   @spec encode(vl :: VegaLite.t(), encoding :: atom(), opts :: keyword(), extra_opts :: keyword()) ::

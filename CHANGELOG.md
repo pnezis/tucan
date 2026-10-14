@@ -176,6 +176,26 @@ locations, e.g. flight routes.
   ])
   ```
 
+- Add `Tucan.Geo.path/4` for drawing paths connecting geographic locations, e.g. the
+track of a storm or the route of a trip.
+
+  ```tucan
+  trip = [
+    %{city: "Lisbon", lon: -9.14, lat: 38.72, day: 1},
+    %{city: "Madrid", lon: -3.70, lat: 40.42, day: 3},
+    %{city: "Paris", lon: 2.35, lat: 48.86, day: 6},
+    %{city: "Berlin", lon: 13.40, lat: 52.52, day: 9},
+    %{city: "Vienna", lon: 16.37, lat: 48.21, day: 12}
+  ]
+
+  projection = [projection: :mercator, projection_opts: [scale: 600, center: [4, 46]]]
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m, projection),
+    Tucan.Geo.path(trip, "lon", "lat", [order_by: "day", points: true] ++ projection)
+  ])
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree
