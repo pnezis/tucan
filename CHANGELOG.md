@@ -196,6 +196,28 @@ track of a storm or the route of a trip.
   ])
   ```
 
+- Add a `:volume` option to `Tucan.Finance.candlestick/7` for drawing the traded
+volume as a bar chart below the prices, sharing their time axis.
+
+  ```tucan
+  :rand.seed(:exsss, {1, 2, 3})
+
+  {data, _close} =
+    Enum.map_reduce(Date.range(~D[2024-03-01], ~D[2024-04-30]), 100.0, fn date, previous ->
+      close = previous + 2 * :rand.normal()
+      high = max(previous, close) + abs(:rand.normal())
+      low = min(previous, close) - abs(:rand.normal())
+      volume = round(1_000_000 * (0.5 + :rand.uniform()))
+
+      {%{date: date, open: previous, high: high, low: low, close: close, volume: volume}, close}
+    end)
+
+  Tucan.Finance.candlestick(data, "date", "open", "high", "low", "close",
+    volume: "volume",
+    width: 400
+  )
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree
