@@ -218,6 +218,18 @@ volume as a bar chart below the prices, sharing their time axis.
   )
   ```
 
+- Add `Tucan.Interactive` module for interactive plots, starting with
+`Tucan.Interactive.brush/2` for linking the plots of a concatenated plot with a brush.
+The rows selected on any plot are highlighted in all of them.
+
+  ```tucan
+  Tucan.hconcat([
+    Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon", color_by: "Origin", width: 250),
+    Tucan.scatter(:cars, "Weight_in_lbs", "Acceleration", color_by: "Origin", width: 250)
+  ])
+  |> Tucan.Interactive.brush()
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

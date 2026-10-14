@@ -78,6 +78,9 @@ defmodule Tucan.MixProject do
         Layout: [
           Tucan.Layers
         ],
+        Interactivity: [
+          Tucan.Interactive
+        ],
         Styling: [
           Tucan.Axes,
           Tucan.Grid,

@@ -280,6 +280,9 @@ defmodule Tucan do
   Tucan.histogram(:cars, "Horsepower", tooltip: true, zoomable: true)
   ```
 
+  More interactions, e.g. linking plots with a brush, are provided by the
+  `Tucan.Interactive` module.
+
   ## Global configuration
 
   You can configure some options that will be applied to all plots by using the `Tucan.configure/1`
