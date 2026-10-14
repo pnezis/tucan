@@ -72,6 +72,7 @@ defmodule Tucan.MixProject do
           Tucan,
           Tucan.Geometry,
           Tucan.Finance,
+          Tucan.Geo,
           Tucan.Polar
         ],
         Layout: [
