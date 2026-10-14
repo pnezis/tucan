@@ -90,6 +90,17 @@ and `:maxsteps` to be positive integers.
 
 ### Fixed
 
+- `Tucan.new/2` applies the spec options, e.g. `:width`, `:height` and `:title`, if the
+data are an existing `VegaLite` plot, e.g. a dataset with some transforms. They were
+ignored before, so the options of any plot built on such a plot were lost too.
+
+  ```tucan
+  VegaLite.new()
+  |> VegaLite.data_from_url("https://vega.github.io/editor/data/cars.json")
+  |> VegaLite.transform(filter: "datum.Origin == 'Europe'")
+  |> Tucan.scatter("Horsepower", "Miles_per_Gallon", width: 400, title: "European cars")
+  ```
+
 - `Tucan.density/3` converts the density field to a number before estimating the
 density. Previously densities of CSV data were computed on strings, producing
 wrong plots, e.g. `Tucan.density(:iris, "petal_width", color_by: "species")`.

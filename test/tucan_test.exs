@@ -129,6 +129,26 @@ defmodule TucanTest do
   end
 
   describe "new/0, new/2" do
+    test "applies the spec options to an existing plot" do
+      vl =
+        VegaLite.new() |> VegaLite.data_from_url("data.csv") |> VegaLite.transform(filter: "true")
+
+      spec = Tucan.new(vl, width: 100, height: 50, title: "A plot") |> VegaLite.to_spec()
+
+      assert spec["width"] == 100
+      assert spec["height"] == 50
+      assert spec["title"] == "A plot"
+      assert spec["data"] == %{"url" => "data.csv"}
+      assert spec["transform"] == [%{"filter" => "true"}]
+
+      assert Tucan.new(vl) == vl
+      assert Tucan.new(vl, only: ["x"]) == vl
+
+      # the plot functions apply the options to plots too
+      spec = vl |> Tucan.scatter("x", "y", width: 200) |> VegaLite.to_spec()
+      assert spec["width"] == 200
+    end
+
     test "new/0" do
       assert Tucan.new() == VegaLite.new()
     end

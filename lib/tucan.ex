@@ -347,7 +347,8 @@ defmodule Tucan do
 
   The behaviour of this function depends on the type of `plotdata`:
 
-  * if a `VegaLite.t()` struct is passed then it is returned unchanged.
+  * if a `VegaLite.t()` struct is passed then its data and transforms are kept, and
+    only the spec options, e.g. `:width`, `:height` and `:title`, are applied to it.
   * If it is a binary it is considered a url and the `VegaLite.data_from_url/2` is
     called on a newly created `VegaLite` struct.
   * if it is an atom then it is considered a `Tucan.Dataset` and it is translated to
@@ -454,7 +455,14 @@ defmodule Tucan do
   def new(plotdata, opts \\ []),
     do: to_vega_plot(plotdata, opts)
 
-  defp to_vega_plot(%VegaLite{} = plot, _opts), do: plot
+  # the spec options, e.g. the width, are applied to the existing plot and its data
+  # are kept
+  defp to_vega_plot(%VegaLite{} = plot, opts) do
+    {_data_opts, spec_opts} = Keyword.split(opts, [:only, :tucan])
+    spec = spec_opts |> Vl.new() |> VegaLite.to_spec() |> Map.delete("$schema")
+
+    %{plot | spec: Map.merge(plot.spec, spec)}
+  end
 
   defp to_vega_plot(dataset, opts) when is_atom(dataset),
     do: to_vega_plot(Tucan.Datasets.dataset(dataset), opts)
