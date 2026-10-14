@@ -324,6 +324,94 @@ defmodule Tucan.InteractiveTest do
     end
   end
 
+  describe "dropdown/3" do
+    test "with an option for all data" do
+      spec =
+        Tucan.scatter(@dataset, "x", "y")
+        |> VegaLite.transform(filter: "datum.x > 0")
+        |> Tucan.Interactive.dropdown("c", options: ["a", "b"], label: "Category", all: "Any")
+        |> VegaLite.to_spec()
+
+      assert spec["params"] == [
+               %{
+                 "name" => "dropdown_c",
+                 "value" => nil,
+                 "bind" => %{
+                   "input" => "select",
+                   "options" => [nil, "a", "b"],
+                   "labels" => ["Any", "a", "b"],
+                   "name" => "Category "
+                 }
+               }
+             ]
+
+      assert spec["transform"] == [
+               %{"filter" => ~s'dropdown_c == null || datum["c"] == dropdown_c'},
+               %{"filter" => "datum.x > 0"}
+             ]
+    end
+
+    test "without an option for all data and inferred options" do
+      data = [%{"a b" => 3}, %{"a b" => 1}, %{"a b" => nil}, %{"a b" => 3}]
+
+      spec =
+        Tucan.lineplot(data, "a b", "a b")
+        |> Tucan.Interactive.dropdown("a b", all: false)
+        |> VegaLite.to_spec()
+
+      assert spec["params"] == [
+               %{
+                 "name" => "dropdown_a_b",
+                 "value" => 3,
+                 "bind" => %{
+                   "input" => "select",
+                   "options" => [3, 1],
+                   "labels" => ["3", "1"],
+                   "name" => "a b "
+                 }
+               }
+             ]
+
+      assert spec["transform"] == [%{"filter" => ~s'datum["a b"] == dropdown_a_b'}]
+
+      assert [%{"value" => 1, "bind" => %{"labels" => ["All", "3", "1"]}}] =
+               Tucan.lineplot(data, "a b", "a b")
+               |> Tucan.Interactive.dropdown("a b", value: 1)
+               |> VegaLite.to_spec()
+               |> Map.fetch!("params")
+
+      assert [%{"value" => nil}] =
+               Tucan.lineplot(data, "a b", "a b")
+               |> Tucan.Interactive.dropdown("a b")
+               |> VegaLite.to_spec()
+               |> Map.fetch!("params")
+    end
+
+    test "raises if the options cannot be inferred" do
+      message = ~s'cannot infer the options of "c", set the :options option'
+
+      assert_raise ArgumentError, message, fn ->
+        Tucan.scatter(@dataset, "x", "y") |> Tucan.Interactive.dropdown("c")
+      end
+    end
+
+    test "the plot shows only the rows of the selected option" do
+      data = for {c, x} <- [{"a", 1}, {"b", 2}, {"a", 3}], do: %{c: c, x: x, y: x}
+
+      drawn = fn opts ->
+        Tucan.scatter(data, "x", "y")
+        |> Tucan.Interactive.dropdown("c", opts)
+        |> Tucan.Export.to_svg()
+        |> marks()
+      end
+
+      assert drawn.([]) == ["x: 1; y: 1", "x: 2; y: 2", "x: 3; y: 3"]
+      assert drawn.(value: "a") == ["x: 1; y: 1", "x: 3; y: 3"]
+      assert drawn.(value: "b", all: false) == ["x: 2; y: 2"]
+      assert drawn.(all: false) == ["x: 1; y: 1", "x: 3; y: 3"]
+    end
+  end
+
   # renders the plot with the brush of the given view set to the given intervals and
   # returns the marks of each view with their opacity. All views share the same
   # brush, whose initial value is taken from the first view defining it.

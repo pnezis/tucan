@@ -258,6 +258,15 @@ the value of a numeric field.
   |> Tucan.Scale.set_y_domain(20, 85)
   ```
 
+- Add `Tucan.Interactive.dropdown/3`, a dropdown below the plot filtering its rows by
+the selected value of a field.
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

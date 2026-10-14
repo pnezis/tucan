@@ -42,15 +42,13 @@ defmodule Tucan.Interactive do
 
   ## Widgets
 
-  `slider/3` adds a slider below the plot that filters its rows, e.g. to show the data
-  of a single year.
+  `slider/3` and `dropdown/3` add input widgets below the plot that filter its rows,
+  e.g. to show the data of a single year or of a single category.
 
   ```tucan
-  data = for x <- 0..100, do: %{x: x, y: :math.sin(x / 10)}
-
-  Tucan.lineplot(data, "x", "y", width: 400)
-  |> Tucan.Interactive.slider("x", mode: :up_to, value: 50)
-  |> Tucan.Scale.set_x_domain(0, 100)
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
   ```
 
   ## Linked brushing
@@ -385,6 +383,119 @@ defmodule Tucan.Interactive do
         &[%{"filter" => expression} | &1]
       )
     end)
+  end
+
+  dropdown_opts = [
+    options: [
+      type: {:list, {:or, [:string, :integer, :float, :boolean]}},
+      doc: """
+      The values of the dropdown. If not set the distinct values of the field are used,
+      which is possible only if the data are passed inline.
+      """
+    ],
+    value: [
+      type: {:or, [:string, :integer, :float, :boolean]},
+      doc: """
+      The initial value of the dropdown. If not set all data are shown if `:all` is
+      enabled, otherwise the first option is selected.
+      """
+    ],
+    all: [
+      type: {:or, [:boolean, :string]},
+      default: true,
+      doc: """
+      Whether to include an option for showing all the data. If a string is passed it
+      is used as the label of this option, defaults to `"All"`.
+      """
+    ],
+    label: [
+      type: :string,
+      doc: "The label of the dropdown. Defaults to the field."
+    ]
+  ]
+
+  @dropdown_schema NimbleOptions.new!(dropdown_opts)
+
+  @doc """
+  Adds a dropdown that filters the data of the plot by the selected value of `field`.
+
+  It is useful for focusing on a single category of a plot with many categories. The
+  dropdown is drawn below the plot.
+
+  As with `slider/3`, the rows are filtered before any other transform of the plot,
+  and plots whose layers have their own data are not filtered.
+
+  ## Options
+
+  #{NimbleOptions.docs(@dropdown_schema)}
+
+  ## Examples
+
+  Select a stock to show only its prices:
+
+  ```tucan
+  :stocks
+  |> Tucan.lineplot("date", "price", color_by: "symbol", x: [type: :temporal], width: 400)
+  |> Tucan.Interactive.dropdown("symbol", options: ["AAPL", "AMZN", "GOOG", "IBM", "MSFT"])
+  ```
+
+  Without an option for showing all data, the first option is initially selected:
+
+  ```tucan
+  :penguins
+  |> Tucan.scatter("Beak Length (mm)", "Beak Depth (mm)", color_by: "Island", width: 400)
+  |> Tucan.Interactive.dropdown("Island", options: ["Biscoe", "Dream", "Torgersen"], all: false)
+  ```
+  """
+  @spec dropdown(vl :: VegaLite.t(), field :: String.t(), opts :: keyword()) :: VegaLite.t()
+  def dropdown(vl, field, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @dropdown_schema)
+
+    options = opts[:options] || inferred_options!(vl, field)
+    name = control_param_name("dropdown", field)
+
+    {values, labels, initial, filter} =
+      case opts[:all] do
+        false ->
+          {options, options, Keyword.get(opts, :value, hd(options)),
+           "datum[#{Jason.encode!(field)}] == #{name}"}
+
+        all ->
+          label = if is_binary(all), do: all, else: "All"
+
+          {[nil | options], [label | options], opts[:value],
+           "#{name} == null || datum[#{Jason.encode!(field)}] == #{name}"}
+      end
+
+    vl
+    |> Vl.param(name,
+      value: initial,
+      bind: [
+        input: :select,
+        options: values,
+        labels: Enum.map(labels, &to_string/1),
+        name: "#{opts[:label] || field} "
+      ]
+    )
+    |> prepend_filter(filter)
+  end
+
+  defp inferred_options!(vl, field) do
+    values =
+      case get_in(vl.spec, ["data", "values"]) do
+        rows when is_list(rows) ->
+          rows |> Enum.map(& &1[field]) |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+        _other ->
+          []
+      end
+
+    if values == [] do
+      raise ArgumentError,
+            "cannot infer the options of #{inspect(field)}, set the :options option"
+    end
+
+    values
   end
 
   @brush_param "_brush"
