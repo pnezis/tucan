@@ -96,6 +96,100 @@ defmodule Tucan.Geometry do
     |> Vl.encode(:y2, datum: y2)
   end
 
+  arrow_opts = [
+    stroke_width: [default: 2],
+    line_color: [default: "black"],
+    head_size: [
+      type: :pos_integer,
+      default: 60,
+      doc: "The size of the arrow head.",
+      section: :style
+    ]
+  ]
+
+  @arrow_opts Tucan.Options.take!(
+                [:stroke_width, :stroke_dash, :line_color, :opacity],
+                arrow_opts
+              )
+  @arrow_schema Tucan.Options.to_nimble_schema!(@arrow_opts)
+
+  @doc """
+  Draws an arrow from the `start` to the `end` point.
+
+  The arrow head points in the direction of the arrow on the screen, taking into
+  account the scales of the plot.
+
+  > #### Concatenated plots {: .warning}
+  >
+  > Inside concatenated plots, e.g. `Tucan.hconcat/2`, the scales of the plot cannot
+  > be referenced and the direction of the head is computed in data units. It matches
+  > the arrow only if the x and y axes have the same scale.
+
+  ## Options
+
+  #{Tucan.Options.docs(@arrow_opts)}
+
+  ## Examples
+
+  Pointing to a point of a scatter plot, with an annotation:
+
+  ```tucan
+  Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon")
+  |> Tucan.Layers.append(Tucan.Geometry.arrow({180, 35}, {225, 16}, line_color: "red"))
+  |> Tucan.annotate(180, 37, "The most powerful car", color: "red")
+  ```
+
+  Arrows in every direction:
+
+  ```tucan
+  arrows =
+    for angle <- 0..330//30 do
+      radians = angle * :math.pi() / 180
+      Tucan.Geometry.arrow({0, 0}, {5 * :math.cos(radians), 5 * :math.sin(radians)})
+    end
+
+  Tucan.layers(arrows)
+  |> Tucan.set_size(250, 250)
+  ```
+  """
+  @spec arrow(start :: point(), end_point :: point(), opts :: keyword()) :: VegaLite.t()
+  def arrow({x1, y1} = _start, {x2, y2} = _end, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @arrow_schema)
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@arrow_opts, :mark)
+      |> Keyword.put(:color, opts[:line_color])
+
+    # the angle of the head is computed on the screen, since the x and y scales
+    # may differ, it is 0 for an arrow pointing up and increases clockwise. If a
+    # scale has an empty domain, e.g. a single horizontal arrow, the screen angle
+    # is not defined and the angle in data units is used instead
+    screen_angle =
+      "atan2(scale('x', #{x2}) - scale('x', #{x1}), scale('y', #{y1}) - scale('y', #{y2}))"
+
+    data_angle = "atan2((#{x2}) - (#{x1}), (#{y2}) - (#{y1}))"
+
+    angle = "(isFinite(#{screen_angle}) ? #{screen_angle} : #{data_angle}) * 180 / PI"
+
+    head =
+      Vl.new()
+      |> Vl.data_from_values([%{}])
+      |> Vl.mark(:point,
+        shape: :triangle,
+        filled: true,
+        opacity: 1,
+        size: opts[:head_size],
+        color: opts[:line_color],
+        angle: [expr: angle]
+      )
+      |> Vl.encode(:x, datum: x2, type: :quantitative)
+      |> Vl.encode(:y, datum: y2, type: :quantitative)
+
+    Vl.new()
+    |> Vl.layers([segment(x1, y1, x2, y2, mark_opts), head])
+  end
+
   circle_opts = [
     stroke_width: [default: 1]
   ]

@@ -103,6 +103,16 @@ option, which orders the points of the lines by a field other than `x`.
   ])
   ```
 
+- Add `Tucan.Geometry.arrow/3` for drawing arrows, e.g. to point to a part of a plot.
+The arrow head follows the direction of the arrow on the screen, even if the x and y
+scales differ.
+
+  ```tucan
+  Tucan.scatter(:cars, "Horsepower", "Miles_per_Gallon")
+  |> Tucan.Layers.append(Tucan.Geometry.arrow({180, 35}, {225, 16}, line_color: "red"))
+  |> Tucan.annotate(180, 37, "The most powerful car", color: "red")
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

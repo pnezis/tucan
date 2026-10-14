@@ -251,6 +251,106 @@ defmodule Tucan.GeometryTest do
     end
   end
 
+  describe "arrow/3" do
+    test "draws a segment and a head at the end point" do
+      spec = Tucan.Geometry.arrow({1, 2}, {3, 4}) |> VegaLite.to_spec()
+
+      assert [segment, head] = spec["layer"]
+
+      assert segment == %{
+               "data" => %{"values" => [%{}]},
+               "mark" => %{"type" => "rule", "color" => "black", "strokeWidth" => 2},
+               "encoding" => %{
+                 "x" => %{"datum" => 1, "type" => "quantitative"},
+                 "y" => %{"datum" => 2, "type" => "quantitative"},
+                 "x2" => %{"datum" => 3},
+                 "y2" => %{"datum" => 4}
+               }
+             }
+
+      assert %{
+               "mark" => %{
+                 "type" => "point",
+                 "shape" => "triangle",
+                 "filled" => true,
+                 "size" => 60,
+                 "color" => "black"
+               },
+               "encoding" => %{
+                 "x" => %{"datum" => 3, "type" => "quantitative"},
+                 "y" => %{"datum" => 4, "type" => "quantitative"}
+               }
+             } = head
+    end
+
+    test "with style options" do
+      spec =
+        Tucan.Geometry.arrow({1, 2}, {3, 4}, line_color: "red", head_size: 100, stroke_width: 1)
+        |> VegaLite.to_spec()
+
+      [segment, head] = spec["layer"]
+
+      assert segment["mark"]["color"] == "red"
+      assert segment["mark"]["strokeWidth"] == 1
+      assert head["mark"]["color"] == "red"
+      assert head["mark"]["size"] == 100
+    end
+
+    test "the head points in the direction of the arrow" do
+      # clockwise angles from the up direction on a square plot
+      directions = [
+        {{0, 1}, 0},
+        {{1, 1}, 45},
+        {{1, 0}, 90},
+        {{1, -1}, 135},
+        {{0, -1}, 180},
+        {{-1, -1}, -135},
+        {{-1, 0}, -90},
+        {{-1, 1}, -45}
+      ]
+
+      for {end_point, angle} <- directions do
+        svg =
+          Tucan.layers([Tucan.Geometry.arrow({0, 0}, end_point)])
+          |> Tucan.set_size(200, 200)
+          |> Tucan.Export.to_svg()
+
+        assert_in_delta head_rotation(svg), angle, 0.01, "arrow to #{inspect(end_point)}"
+      end
+    end
+
+    test "the head follows the screen direction if the scales differ" do
+      # on a plot twice as wide as high the diagonal is less steep on the screen
+      svg =
+        Tucan.layers([Tucan.Geometry.arrow({0, 0}, {1, 1})])
+        |> Tucan.set_size(400, 200)
+        |> Tucan.Export.to_svg()
+
+      assert_in_delta head_rotation(svg), :math.atan2(400, 200) * 180 / :math.pi(), 0.01
+    end
+
+    test "does not affect the axis titles of the plot" do
+      svg =
+        Tucan.layers([
+          Tucan.scatter([%{a: 1, b: 2}, %{a: 3, b: 4}], "a", "b"),
+          Tucan.Geometry.arrow({0, 0}, {4, 4})
+        ])
+        |> Tucan.Export.to_svg()
+
+      assert axis_titles(svg) == ["X-axis titled 'a'", "Y-axis titled 'b'"]
+    end
+  end
+
+  # the rotation of the arrow head in degrees, vega omits it if it is 0
+  defp head_rotation(svg) do
+    [symbols] = Regex.run(~r/class="mark-symbol.*?<\/g>/s, svg)
+
+    case Regex.run(~r/rotate\(([-\d.]+)\)/, symbols, capture: :all_but_first) do
+      nil -> 0.0
+      [angle] -> angle |> Float.parse() |> elem(0)
+    end
+  end
+
   defp axis_titles(svg) do
     ~r/aria-label="([XY]-axis titled '[^']*')/
     |> Regex.scan(svg, capture: :all_but_first)
