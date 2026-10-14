@@ -47,20 +47,7 @@ defmodule Tucan.MixProject do
       {:vega_lite_convert, "~> 1.0.0", optional: true},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:fancy_fences, "~> 0.3.1", only: :dev, runtime: false}
-    ] ++ dev_deps()
-  end
-
-  defp dev_deps do
-    case System.get_env("TUCAN_DEV") do
-      "true" ->
-        [
-          {:doctor, "~> 0.21.0", only: :dev},
-          {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
-        ]
-
-      _other ->
-        []
-    end
+    ]
   end
 
   defp docs do

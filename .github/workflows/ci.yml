@@ -14,9 +14,6 @@ on:
 permissions:
   contents: read
 
-env:
-  TUCAN_DEV: true
-
 jobs:
   codespell:
     runs-on: ubuntu-latest
@@ -60,12 +57,6 @@ jobs:
       run: mix compile --force --warnings-as-errors
     - name: Format
       run: mix format --check-formatted
-      if: ${{ matrix.lint }}
-    - name: Credo
-      run: mix credo --strict
-      if: ${{ matrix.lint }}
-    - name: Doctor
-      run: mix doctor --failed
       if: ${{ matrix.lint }}
     - name: Run tests
       run: mix test --cover

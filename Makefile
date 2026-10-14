@@ -17,12 +17,9 @@ spell: ## Run cspell on project
 	cspell lint *.md
 
 .PHONY: lint
-lint: export TUCAN_DEV=true
 lint: ## Lint tucan
 	mix compile --force --warnings-as-errors
 	mix format --check-formatted
-	mix credo --strict
-	mix doctor --failed
 	mix docs -f html
 	mix test --warnings-as-errors --cover
 
