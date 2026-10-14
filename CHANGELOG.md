@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [v0.7.0](https://github.com/pnezis/tucan/tree/v0.7.0) (2026-10-14)
 
 A big release that adds interactive plots, plots in polar coordinates and maps, each
 in its own module:
