@@ -4903,12 +4903,14 @@ defmodule Tucan do
         ) ::
           VegaLite.t()
   def annotate(vl, x, y, text, opts \\ []) when is_struct(vl, VegaLite) do
+    # the position is a data value and not a field, so that the axis titles of the
+    # plot are not affected
     annotation =
       Vl.new()
-      |> Vl.data_from_values(%{x: [x], y: [y]})
+      |> Vl.data_from_values([%{}])
       |> Vl.mark(:text, opts ++ [text: text])
-      |> Vl.encode_field(:x, "x", type: :quantitative)
-      |> Vl.encode_field(:y, "y", type: :quantitative)
+      |> Vl.encode(:x, datum: x, type: :quantitative)
+      |> Vl.encode(:y, datum: y, type: :quantitative)
 
     Tucan.Layers.append(vl, annotation)
   end

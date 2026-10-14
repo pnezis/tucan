@@ -3190,10 +3190,10 @@ defmodule TucanTest do
           Vl.new(),
           [
             Vl.new()
-            |> Vl.data_from_values(%{x: [10], y: [10]})
+            |> Vl.data_from_values([%{}])
             |> Vl.mark(:text, text: "Hello")
-            |> Vl.encode_field(:x, "x", type: :quantitative)
-            |> Vl.encode_field(:y, "y", type: :quantitative)
+            |> Vl.encode(:x, datum: 10, type: :quantitative)
+            |> Vl.encode(:y, datum: 10, type: :quantitative)
           ]
         )
 
@@ -3204,10 +3204,10 @@ defmodule TucanTest do
       expected =
         Vl.layers(Vl.new(), [
           Vl.new()
-          |> Vl.data_from_values(%{x: [10], y: [10]})
+          |> Vl.data_from_values([%{}])
           |> Vl.mark(:text, text: "Hello", size: 10, angle: 10, font: "Courier")
-          |> Vl.encode_field(:x, "x", type: :quantitative)
-          |> Vl.encode_field(:y, "y", type: :quantitative)
+          |> Vl.encode(:x, datum: 10, type: :quantitative)
+          |> Vl.encode(:y, datum: 10, type: :quantitative)
         ])
 
       assert Tucan.annotate(Vl.new(), 10, 10, "Hello", size: 10, angle: 10, font: "Courier") ==
@@ -3218,21 +3218,33 @@ defmodule TucanTest do
       expected =
         Vl.layers(Vl.new(), [
           Vl.new()
-          |> Vl.data_from_values(%{x: [10], y: [10]})
+          |> Vl.data_from_values([%{}])
           |> Vl.mark(:text, text: "Hello")
-          |> Vl.encode_field(:x, "x", type: :quantitative)
-          |> Vl.encode_field(:y, "y", type: :quantitative),
+          |> Vl.encode(:x, datum: 10, type: :quantitative)
+          |> Vl.encode(:y, datum: 10, type: :quantitative),
           Vl.new()
-          |> Vl.data_from_values(%{x: [20], y: [20]})
+          |> Vl.data_from_values([%{}])
           |> Vl.mark(:text, text: "World")
-          |> Vl.encode_field(:x, "x", type: :quantitative)
-          |> Vl.encode_field(:y, "y", type: :quantitative)
+          |> Vl.encode(:x, datum: 20, type: :quantitative)
+          |> Vl.encode(:y, datum: 20, type: :quantitative)
         ])
 
       assert Vl.new()
              |> Tucan.annotate(10, 10, "Hello")
              |> Tucan.annotate(20, 20, "World") ==
                expected
+    end
+
+    test "does not affect the axis titles of the plot" do
+      svg =
+        Tucan.scatter([%{a: 1, b: 2}, %{a: 3, b: 4}], "a", "b")
+        |> Tucan.annotate(2, 3, "Hello")
+        |> Tucan.Export.to_svg()
+
+      titles =
+        Regex.scan(~r/aria-label="([XY]-axis titled '[^']*')/, svg, capture: :all_but_first)
+
+      assert titles == [["X-axis titled 'a'"], ["Y-axis titled 'b'"]]
     end
   end
 

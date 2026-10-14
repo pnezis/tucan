@@ -107,6 +107,8 @@ and `:maxsteps` to be positive integers.
 
 ### Fixed
 
+- `Tucan.annotate/5` does not change the axis titles of the annotated plot. The
+annotation's internal `x` and `y` fields were appended to them, e.g. `Horsepower, x`.
 - `Tucan.new/2` applies the spec options, e.g. `:width`, `:height` and `:title`, if the
 data are an existing `VegaLite` plot, e.g. a dataset with some transforms. They were
 ignored before, so the options of any plot built on such a plot were lost too.
