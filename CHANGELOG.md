@@ -161,6 +161,21 @@ maps on top of a `Tucan.Geo.basemap/2`.
   ])
   ```
 
+- Add `Tucan.Geo.connections/6` for drawing lines between pairs of geographic
+locations, e.g. flight routes.
+
+  ```tucan
+  routes =
+    for {lon, lat} <- [{-73.78, 40.64}, {55.36, 25.25}, {103.99, 1.36}, {28.24, -26.13}] do
+      %{lon: -0.45, lat: 51.47, lon2: lon, lat2: lat}
+    end
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m),
+    Tucan.Geo.connections(routes, "lon", "lat", "lon2", "lat2", line_color: "firebrick")
+  ])
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

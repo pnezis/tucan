@@ -498,6 +498,122 @@ defmodule Tucan.Geo do
   defp maybe_encode(vl, _channel, nil, _opts), do: vl
   defp maybe_encode(vl, channel, field, opts), do: Vl.encode_field(vl, channel, field, opts)
 
+  connections_opts = [
+    stroke_width: [
+      type: {:or, [:integer, :float]},
+      default: 1,
+      doc: "The width of the lines in pixels. Ignored if `:size_by` is set."
+    ],
+    opacity: [default: 0.6]
+  ]
+
+  @connections_opts Tucan.Options.take!(
+                      [:color_by, :size_by, :line_color, :stroke_width, :opacity, :tooltip],
+                      connections_opts ++ @projection_opts
+                    )
+  @connections_schema Tucan.Options.to_nimble_schema!(@connections_opts)
+
+  @doc """
+  Draws lines between pairs of geographic locations, e.g. flight routes.
+
+  `longitude` and `latitude` are the fields with the coordinates of the start of
+  each line, and `longitude2` and `latitude2` the fields with the coordinates of its
+  end.
+
+  The lines are straight lines on the projected map, and not great circles.
+
+  The lines are drawn without a map, combine them with a `basemap/2` using
+  `Tucan.layers/1`, see the module documentation.
+
+  ## Options
+
+  #{Tucan.Options.docs(@connections_opts)}
+
+  ## Examples
+
+  Flights from London to some cities of the world, with made up weekly frequencies:
+
+  ```tucan
+  london = %{lon: -0.45, lat: 51.47}
+
+  routes =
+    for {city, lon, lat, weekly} <- [
+          {"New York", -73.78, 40.64, 140},
+          {"Dubai", 55.36, 25.25, 90},
+          {"Singapore", 103.99, 1.36, 35},
+          {"Johannesburg", 28.24, -26.13, 21},
+          {"São Paulo", -46.47, -23.43, 14},
+          {"Tokyo", 139.78, 35.55, 28},
+          {"Los Angeles", -118.41, 33.94, 50}
+        ] do
+      %{city: city, lon: london.lon, lat: london.lat, lon2: lon, lat2: lat, weekly: weekly}
+    end
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m),
+    Tucan.Geo.connections(routes, "lon", "lat", "lon2", "lat2",
+      size_by: "weekly",
+      line_color: "firebrick",
+      tooltip: true
+    )
+  ])
+  ```
+
+  The flights from Seattle to other US airports. The coordinates of the airports are
+  joined to the flights with lookup transforms:
+
+  ```tucan
+  airports = Tucan.Datasets.dataset(:airports)
+
+  lookup = fn vl, field, as ->
+    VegaLite.transform(vl,
+      lookup: field,
+      from: [data: [url: airports], key: "iata", fields: ["longitude", "latitude"]],
+      as: as
+    )
+  end
+
+  flights =
+    Tucan.new(:flights_airport)
+    |> VegaLite.transform(filter: "datum.origin == 'SEA'")
+    |> lookup.("origin", ["origin_lon", "origin_lat"])
+    |> lookup.("destination", ["dest_lon", "dest_lat"])
+    |> Tucan.Geo.connections("origin_lon", "origin_lat", "dest_lon", "dest_lat",
+      projection: :albers_usa,
+      size_by: "count",
+      line_color: "steelblue"
+    )
+
+  Tucan.layers([Tucan.Geo.basemap(:us_10m), flights])
+  ```
+  """
+  @spec connections(
+          plotdata :: Tucan.plotdata(),
+          longitude :: String.t(),
+          latitude :: String.t(),
+          longitude2 :: String.t(),
+          latitude2 :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def connections(plotdata, longitude, latitude, longitude2, latitude2, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @connections_schema)
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@connections_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    plotdata
+    |> Tucan.new()
+    |> Vl.mark(:rule, mark_opts)
+    |> encode_coordinates(longitude, latitude)
+    |> Vl.encode_field(:longitude2, longitude2)
+    |> Vl.encode_field(:latitude2, latitude2)
+    |> maybe_encode(:color, opts[:color_by], type: :nominal)
+    |> maybe_encode(:size, opts[:size_by], type: :quantitative)
+    |> geo_view(plotdata, opts)
+  end
+
   ## Helpers
 
   # Sets the size, the title and the projection of a plot

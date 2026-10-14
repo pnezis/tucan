@@ -351,6 +351,81 @@ defmodule Tucan.GeoTest do
     end
   end
 
+  describe "connections/6" do
+    @routes [%{a: 1, b: 2, c: 3, d: 4, g: "x", n: 5}]
+
+    test "draws lines between the coordinates" do
+      spec = Tucan.Geo.connections(@routes, "a", "b", "c", "d") |> VegaLite.to_spec()
+
+      assert spec["mark"] == %{"type" => "rule", "opacity" => 0.6, "strokeWidth" => 1}
+
+      assert spec["encoding"] == %{
+               "longitude" => %{"field" => "a", "type" => "quantitative"},
+               "latitude" => %{"field" => "b", "type" => "quantitative"},
+               "longitude2" => %{"field" => "c"},
+               "latitude2" => %{"field" => "d"}
+             }
+
+      assert spec["projection"] == %{"type" => "equalEarth"}
+    end
+
+    test "with grouping and styling options" do
+      spec =
+        Tucan.Geo.connections(@routes, "a", "b", "c", "d",
+          color_by: "g",
+          size_by: "n",
+          line_color: "red",
+          stroke_width: 2,
+          opacity: 1,
+          tooltip: true,
+          projection: :albers_usa
+        )
+        |> VegaLite.to_spec()
+
+      assert spec["mark"] == %{
+               "type" => "rule",
+               "opacity" => 1,
+               "strokeWidth" => 2,
+               "color" => "red",
+               "tooltip" => true
+             }
+
+      assert spec["encoding"]["color"] == %{"field" => "g", "type" => "nominal"}
+      assert spec["encoding"]["size"] == %{"field" => "n", "type" => "quantitative"}
+      assert spec["projection"] == %{"type" => "albersUsa"}
+    end
+
+    test "the lines join the projected locations" do
+      # along the equator and along the prime meridian, with an equirectangular projection
+      data = [%{a: -90, b: 0, c: 90, d: 0}, %{a: 0, b: -45, c: 0, d: 45}]
+
+      svg =
+        Tucan.Geo.connections(data, "a", "b", "c", "d", projection: :equirectangular)
+        |> Tucan.Export.to_svg()
+
+      [rules] = Regex.run(~r/class="mark-rule.*?<\/g>/s, svg)
+
+      [{x1, y1, dx1, dy1}, {x2, y2, dx2, dy2}] =
+        Regex.scan(~r/translate\(([^,]+),([^)]+)\)" x2="([^"]+)" y2="([^"]+)"/, rules,
+          capture: :all_but_first
+        )
+        |> Enum.map(fn values -> values |> Enum.map(&round_number/1) |> List.to_tuple() end)
+
+      # the equator is horizontal and the meridian vertical, pointing north
+      assert dy1 == 0
+      assert dx1 > 0
+      assert dx2 == 0
+      assert dy2 < 0
+
+      # 180 degrees of longitude are twice as long as 90 degrees of latitude
+      assert_in_delta dx1, -2 * dy2, 0.01
+
+      # the lines cross at their middle points
+      assert_in_delta x1 + dx1 / 2, x2, 0.01
+      assert_in_delta y2 + dy2 / 2, y1, 0.01
+    end
+  end
+
   describe "combining maps" do
     test "layered maps keep their projection when combined" do
       vl =
