@@ -140,8 +140,11 @@ defmodule Tucan.Export do
     VegaLite.Convert.to_svg(vl)
   end
 
-  defp assert_vega_lite_convert! do
-    if !Code.ensure_loaded?(VegaLite.Convert) do
+  # the module is configurable only for testing the missing dependency error
+  @doc false
+  @spec assert_vega_lite_convert!(module :: module()) :: :ok
+  def assert_vega_lite_convert!(module \\ VegaLite.Convert) do
+    if !Code.ensure_loaded?(module) do
       raise RuntimeError, """
       Tucan.Export depends on the :vega_lite_convert package.
 
@@ -152,5 +155,7 @@ defmodule Tucan.Export do
       to your dependency list.
       """
     end
+
+    :ok
   end
 end

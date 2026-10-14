@@ -49,4 +49,12 @@ defmodule Tucan.ExportTest do
     assert :ok = Tucan.Export.save!(@vl, path, format: :svg)
     assert File.read!(path) =~ "<svg"
   end
+
+  test "raises if vega_lite_convert is missing" do
+    assert Tucan.Export.assert_vega_lite_convert!() == :ok
+
+    assert_raise RuntimeError, ~r/depends on the :vega_lite_convert package/, fn ->
+      Tucan.Export.assert_vega_lite_convert!(NotLoaded.Convert)
+    end
+  end
 end
