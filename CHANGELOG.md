@@ -151,6 +151,16 @@ features are joined with the rows of any data supported by `Tucan.new/2`.
   )
   ```
 
+- Add `Tucan.Geo.scatter/4` for drawing points at geographic locations, e.g. bubble
+maps on top of a `Tucan.Geo.basemap/2`.
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geo.basemap(:us_10m),
+    Tucan.Geo.scatter(:airports, "longitude", "latitude", point_size: 4, point_color: "firebrick")
+  ])
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

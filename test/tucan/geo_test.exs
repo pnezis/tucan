@@ -246,22 +246,133 @@ defmodule Tucan.GeoTest do
     end
   end
 
+  describe "scatter/4" do
+    @airports Tucan.Datasets.dataset(:airports)
+
+    test "draws points at the coordinates" do
+      spec = Tucan.Geo.scatter(:airports, "longitude", "latitude") |> VegaLite.to_spec()
+
+      assert spec == %{
+               "$schema" => "https://vega.github.io/schema/vega-lite/v5.json",
+               "data" => %{"url" => @airports},
+               "mark" => %{"type" => "point", "filled" => true, "fillOpacity" => 0.7},
+               "encoding" => %{
+                 "longitude" => %{"field" => "longitude", "type" => "quantitative"},
+                 "latitude" => %{"field" => "latitude", "type" => "quantitative"}
+               },
+               "projection" => %{"type" => "albersUsa"},
+               "width" => 500,
+               "height" => 300
+             }
+    end
+
+    test "with grouping and styling options" do
+      data = [%{lon: 1, lat: 2, c: "a", s: 3}]
+
+      spec =
+        Tucan.Geo.scatter(data, "lon", "lat",
+          color_by: "c",
+          size_by: "s",
+          point_color: "red",
+          point_size: 10,
+          point_shape: "square",
+          filled: false,
+          fill_opacity: 0.5,
+          tooltip: true,
+          title: "Points"
+        )
+        |> VegaLite.to_spec()
+
+      assert spec["projection"] == %{"type" => "equalEarth"}
+      assert spec["title"] == %{"text" => "Points"}
+
+      assert spec["mark"] == %{
+               "type" => "point",
+               "filled" => false,
+               "fillOpacity" => 0.5,
+               "color" => "red",
+               "size" => 10,
+               "shape" => "square",
+               "tooltip" => true
+             }
+
+      assert spec["encoding"]["color"] == %{"field" => "c", "type" => "nominal"}
+      assert spec["encoding"]["size"] == %{"field" => "s", "type" => "quantitative"}
+    end
+
+    test "can be layered on a basemap" do
+      vl =
+        Tucan.layers([
+          Tucan.Geo.basemap(:us_10m),
+          Tucan.Geo.scatter(:airports, "longitude", "latitude")
+        ])
+
+      assert [basemap, points] = VegaLite.to_spec(vl)["layer"]
+      assert basemap["projection"] == points["projection"]
+    end
+
+    test "with a data tooltip and invalid options" do
+      spec = Tucan.Geo.scatter([%{lon: 1, lat: 2}], "lon", "lat", tooltip: :data)
+      assert VegaLite.to_spec(spec)["mark"]["tooltip"] == %{"content" => "data"}
+
+      assert_raise NimbleOptions.ValidationError, fn ->
+        Tucan.Geo.scatter([%{lon: 1, lat: 2}], "lon", "lat", point_shape: "star")
+      end
+    end
+
+    test "the points are projected on the plane" do
+      # with an equirectangular projection longitude and latitude are linear in x and y
+      data = for lon <- [-90, -30, 30, 90], lat <- [-20, 40], do: %{lon: lon, lat: lat}
+
+      svg =
+        Tucan.Geo.scatter(data, "lon", "lat", projection: :equirectangular)
+        |> Tucan.Export.to_svg()
+
+      [symbols] = Regex.run(~r/class="mark-symbol.*?<\/g>/s, svg)
+
+      positions =
+        Regex.scan(~r/transform="translate\(([^,]+),([^)]+)\)"/, symbols, capture: :all_but_first)
+        |> Enum.map(fn [x, y] -> {round_number(x), round_number(y)} end)
+
+      assert length(positions) == 8
+
+      xs = positions |> Enum.map(&elem(&1, 0)) |> Enum.uniq() |> Enum.sort()
+      ys = positions |> Enum.map(&elem(&1, 1)) |> Enum.uniq() |> Enum.sort()
+
+      # four columns equally spaced, one per longitude, and two rows
+      assert length(xs) == 4
+      assert length(ys) == 2
+
+      [step | steps] = Enum.chunk_every(xs, 2, 1, :discard) |> Enum.map(fn [a, b] -> b - a end)
+      for s <- steps, do: assert_in_delta(s, step, 0.01)
+
+      # 60 degrees of longitude and 60 of latitude have the same length
+      assert_in_delta Enum.at(ys, 1) - Enum.at(ys, 0), step, 0.01
+    end
+  end
+
   describe "combining maps" do
     test "layered maps keep their projection when combined" do
       vl =
         Tucan.layers([
           Tucan.Geo.basemap(:world_110m, sphere: true, graticule: true, projection: :mercator),
           Tucan.Geo.choropleth(:world_110m, [%{id: 4, v: 1}], "id", "v", projection: :mercator),
-          Tucan.Geo.basemap(:world_110m, mesh: "countries", projection: :mercator)
+          Tucan.Geo.basemap(:world_110m, mesh: "countries", projection: :mercator),
+          Tucan.Geo.scatter([%{lon: 1, lat: 2}], "lon", "lat", projection: :mercator)
         ])
 
       layers = VegaLite.to_spec(vl)["layer"]
 
-      assert length(layers) == 6
+      assert length(layers) == 7
 
       for layer <- layers do
         assert layer["projection"] == %{"type" => "mercator"}
       end
     end
+  end
+
+  defp round_number(string) do
+    {number, ""} = Float.parse(string)
+    Float.round(number, 6)
   end
 end

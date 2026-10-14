@@ -30,6 +30,13 @@ defmodule Tucan.Geo do
   All plots of this module are single views with their own projection, so they can be
   combined with `Tucan.layers/1`, e.g. to draw some points on top of a base map. Use
   the same projection for all layers.
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geo.basemap(:us_10m),
+    Tucan.Geo.scatter(:airports, "longitude", "latitude", point_size: 4, point_color: "firebrick")
+  ])
+  ```
   """
 
   alias VegaLite, as: Vl
@@ -57,7 +64,8 @@ defmodule Tucan.Geo do
       type: {:in, @projections},
       doc: """
       The cartographic projection. One of #{Enum.map_join(@projections, ", ", &"`#{inspect(&1)}`")}.
-      Defaults to `:albers_usa` for the `:us_10m` dataset and to `:equal_earth` otherwise.
+      Defaults to `:albers_usa` for the `:us_10m` and `:airports` datasets and to
+      `:equal_earth` otherwise.
       """,
       section: :style
     ],
@@ -110,7 +118,7 @@ defmodule Tucan.Geo do
   @default_features %{us_10m: "states", world_110m: "countries"}
 
   # datasets that default to the albers usa projection
-  @us_datasets [:us_10m]
+  @us_datasets [:us_10m, :airports]
 
   basemap_opts = [
     fill_color: [
@@ -384,6 +392,111 @@ defmodule Tucan.Geo do
 
   defp maybe_set_color_scheme(vl, nil), do: vl
   defp maybe_set_color_scheme(vl, scheme), do: Tucan.Scale.set_color_scheme(vl, scheme)
+
+  @scatter_opts Tucan.Options.take!(
+                  [
+                    :color_by,
+                    :size_by,
+                    :point_color,
+                    :point_size,
+                    :point_shape,
+                    :filled,
+                    :fill_opacity,
+                    :tooltip
+                  ],
+                  [filled: [default: true], fill_opacity: [default: 0.7]] ++ @projection_opts
+                )
+  @scatter_schema Tucan.Options.to_nimble_schema!(@scatter_opts)
+
+  @doc """
+  Draws points at geographic locations.
+
+  `longitude` and `latitude` are the fields with the coordinates of each point in
+  degrees. The points can be colored and sized by data fields, e.g. for a bubble map.
+
+  The points are drawn without a map, combine them with a `basemap/2` using
+  `Tucan.layers/1`, see the module documentation.
+
+  > #### Points outside the projection {: .warning}
+  >
+  > Points that the projection cannot place are drawn at the top left corner of the
+  > plot, e.g. the airports of Guam with the `:albers_usa` projection, which covers
+  > only the 50 states. Filter them out of the data if needed.
+
+  ## Options
+
+  #{Tucan.Options.docs(@scatter_opts)}
+
+  ## Examples
+
+  The airports of the United States:
+
+  ```tucan
+  Tucan.Geo.scatter(:airports, "longitude", "latitude", point_size: 4)
+  ```
+
+  A bubble map of some of the largest cities of the world, sized by their approximate
+  metropolitan population in millions, on top of a world map:
+
+  ```tucan
+  cities = [
+    %{city: "Tokyo", lon: 139.69, lat: 35.69, population: 37.4, continent: "Asia"},
+    %{city: "Delhi", lon: 77.21, lat: 28.61, population: 31.0, continent: "Asia"},
+    %{city: "Shanghai", lon: 121.47, lat: 31.23, population: 27.1, continent: "Asia"},
+    %{city: "São Paulo", lon: -46.63, lat: -23.55, population: 22.0, continent: "South America"},
+    %{city: "Mexico City", lon: -99.13, lat: 19.43, population: 21.8, continent: "North America"},
+    %{city: "Cairo", lon: 31.24, lat: 30.04, population: 21.3, continent: "Africa"},
+    %{city: "Mumbai", lon: 72.88, lat: 19.08, population: 20.7, continent: "Asia"},
+    %{city: "New York", lon: -74.01, lat: 40.71, population: 18.8, continent: "North America"},
+    %{city: "Lagos", lon: 3.38, lat: 6.52, population: 14.9, continent: "Africa"},
+    %{city: "Moscow", lon: 37.62, lat: 55.76, population: 12.6, continent: "Europe"},
+    %{city: "Paris", lon: 2.35, lat: 48.86, population: 11.1, continent: "Europe"},
+    %{city: "Sydney", lon: 151.21, lat: -33.87, population: 5.0, continent: "Oceania"}
+  ]
+
+  Tucan.layers([
+    Tucan.Geo.basemap(:world_110m),
+    Tucan.Geo.scatter(cities, "lon", "lat",
+      size_by: "population",
+      color_by: "continent",
+      tooltip: true
+    )
+  ])
+  ```
+  """
+  @spec scatter(
+          plotdata :: Tucan.plotdata(),
+          longitude :: String.t(),
+          latitude :: String.t(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def scatter(plotdata, longitude, latitude, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @scatter_schema)
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@scatter_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:point_color])
+      |> Tucan.Keyword.put_not_nil(:size, opts[:point_size])
+      |> Tucan.Keyword.put_not_nil(:shape, opts[:point_shape])
+
+    plotdata
+    |> Tucan.new()
+    |> Vl.mark(:point, mark_opts)
+    |> encode_coordinates(longitude, latitude)
+    |> maybe_encode(:color, opts[:color_by], type: :nominal)
+    |> maybe_encode(:size, opts[:size_by], type: :quantitative)
+    |> geo_view(plotdata, opts)
+  end
+
+  defp encode_coordinates(vl, longitude, latitude) do
+    vl
+    |> Vl.encode_field(:longitude, longitude, type: :quantitative)
+    |> Vl.encode_field(:latitude, latitude, type: :quantitative)
+  end
+
+  defp maybe_encode(vl, _channel, nil, _opts), do: vl
+  defp maybe_encode(vl, channel, field, opts), do: Vl.encode_field(vl, channel, field, opts)
 
   ## Helpers
 
