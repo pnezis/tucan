@@ -9,8 +9,6 @@ defmodule Tucan.Image do
   """
   @spec show(tensor :: Nx.Tensor.t(), opts :: keyword()) :: VegaLite.t()
   def show(tensor, opts) when is_struct(tensor, Nx.Tensor) do
-    assert_nx!()
-
     type = Nx.type(tensor)
 
     if type not in [{:u, 8}, {:f, 32}] do
@@ -105,19 +103,5 @@ defmodule Tucan.Image do
 
   defp encode_color(vl, _channels, _opts) do
     Vl.encode_field(vl, :color, "v", type: :nominal, scale: nil, legend: nil)
-  end
-
-  defp assert_nx! do
-    if !Code.ensure_loaded?(Nx) do
-      raise RuntimeError, """
-      Tucan.imshow/2 depends on the :nx package.
-
-      You can install it by adding
-
-          {:nx, "~> 0.6"}
-
-      to your dependency list.
-      """
-    end
   end
 end
