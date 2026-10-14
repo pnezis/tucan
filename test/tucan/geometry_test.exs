@@ -202,4 +202,58 @@ defmodule Tucan.GeometryTest do
       assert Tucan.Geometry.rectangle({1, 2}, {5, 6}) == expected
     end
   end
+
+  describe "line/3" do
+    test "draws a segment between the points" do
+      spec = Tucan.Geometry.line({1, 2}, {3, 4}) |> VegaLite.to_spec()
+
+      assert spec == %{
+               "$schema" => "https://vega.github.io/schema/vega-lite/v5.json",
+               "data" => %{"values" => [%{}]},
+               "mark" => %{"type" => "rule", "strokeWidth" => 1},
+               "encoding" => %{
+                 "x" => %{"datum" => 1, "type" => "quantitative"},
+                 "y" => %{"datum" => 2, "type" => "quantitative"},
+                 "x2" => %{"datum" => 3},
+                 "y2" => %{"datum" => 4}
+               }
+             }
+    end
+
+    test "with style options" do
+      spec =
+        Tucan.Geometry.line({1, 2}, {3, 4},
+          line_color: "red",
+          stroke_width: 3,
+          stroke_dash: [4, 4],
+          opacity: 0.5
+        )
+        |> VegaLite.to_spec()
+
+      assert spec["mark"] == %{
+               "type" => "rule",
+               "color" => "red",
+               "strokeWidth" => 3,
+               "strokeDash" => [4, 4],
+               "opacity" => 0.5
+             }
+    end
+
+    test "does not affect the axis titles of the plot" do
+      svg =
+        Tucan.layers([
+          Tucan.scatter([%{a: 1, b: 2}, %{a: 3, b: 4}], "a", "b"),
+          Tucan.Geometry.line({0, 0}, {4, 4})
+        ])
+        |> Tucan.Export.to_svg()
+
+      assert axis_titles(svg) == ["X-axis titled 'a'", "Y-axis titled 'b'"]
+    end
+  end
+
+  defp axis_titles(svg) do
+    ~r/aria-label="([XY]-axis titled '[^']*')/
+    |> Regex.scan(svg, capture: :all_but_first)
+    |> List.flatten()
+  end
 end

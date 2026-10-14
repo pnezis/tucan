@@ -92,6 +92,17 @@ option, which orders the points of the lines by a field other than `x`.
   Tucan.lineplot(data, "unemployment", "inflation", order_by: "year", points: true)
   ```
 
+- Add `Tucan.Geometry.line/3` for drawing line segments.
+
+  ```tucan
+  data = for i <- 1..50, do: %{actual: i, predicted: i + 8 * :math.sin(i)}
+
+  Tucan.layers([
+    Tucan.scatter(data, "actual", "predicted"),
+    Tucan.Geometry.line({0, 0}, {50, 50}, line_color: "gray", stroke_dash: [4, 4])
+  ])
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

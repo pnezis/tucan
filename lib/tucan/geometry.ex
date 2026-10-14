@@ -35,6 +35,67 @@ defmodule Tucan.Geometry do
   @typedoc "A cartesian point in the form `{x, y}`"
   @type point :: {number(), number()}
 
+  line_opts = [
+    stroke_width: [default: 1]
+  ]
+
+  @line_opts Tucan.Options.take!(
+               [:stroke_width, :stroke_dash, :line_color, :opacity],
+               line_opts
+             )
+  @line_schema Tucan.Options.to_nimble_schema!(@line_opts)
+
+  @doc """
+  Draws a line segment from the `start` to the `end` point.
+
+  ## Options
+
+  #{Tucan.Options.docs(@line_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.line({0, 0}, {10, 10}, stroke_dash: [5, 5]),
+    Tucan.Geometry.line({0, 10}, {10, 0}, line_color: "red", stroke_width: 3)
+  ])
+  ```
+
+  The identity line on top of a scatter plot:
+
+  ```tucan
+  data = for i <- 1..50, do: %{actual: i, predicted: i + 8 * :math.sin(i)}
+
+  Tucan.layers([
+    Tucan.scatter(data, "actual", "predicted"),
+    Tucan.Geometry.line({0, 0}, {50, 50}, line_color: "gray", stroke_dash: [4, 4])
+  ])
+  ```
+  """
+  @spec line(start :: point(), end_point :: point(), opts :: keyword()) :: VegaLite.t()
+  def line({x1, y1} = _start, {x2, y2} = _end, opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @line_schema)
+
+    mark_opts =
+      opts
+      |> Tucan.Options.take_options(@line_opts, :mark)
+      |> Tucan.Keyword.put_not_nil(:color, opts[:line_color])
+
+    segment(x1, y1, x2, y2, mark_opts)
+  end
+
+  defp segment(x1, y1, x2, y2, mark_opts) do
+    # the positions are data values and not fields, so that the axis titles of the
+    # plots the shape is added to are not affected
+    Vl.new()
+    |> Vl.data_from_values([%{}])
+    |> Vl.mark(:rule, mark_opts)
+    |> Vl.encode(:x, datum: x1, type: :quantitative)
+    |> Vl.encode(:y, datum: y1, type: :quantitative)
+    |> Vl.encode(:x2, datum: x2)
+    |> Vl.encode(:y2, datum: y2)
+  end
+
   circle_opts = [
     stroke_width: [default: 1]
   ]
