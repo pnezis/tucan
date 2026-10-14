@@ -2577,6 +2577,28 @@ defmodule TucanTest do
     end
   end
 
+  describe "pairplot/3 with brush" do
+    test "links the subplots" do
+      spec =
+        Tucan.pairplot(@dataset, ["a", "b"], diagonal: :histogram, brush: true)
+        |> VegaLite.to_spec()
+
+      [diagonal_1, lower, upper, diagonal_2] = spec["concat"]
+
+      for view <- [lower, upper] do
+        assert [%{"name" => "_brush"}] = view["params"]
+        assert %{"condition" => %{"param" => "_brush"}} = view["encoding"]["opacity"]
+      end
+
+      for view <- [diagonal_1, diagonal_2] do
+        refute Map.has_key?(view, "params")
+      end
+
+      spec = Tucan.pairplot(@dataset, ["a", "b"]) |> VegaLite.to_spec()
+      refute Enum.any?(spec["concat"], &Map.has_key?(&1, "params"))
+    end
+  end
+
   describe "pairplot/3" do
     test "with default options" do
       top_left =

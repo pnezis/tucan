@@ -230,6 +230,15 @@ The rows selected on any plot are highlighted in all of them.
   |> Tucan.Interactive.brush()
   ```
 
+- Add a `:brush` option to `Tucan.pairplot/3` for linking its subplots with a brush.
+
+  ```tucan
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram, brush: true)
+  |> Tucan.color_by("species", recursive: true)
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree

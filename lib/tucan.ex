@@ -4096,6 +4096,14 @@ defmodule Tucan do
       `:scatter`, `:density` and `:histogram`.
       """
     ],
+    brush: [
+      type: :boolean,
+      default: false,
+      doc: """
+      Whether the subplots are linked with a brush, see `Tucan.Interactive.brush/2`. The
+      data selected on any scatter plot of the grid are highlighted on all of them.
+      """
+    ],
     plot_fn: [
       type: {:fun, 3},
       doc: """
@@ -4169,6 +4177,16 @@ defmodule Tucan do
   |> Tucan.color_by("species", recursive: true)
   ```
 
+  With the `:brush` option the subplots are linked, drag a rectangle on any scatter
+  plot to highlight the same flowers on all of them:
+
+  ```tucan
+  fields = ["petal_width", "petal_length", "sepal_width", "sepal_length"]
+
+  Tucan.pairplot(:iris, fields, width: 130, height: 130, diagonal: :histogram, brush: true)
+  |> Tucan.color_by("species", recursive: true)
+  ```
+
   Additionally you have the option to configure a `plot_fn` with which we can go crazy and
   modify any part of the grid based on our needs. `plot_fn` should accept as input a `VegaLite`
   struct and two tuples containing the row and column fields and indexes. In the following
@@ -4224,9 +4242,12 @@ defmodule Tucan do
 
     spec_opts = Keyword.take(opts, [:title, :zoomable]) ++ [columns: length(fields)]
 
-    plotdata
-    |> new(spec_opts)
-    |> Vl.concat(children, :wrappable)
+    vl =
+      plotdata
+      |> new(spec_opts)
+      |> Vl.concat(children, :wrappable)
+
+    if opts[:brush], do: Tucan.Interactive.brush(vl), else: vl
   end
 
   defp pairplot_child_spec({row_field, row_index}, {col_field, col_index}, fields_count, opts) do
