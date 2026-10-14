@@ -341,6 +341,63 @@ defmodule Tucan.GeometryTest do
     end
   end
 
+  describe "regular_polygon/4" do
+    test "the vertices are equally spaced on the circle" do
+      for sides <- 3..12, {cx, cy} = center <- [{0, 0}, {1.5, -2}], radius <- [0.5, 3] do
+        points = polygon_points(Tucan.Geometry.regular_polygon(center, radius, sides))
+
+        # the polygon is closed by repeating the first vertex
+        assert length(points) == sides + 1
+        assert List.first(points) == List.last(points)
+
+        for {x, y} <- points do
+          assert_in_delta :math.sqrt((x - cx) ** 2 + (y - cy) ** 2), radius, 1.0e-9
+        end
+
+        side = 2 * radius * :math.sin(:math.pi() / sides)
+
+        for [{x1, y1}, {x2, y2}] <- Enum.chunk_every(points, 2, 1, :discard) do
+          assert_in_delta :math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2), side, 1.0e-9
+        end
+      end
+    end
+
+    test "the first vertex points up and the rotation is counter clockwise" do
+      [{x, y} | _rest] = polygon_points(Tucan.Geometry.regular_polygon({1, 2}, 2, 4))
+      assert_in_delta x, 1, 1.0e-9
+      assert_in_delta y, 4, 1.0e-9
+
+      [{x, y} | _rest] =
+        polygon_points(Tucan.Geometry.regular_polygon({0, 0}, 1, 3, rotation: 90))
+
+      assert_in_delta x, -1, 1.0e-9
+      assert_in_delta y, 0, 1.0e-9
+    end
+
+    test "with style options" do
+      spec =
+        Tucan.Geometry.regular_polygon({0, 0}, 1, 3, fill_color: "red", line_color: "blue")
+        |> VegaLite.to_spec()
+
+      assert spec["mark"]["type"] == "line"
+      assert spec["mark"]["fill"] == "red"
+      assert spec["mark"]["color"] == "blue"
+    end
+
+    test "raises with less than three sides or a non positive radius" do
+      assert_raise FunctionClauseError, fn -> Tucan.Geometry.regular_polygon({0, 0}, 1, 2) end
+      assert_raise FunctionClauseError, fn -> Tucan.Geometry.regular_polygon({0, 0}, 0, 3) end
+    end
+  end
+
+  defp polygon_points(vl) do
+    vl
+    |> VegaLite.to_spec()
+    |> get_in(["data", "values"])
+    |> Enum.sort_by(& &1["order"])
+    |> Enum.map(&{&1["x"], &1["y"]})
+  end
+
   # the rotation of the arrow head in degrees, vega omits it if it is 0
   defp head_rotation(svg) do
     [symbols] = Regex.run(~r/class="mark-symbol.*?<\/g>/s, svg)

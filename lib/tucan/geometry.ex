@@ -505,4 +505,69 @@ defmodule Tucan.Geometry do
     |> Vl.encode_field(:y, "y", type: :quantitative)
     |> Vl.encode_field(:order, "order")
   end
+
+  regular_polygon_opts = [
+    rotation: [
+      type: {:or, [:integer, :float]},
+      default: 0,
+      doc: """
+      The rotation of the polygon in degrees, counter clockwise. With `0` the first
+      vertex points up.
+      """
+    ]
+  ]
+
+  @regular_polygon_opts Tucan.Options.take!(
+                          [
+                            :stroke_width,
+                            :stroke_dash,
+                            :line_color,
+                            :opacity,
+                            :stroke_opacity,
+                            :fill_color,
+                            :fill_opacity
+                          ],
+                          regular_polygon_opts ++ [stroke_width: [default: 1]]
+                        )
+  @regular_polygon_schema Tucan.Options.to_nimble_schema!(@regular_polygon_opts)
+
+  @doc """
+  Draws a regular polygon with the given number of `sides`, whose vertices are on a
+  circle with the given `center` and `radius`.
+
+  ## Options
+
+  #{Tucan.Options.docs(@regular_polygon_opts)}
+
+  ## Examples
+
+  ```tucan
+  Tucan.layers([
+    Tucan.Geometry.regular_polygon({0, 0}, 1, 3, fill_color: "orange", fill_opacity: 0.4),
+    Tucan.Geometry.regular_polygon({3, 0}, 1, 4, rotation: 45, line_color: "red"),
+    Tucan.Geometry.regular_polygon({6, 0}, 1, 6, fill_color: "teal", stroke_width: 2)
+  ])
+  |> Tucan.Scale.set_x_domain(-1.5, 7.5)
+  |> Tucan.Scale.set_y_domain(-1.5, 1.5)
+  |> Tucan.set_size(360, 120)
+  ```
+  """
+  @spec regular_polygon(
+          center :: point(),
+          radius :: number(),
+          sides :: pos_integer(),
+          opts :: keyword()
+        ) :: VegaLite.t()
+  def regular_polygon({x, y} = _center, radius, sides, opts \\ [])
+      when is_number(radius) and radius > 0 and is_integer(sides) and sides >= 3 do
+    opts = NimbleOptions.validate!(opts, @regular_polygon_schema)
+
+    vertices =
+      for i <- 0..(sides - 1) do
+        angle = (90 + opts[:rotation] + i * 360 / sides) * :math.pi() / 180
+        {x + radius * :math.cos(angle), y + radius * :math.sin(angle)}
+      end
+
+    polyline(vertices, Keyword.put(Keyword.delete(opts, :rotation), :closed, true))
+  end
 end

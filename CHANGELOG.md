@@ -113,6 +113,13 @@ scales differ.
   |> Tucan.annotate(180, 37, "The most powerful car", color: "red")
   ```
 
+- Add `Tucan.Geometry.regular_polygon/4` for drawing regular polygons.
+
+  ```tucan
+  Tucan.Geometry.regular_polygon({0, 0}, 1, 6, fill_color: "teal")
+  |> Tucan.set_size(200, 200)
+  ```
+
 ### Changed
 
 - `Tucan.Geometry.circle/3` and `Tucan.Geometry.ellipse/5` are sampled every degree
